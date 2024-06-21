@@ -1,0 +1,361 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+    text-decoration: none;
+  }
+  
+  body {
+    background-color: #333333;
+    /* background-image: url("assets/bg_suggested_ratio.png"); */
+  }
+  
+  
+  
+  /* ---------- HEADER ---------- */
+  header {
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  /* ---------- NAVBAR ---------- */
+  .navbar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #000000;
+    z-index: 1000;
+    padding: 20px;
+  }
+  
+  .navbar .logo {
+    margin: 10px 20px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .navbar .logo img {
+    width: 50px;
+    margin-right: 10px;
+  }
+  
+  .navbar .logo p {
+    color: #ffffff;
+    font-family: 'Bubblegum sans',sans-serif;
+    font-size: 35px;
+  }
+  
+  .navbar .menu {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+  }
+  
+  .navbar .menu li {
+    margin: 10px 30px;
+  }
+  
+  .navbar .menu li a {
+    color: #ffffff;
+    font-family: "Ubuntu", sans-serif;
+    font-size: 20px;
+    transition: color ease 0.3s;
+  }
+  
+  .navbar .menu li a:hover {
+    color: orange;
+  }
+  
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #101010;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1001;
+    min-width: 160px;
+  }
+  
+  .dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+  }
+  
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+  
+  .dropdown-content a:hover {
+    background-color: #222222
+  }
+  
+  .dropdown-content:hover .dropbtn {
+    color: orange;
+  }
+  
+  .menu-btn {
+    color: white;
+    font-size: 20px;
+    margin: 10px 20px;
+    display: none;
+  }
+  
+  @media(max-width: 991px) {
+    .navbar .menu {
+        height: 100vh;
+        width: 100%;
+        position: fixed;
+        left: 100%;
+        top: 0;
+        background-color: #111111;
+        text-align: center;
+        padding-top: 80px;
+        display: grid;
+        transition: all 0.3s ease;
+    }
+  
+    .navbar .menu.active {
+        height: 100vh;
+        width: 100%;
+        position: fixed;
+        left: 0;
+        top: 0;
+        background-color: #111111;
+        text-align: center;
+        padding-top: 80px;
+    }
+  
+    .navbar .menu.active li a:hover {
+        color: orange;
+    }
+  
+    .navbar .menu-btn {
+        display: block;
+        z-index: 1000;
+    }
+  
+    .menu-btn i.active:before {
+        content: '\f00d';
+    }
+  
+    .navbar .menu li {
+        display: block;
+        margin: 0;
+    }
+  
+    .navbar .menu li a {
+        display: inline-block;
+    }
+  
+    .navbar .menu li a:hover {
+        color: orange;
+    }
+  
+    .dropdown-content a {
+        margin: auto;
+    }
+  
+    .dropdown-content a:hover {
+        color: orange;
+        background: none;
+    }
+  
+  
+    .dropdown-content {
+        height: 100vh;
+        width: 100%;
+        display: grid;
+        position: fixed;
+        top: 0;
+        left: 100%;
+        background-color: #101010;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 2000;
+        min-width: 160px;
+        padding-top: 80px;
+    }
+  
+    .dropdown-content.onscreen {
+        height: 100vh;
+        width: 100%;
+        display: grid;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #101010;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 2000;
+        min-width: 160px;
+        padding-top: 100px;
+    }
+  
+    .dropdown:hover .dropdown-content {
+        display: grid;
+    }
+  }
+  
+  
+  
+  /* ---------- MAIN ---------- */
+  main {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* ---------- WELCOME ---------- */
+  .welcome {
+    width: 80%;
+    margin: 100px auto 50px auto;
+  }
+  
+  .welcome p {
+    text-align: center;
+    color: white;
+    font-family: 'Playwrite NL', cursive;
+    font-size: 100px;
+  }
+  
+  @media(max-width: 790px) {
+    .welcome {
+        width: 80%;
+        margin: 80px auto 40px auto;
+    }
+  
+    .welcome p {
+        font-size: 70px;
+    }
+  }
+  
+  @media(max-width: 640px) {
+    .welcome {
+        width: 80%;
+        margin: 60px auto 30px auto;
+    }
+  
+    .welcome p {
+        font-size: 50px;
+    }
+  }
+  
+  @media(max-width: 420px) {
+    .welcome {
+        width: 80%;
+        margin: 50px auto 20px auto;
+    }
+  
+    .welcome p {
+        font-size: 40px;
+    }
+  }
+  
+  /* ---------- CONTENT ---------- */
+  .content {
+    width: 80%;
+  }
+  
+  .content p{
+    text-align: justify;
+    color: white;
+    font-family: 'Ubuntu', sans-serif;
+    font-size: 25px;
+  }
+  
+  @media(max-width: 991px) {
+    .content p {
+        font-size: 20px;
+    }
+  }
+  
+  @media(max-width: 420px) {
+    .content p {
+        font-size: 15px;
+    }
+  }
+  
+  /* ---------- CAROUSEL ---------- */
+  .carousel-container {
+    position: relative;
+    width: 80%;
+    max-width: 1200px;
+    overflow: hidden;
+    margin: 20px 0;
+  }
+  
+  .carousel {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+  }
+  
+  .carousel-item {
+    min-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .carousel-item img {
+    width: 100%;
+    height: auto;
+  }
+  
+  .prev, .next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+  }
+  
+  .prev {
+    left: 10px;
+  }
+  
+  .next {
+    right: 10px;
+  }
+  
+  .prev:hover, .next:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+  
+  /* ---------- VIDEO ---------- */
+  .video-container {
+    width: 80%;
+    margin: 20px 0;
+  }
+  
+  .video-container video {
+    width: 100%;
+    height: auto;
+  }
+  
+  
+  
+  /* ---------- FOOTER ---------- */
+  footer {
+    width: 100%;
+    background-color: #000000;
+    padding: 20px;
+  }
+  
+  footer p {
+    color: white;
+    font-size: 20px;
+    font-family: 'Ubuntu', sans-serif;
+    text-align: center;
+  }
+  
+  footer p i {
+    color: red;
+    margin: 2px;
+  }
+  
