@@ -7,16 +7,16 @@ const Navbar = () => {
     <div className={style.Navbar}>
     <header>
 
-<nav class="navbar">
-    <div class="logo">
+<nav className="navbar">
+    <div className="logo">
         <img src={logo} alt=""/>
         <p>Bootcamp</p>
     </div>
-    <ul class="menu">
+    <ul className="menu">
    
-        <li><a><Link to="/home">HOME</Link></a></li>
-        <li><a><Link to="/about">ABOUT</Link></a></li>
-        <li><a><Link to="/login">LOGIN</Link></a></li>
+        <li><Link to="/home">HOME</Link></li>
+        <li><Link to="/about">ABOUT</Link></li>
+        <li><Link to="/login">LOGIN</Link></li>
         {/* <li class="dropdown">
             <a href="javascript:void(0)" class="dropbtn">BATCH</a>
             <div class="dropdown-content">
@@ -25,10 +25,10 @@ const Navbar = () => {
                 <a href="#">2028</a>
             </div>
         </li> */}
-        <li><a ><Link to="/society">SOCIETY</Link></a></li>
+        <li><Link to="/society">SOCIETY</Link></li>
     </ul>
-    <div class="menu-btn">
-        <i class="fa-solid fa-bars"></i>
+    <div className="menu-btn">
+        <i className="fa-solid fa-bars"></i>
     </div>
 </nav>
 

@@ -13,8 +13,8 @@ import bn from '../../assets/Photos/bg.png'
 const About = () => {
     return (
         <div className={style.About}>
-            <section class="about" id="about">
-                <div class="about-us">
+            <section className="about" id="about">
+                <div className="about-us">
                     <h1>ABOUT US</h1>
                     <div id="container">
                         <span id="text1"></span>
@@ -34,55 +34,55 @@ const About = () => {
                     <p>A platform dedicated to introducing you to the talented computer engineering students who are shaping the future of technology. Our website is designed to showcase their skills, projects, and the passion they bring to their field.</p>
                     <p>Our mission is to provide a simple, user-friendly experience that highlights the incredible talents of our computer engineering students. We believe in the power of community and the importance of recognizing the hard work and love that goes into every project.</p>
                 </div>
-                <div class="team">
+                <div className="team">
                     <h2>Our Team</h2>
-                    <div class="our-team">
-                        <div class="card">
-                            <img class="bg" src={bn} />
-                            <img class="one" src={priyaranjan} />
+                    <div className="our-team">
+                        <div className="card">
+                            <img className="bg" src={bn} />
+                            <img className="one" src={priyaranjan} />
                             <h3>PRIYARANJAN KUMAR</h3>
                             <h4>Frontend Developer</h4>
-                            <div class="icon">
-                                <a href="https://github.com/priyaranjan2902"> <i class="fa fa-github" ></i></a>
-                                <a href="https://in.linkedin.com/in/priyaranjan2902"> <i class="fa fa-linkedin" ></i></a>
-                                <a href="https://www.instagram.com/priyaranjan2902/"> <i class="fa fa-instagram" ></i></a>
-                                <a href="rajprience2902@gmail.com"> <i class="fa fa-envelope" ></i></a>
+                            <div className="icon">
+                                <a href="https://github.com/priyaranjan2902"> <i className="fa fa-github" ></i></a>
+                                <a href="https://in.linkedin.com/in/priyaranjan2902"> <i className="fa fa-linkedin" ></i></a>
+                                <a href="https://www.instagram.com/priyaranjan2902/"> <i className="fa fa-instagram" ></i></a>
+                                <a href="rajprience2902@gmail.com"> <i className="fa fa-envelope" ></i></a>
                             </div>
                         </div>
-                        <div class="card">
-                            <img class="bg" src={bn} />
-                            <img class="one" src={harapriya} />
+                        <div className="card">
+                            <img className="bg" src={bn} />
+                            <img className="one" src={harapriya} />
                             <h3>HARAPRIYA SWAIN</h3>
                             <h4>Frontend Developer</h4>
-                            <div class="icon">
+                            <div className="icon">
                                 <a href=""> <i class="fa fa-github" ></i></a>
-                                <a href="https://www.linkedin.com/in/harapriya-swain-75632a256/"> <i class="fa fa-linkedin" ></i></a>
-                                <a href="https://www.instagram.com/harapriya_17/"> <i class="fa fa-instagram" ></i></a>
-                                <a href=""> <i class="fa fa-envelope" ></i></a>
+                                <a href="https://www.linkedin.com/in/harapriya-swain-75632a256/"> <i className="fa fa-linkedin" ></i></a>
+                                <a href="https://www.instagram.com/harapriya_17/"> <i className="fa fa-instagram" ></i></a>
+                                <a href=""> <i className="fa fa-envelope" ></i></a>
                             </div>
                         </div>
-                        <div class="card">
-                            <img class="bg" src={bn} />
-                            <img class="one" src={subham} />
+                        <div className="card">
+                            <img className="bg" src={bn} />
+                            <img className="one" src={subham} />
                             <h3>SUBHAM KUANAR</h3>
                             <h4>Frontend Developer</h4>
-                            <div class="icon">
+                            <div className="icon">
                                 <a href=""> <i class="fa fa-github" ></i></a>
-                                <a href="https://www.linkedin.com/in/kuanarshubham/"> <i class="fa fa-linkedin" ></i></a>
-                                <a href="https://www.instagram.com/shubhamkuanar/"> <i class="fa fa-instagram" ></i></a>
-                                <a href=""> <i class="fa fa-envelope" ></i></a>
+                                <a href="https://www.linkedin.com/in/kuanarshubham/"> <i className="fa fa-linkedin" ></i></a>
+                                <a href="https://www.instagram.com/shubhamkuanar/"> <i className="fa fa-instagram" ></i></a>
+                                <a href=""> <i className="fa fa-envelope" ></i></a>
                             </div>
                         </div>
-                        <div class="card">
-                            <img class="bg" src={bn} />
-                            <img class="one" src={saumyajeet} />
+                        <div className="card">
+                            <img className="bg" src={bn} />
+                            <img className="one" src={saumyajeet} />
                             <h3>SAUMYAJEET VARMA</h3>
                             <h4>Frontend Developer</h4>
-                            <div class="icon">
-                                <a href="https://github.com/Saumyajeet-Varma"> <i class="fa fa-github" ></i></a>
-                                <a href="https://www.linkedin.com/in/saumyajeet-varma-91bb4025a/"> <i class="fa fa-linkedin" ></i></a>
-                                <a href="https://www.instagram.com/_saumyajeet_/"> <i class="fa fa-instagram" ></i></a>
-                                <a href=""> <i class="fa fa-envelope" ></i></a>
+                            <div className="icon">
+                                <a href="https://github.com/Saumyajeet-Varma"> <i className="fa fa-github" ></i></a>
+                                <a href="https://www.linkedin.com/in/saumyajeet-varma-91bb4025a/"> <i className="fa fa-linkedin" ></i></a>
+                                <a href="https://www.instagram.com/_saumyajeet_/"> <i className="fa fa-instagram" ></i></a>
+                                <a href=""> <i className="fa fa-envelope" ></i></a>
                             </div>
                         </div>
                         <div class="card">
@@ -97,16 +97,16 @@ const About = () => {
                                 <a href="swedeshnamishra364@gmail.com"> <i class="fa fa-envelope" ></i></a>
                             </div>
                         </div>
-                        <div class="card">
-                            <img class="bg" src={bn} />
-                            <img class="one" src={biswa} />
+                        <div className="card">
+                            <img className="bg" src={bn} />
+                            <img className="one" src={biswa} />
                             <h3>BISWAJIT BHOI</h3>
                             <h4>UI/UX Designer</h4>
-                            <div class="icon">
-                                <a href=""> <i class="fa fa-github" ></i></a>
-                                <a href="https://www.linkedin.com/in/biswajit-bhoi-2537b5257/"> <i class="fa fa-linkedin" ></i></a>
-                                <a href="https://www.instagram.com/biswajit.bhoi.125/"> <i class="fa fa-instagram" ></i></a>
-                                <a href=""> <i class="fa fa-envelope" ></i></a>
+                            <div className="icon">
+                                <a href=""> <i className="fa fa-github" ></i></a>
+                                <a href="https://www.linkedin.com/in/biswajit-bhoi-2537b5257/"> <i className="fa fa-linkedin" ></i></a>
+                                <a href="https://www.instagram.com/biswajit.bhoi.125/"> <i className="fa fa-instagram" ></i></a>
+                                <a href=""> <i className="fa fa-envelope" ></i></a>
                             </div>
                         </div>
                         <div class="card">
@@ -118,19 +118,19 @@ const About = () => {
                                 <a href=""> <i class="fa fa-github" ></i></a>
                                 <a href="https://www.linkedin.com/in/janmenjay-panigrahi-6806ab28a/"> <i class="fa fa-linkedin" ></i></a>
                                 <a href=""> <i class="fa fa-instagram" ></i></a>
-                                <a href=""> <i class="fa fa-envelope" ></i></a>
+                                <a href=""> <i className="fa fa-envelope" ></i></a>
                             </div>
                         </div>
-                        <div class="card">
-                            <img class="bg" src={bn} />
-                            <img class="one" src={priyanshu} />
+                        <div className="card">
+                            <img className="bg" src={bn} />
+                            <img className="one" src={priyanshu} />
                             <h3>PRIYANSHU KUMAR ANAND</h3>
                             <h4>Backend Developer</h4>
-                            <div class="icon">
-                                <a href="https://github.com/Priyanshukumaranand"> <i class="fa fa-github" ></i></a>
-                                <a href="http://www.linkedin.com/in/priyanshu-kumar-anand-52b29825a"> <i class="fa fa-linkedin" ></i></a>
-                                <a href=""> <i class="fa fa-instagram"></i></a>
-                                <a href="priyanshukumaranandofficial@gmail.com"> <i class="fa fa-envelope" ></i></a>
+                            <div className="icon">
+                                <a href="https://github.com/Priyanshukumaranand"> <i className="fa fa-github" ></i></a>
+                                <a href="http://www.linkedin.com/in/priyanshu-kumar-anand-52b29825a"> <i className="fa fa-linkedin" ></i></a>
+                                <a href=""> <i className="fa fa-instagram"></i></a>
+                                <a href="priyanshukumaranandofficial@gmail.com"> <i className="fa fa-envelope" ></i></a>
                             </div>
                         </div>
                     </div>
