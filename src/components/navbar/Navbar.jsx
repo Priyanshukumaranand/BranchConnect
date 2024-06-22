@@ -1,9 +1,10 @@
 import React from 'react'
-import './navbar.css'
-import logo from '../assets/bootcamp_logo_wo_bg.png'
-
+import style from './navbar.css'
+import logo from '../../assets/bootcamp_logo_wo_bg.png'
+import { Link } from 'react-router-dom'
 const Navbar = () => {
   return (
+    <div className={style.Navbar}>
     <header>
 
 <nav class="navbar">
@@ -12,8 +13,10 @@ const Navbar = () => {
         <p>Bootcamp</p>
     </div>
     <ul class="menu">
-        <li><a href="#">HOME</a></li>
-        <li><a href="/About_Page/index.html">ABOUT</a></li>
+   
+        <li><a><Link to="/home">HOME</Link></a></li>
+        <li><a><Link to="/about">ABOUT</Link></a></li>
+        <li><a><Link to="/login">LOGIN</Link></a></li>
         {/* <li class="dropdown">
             <a href="javascript:void(0)" class="dropbtn">BATCH</a>
             <div class="dropdown-content">
@@ -22,7 +25,7 @@ const Navbar = () => {
                 <a href="#">2028</a>
             </div>
         </li> */}
-        <li><a href="/society/index.html">SOCIETY</a></li>
+        <li><a ><Link to="/society">SOCIETY</Link></a></li>
     </ul>
     <div class="menu-btn">
         <i class="fa-solid fa-bars"></i>
@@ -30,6 +33,7 @@ const Navbar = () => {
 </nav>
 
 </header>
+</div>
   )
 }
 

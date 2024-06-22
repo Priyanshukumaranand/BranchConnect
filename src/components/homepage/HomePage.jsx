@@ -1,13 +1,13 @@
 import React from 'react'
-import './homepage.css'
-import imgc1 from '../assets/carousel_1.png'
-import imgc2 from '../assets/carousel_2.png'
-import imgc3 from '../assets/carousel_3.png'
-import video from '../assets/video.mp4'
+import style from './homepage.css'
+import imgc1 from '../../assets/carousel_1.png'
+import imgc2 from '../../assets/carousel_2.png'
+import imgc3 from '../../assets/carousel_3.png'
+import video from '../../assets/video.mp4'
 
 const HomePage = () => {
   return (
-   <>
+   <div className={style.HomePage}>
    <main>
 
 <div class="welcome">
@@ -57,7 +57,7 @@ const HomePage = () => {
     </video>
 </div>
 
-</main> </>
+</main> </div>
   )
 }
 

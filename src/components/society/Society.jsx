@@ -1,23 +1,23 @@
 import React, { useEffect } from 'react'
 // import './script.js'
-import './society.css'
-import cultpic from '../assets/images/cultpic.png'
-import techsociety from "../assets/images/techsociety.png"
-import cult from '../assets/images/cult.jpeg'
-import ecell from '../assets/images/e-cell.png'
-import fats from '../assets/images/fats.png'
-import megahertz from '../assets/images/megaheartz.jpg'
-import naps from '../assets/images/naps.jpeg'
-import paracosm from '../assets/images/paracosm.png'
-import photogeeks from '../assets/images/photogeeks.png'
-import sports from '../assets/images/sports.png'
-import tars from '../assets/images/tars.jpeg'
-import vedenta from '../assets/images/vedantsamiti.png'
-import spicy from '../assets/images/spic_macay.jpg'
+import style from './society.css'
+import cultpic from '../../assets/images/cultpic.png'
+import techsociety from "../../assets/images/techsociety.png"
+import cult from '../../assets/images/cult.jpeg'
+import ecell from '../../assets/images/e-cell.png'
+import fats from '../../assets/images/fats.png'
+import megahertz from '../../assets/images/megaheartz.jpg'
+import naps from '../../assets/images/naps.jpeg'
+import paracosm from '../../assets/images/paracosm.png'
+import photogeeks from '../../assets/images/photogeeks.png'
+import sports from '../../assets/images/sports.png'
+import tars from '../../assets/images/tars.jpeg'
+import vedenta from '../../assets/images/vedantsamiti.png'
+import spicy from '../../assets/images/spic_macay.jpg'
 
 const Society = () => {
   return (
-    <>
+    <div id="society" className={style.Society}>
    
      <header id="header">
             <canvas id="test"></canvas>
@@ -336,7 +336,7 @@ const Society = () => {
     </div>
 
     {/* <script src={scr}></script> */}
-    </>
+    </div>
   )
 }
 

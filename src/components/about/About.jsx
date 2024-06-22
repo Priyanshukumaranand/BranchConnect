@@ -1,20 +1,18 @@
 import React from 'react'
-import './about.css'
-import priyaranjan from '../assets/Photos/PRIYARANJAN.png'
-import harapriya from '../assets/Photos/HARAPRIYA.png'
-import jhony from '../assets/Photos/JANMANJEY.png'
-import biswa from '../assets/Photos/BISWAJIT.png'
-import priyanshu from '../assets/Photos/PRIYANSHU.png'
-import saumyajeet from '../assets/Photos/SAUMYAJEET.png'
-import swedeshna from '../assets/Photos/SWEDESHNA.png'
-import subham from '../assets/Photos/SHUBHAM.png'
+import style from './about.css'
+import priyaranjan from '../../assets/Photos/PRIYARANJAN.png'
+import harapriya from '../../assets/Photos/HARAPRIYA.png'
+import jhony from '../../assets/Photos/JANMANJEY.png'
+import biswa from '../../assets/Photos/BISWAJIT.png'
+import priyanshu from '../../assets/Photos/PRIYANSHU.png'
+import saumyajeet from '../../assets/Photos/SAUMYAJEET.png'
+import swedeshna from '../../assets/Photos/SWEDESHNA.png'
+import subham from '../../assets/Photos/SHUBHAM.png'
 // import './script'
-
-import bn from '../assets/Photos/bg.png'
-// import priyaranjan from '../assets/Photos/PRIYARANJAN.png'
+import bn from '../../assets/Photos/bg.png'
 const About = () => {
     return (
-        <>
+        <div className={style.About}>
             <section class="about" id="about">
                 <div class="about-us">
                     <h1>ABOUT US</h1>
@@ -139,7 +137,7 @@ const About = () => {
                 </div>
             </section>
 
-        </>
+        </div>
     )
 }
 
