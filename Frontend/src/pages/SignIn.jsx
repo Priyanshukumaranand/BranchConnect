@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Auth.css';
 import { signIn } from '../api/auth';
+import { API_BASE_URL } from '../api/client';
 
 const initialForm = {
   email: '',
@@ -73,6 +74,11 @@ const SignIn = () => {
     }
   };
 
+  const handleGoogleSignIn = () => {
+    const endpoint = `${API_BASE_URL}/auth/google`;
+    window.location.href = endpoint;
+  };
+
   return (
     <section className="auth-page">
       <div className="auth-headline">
@@ -120,7 +126,7 @@ const SignIn = () => {
           </form>
 
           <div className="alt-signin" aria-live="polite">
-            <button type="button" className="alt-signin__google">
+            <button type="button" className="alt-signin__google" onClick={handleGoogleSignIn}>
               <span aria-hidden className="alt-signin__icon">G</span>
               <span>Continue with Google</span>
             </button>

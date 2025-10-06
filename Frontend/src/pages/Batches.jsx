@@ -1,137 +1,154 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import './Batches.css';
+import { fetchBatchMembers } from '../api/batches';
 
-const batches = [
-  {
-    id: '2022',
-    label: 'Batch 2022 · Seniors',
-    description: 'Final-year makers leading capstone projects and mentoring younger cohorts.',
-    students: [
-      {
-        name: 'Aditi Singh',
-        roll: 'B522004',
-        focus: ['AI Research', 'Edge Computing'],
-        about: 'Builds privacy-preserving ML pipelines and leads the campus research paper reading club.',
-        links: {
-          linkedin: 'https://www.linkedin.com',
-          github: 'https://github.com/'
-        }
-      },
-      {
-        name: 'Rahul Verma',
-        roll: 'B522027',
-        focus: ['DevOps', 'Cloud'],
-        about: 'SRE-in-training who automated deploys for student projects using GitHub Actions and ArgoCD.',
-        links: {
-          linkedin: 'https://www.linkedin.com',
-          github: 'https://github.com/'
-        }
-      },
-      {
-        name: 'Sneha Patra',
-        roll: 'B522052',
-        focus: ['UX Engineering', 'Design Systems'],
-        about: 'Blends interaction design with clean code. Led the design system revamp for bootcamp projects.',
-        links: {
-          behance: 'https://www.behance.net'
-        }
-      }
-    ]
-  },
-  {
-    id: '2023',
-    label: 'Batch 2023 · Sophomores',
-    description: 'Sophomores experimenting across domains—from web3 prototypes to embedded builds.',
-    students: [
-      {
-        name: 'Ishaan Mishra',
-        roll: 'B523009',
-        focus: ['Full-stack', 'Community'],
-        about: 'Organises weekend build clubs and ships indie tools using React, Go, and tRPC.',
-        links: {
-          twitter: 'https://twitter.com'
-        }
-      },
-      {
-        name: 'Kavya Nanda',
-        roll: 'B523031',
-        focus: ['Product', 'AR/VR'],
-        about: 'Exploring spatial interfaces for education; prototyped an AR lab assistant for circuits.',
-        links: {
-          linkedin: 'https://www.linkedin.com'
-        }
-      },
-      {
-        name: 'Neel Banerjee',
-        roll: 'B523044',
-        focus: ['Security', 'C++'],
-        about: 'CTF enthusiast building fuzzers and teaching juniors about secure coding practices.',
-        links: {
-          github: 'https://github.com/'
-        }
-      }
-    ]
-  },
-  {
-    id: '2024',
-    label: 'Batch 2024 · Freshers',
-    description: 'First-year cohort diving into fundamentals and contributing to open bootcamp repos.',
-    students: [
-      {
-        name: 'Arushi Priya',
-        roll: 'B524018',
-        focus: ['Frontend', 'Accessibility'],
-        about: 'Translates design mockups into inclusive UI and documents component patterns for the team.',
-        links: {
-          dribbble: 'https://dribbble.com'
-        }
-      },
-      {
-        name: 'Dev Malik',
-        roll: 'B524028',
-        focus: ['Python', 'Automation'],
-        about: 'Writes scripts that automate note sharing, event reminders, and campus inventory systems.',
-        links: {
-          github: 'https://github.com/'
-        }
-      },
-      {
-        name: 'Sara Thomas',
-        roll: 'B524047',
-        focus: ['Hardware', 'IoT'],
-        about: 'Building low-cost sensor kits for monitoring campus spaces with real-time dashboards.',
-        links: {
-          linkedin: 'https://www.linkedin.com'
-        }
-      }
-    ]
-  }
-];
+const DEFAULT_BATCH_YEARS = ['2024', '2023', '2022'];
 
-const linkIcon = (key) => {
-  switch (key) {
-    case 'github':
-      return 'GitHub';
-    case 'linkedin':
-      return 'LinkedIn';
-    case 'twitter':
-      return 'X';
-    case 'behance':
-      return 'Behance';
-    case 'dribbble':
-      return 'Dribbble';
-    default:
-      return 'Portfolio';
-  }
+const LINK_LABELS = {
+  github: 'GitHub',
+  linkedin: 'LinkedIn',
+  twitter: 'X',
+  instagram: 'Instagram',
+  behance: 'Behance',
+  dribbble: 'Dribbble',
+  portfolio: 'Portfolio',
+  website: 'Website'
+};
+
+const linkIcon = (key) => LINK_LABELS[key] || 'Profile';
+
+const tokenise = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean).map((item) => item.trim());
+  return value
+    .split(/[,|;/]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const normaliseProfile = (user) => {
+  const name = user.name || user.email?.split('@')[0] || 'Bootcamp Member';
+  const roll = user.collegeId ? user.collegeId.toUpperCase() : '—';
+  const focus = Array.from(new Set([
+    ...tokenise(user.secret),
+    ...tokenise(user.place)
+  ])).slice(0, 4);
+
+  const links = Object.entries({
+    github: user.github,
+    linkedin: user.linkedin,
+    twitter: user.twitter,
+    instagram: user.instagram,
+    behance: user.behance,
+    dribbble: user.dribbble,
+    portfolio: user.portfolio || user.website
+  }).filter(([, value]) => Boolean(value));
+
+  return {
+    id: user._id || user.id || user.email || roll || name,
+    initials: name.slice(0, 1).toUpperCase(),
+    name,
+    roll,
+    about: user.about || 'Details coming soon. Reach out to the bootcamp organisers to update this profile.',
+    focus: focus.length > 0 ? focus : ['Bootcamp Member'],
+    links
+  };
 };
 
 const Batches = () => {
-  const [activeBatch, setActiveBatch] = useState(batches[0].id);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialYearFromQuery = searchParams.get('year');
 
-  const currentBatch = useMemo(
-    () => batches.find((batch) => batch.id === activeBatch) ?? batches[0],
-    [activeBatch]
+  const initialYears = useMemo(() => {
+    const base = [...DEFAULT_BATCH_YEARS];
+    if (initialYearFromQuery && !base.includes(initialYearFromQuery)) {
+      base.unshift(initialYearFromQuery);
+    }
+    return base;
+  }, [initialYearFromQuery]);
+
+  const [availableYears, setAvailableYears] = useState(initialYears);
+  const [activeYear, setActiveYear] = useState(() => initialYearFromQuery || initialYears[0]);
+  const [profilesByYear, setProfilesByYear] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (initialYearFromQuery && !availableYears.includes(initialYearFromQuery)) {
+      setAvailableYears((prev) => [initialYearFromQuery, ...prev]);
+    }
+
+    if (initialYearFromQuery && initialYearFromQuery !== activeYear) {
+      setActiveYear(initialYearFromQuery);
+    }
+  }, [initialYearFromQuery, availableYears, activeYear]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    if (profilesByYear[activeYear]) {
+      return () => {
+        cancelled = true;
+        controller.abort();
+      };
+    }
+
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetchBatchMembers({
+          year: activeYear,
+          signal: controller.signal
+        });
+
+        if (cancelled) return;
+
+        const members = Array.isArray(response?.users)
+          ? response.users.map(normaliseProfile)
+          : [];
+
+        if (!availableYears.includes(activeYear)) {
+          setAvailableYears((prev) => [activeYear, ...prev]);
+        }
+
+        setProfilesByYear((prev) => ({
+          ...prev,
+          [activeYear]: members
+        }));
+      } catch (fetchError) {
+        if (fetchError.name === 'AbortError' || cancelled) {
+          return;
+        }
+        setError(fetchError?.message || 'Unable to load batch data right now.');
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [activeYear, profilesByYear, availableYears]);
+
+  const currentProfiles = profilesByYear[activeYear] || [];
+  const years = useMemo(
+    () => Array.from(new Set(availableYears.filter(Boolean))),
+    [availableYears]
   );
+
+  const handleTabChange = (year) => {
+    setActiveYear(year);
+    const next = new URLSearchParams(searchParams);
+    next.set('year', year);
+    setSearchParams(next, { replace: true });
+  };
 
   return (
     <div className="batches-page">
@@ -143,47 +160,67 @@ const Batches = () => {
       </header>
 
       <div className="batch-tabs" role="tablist" aria-label="Select bootcamp batch">
-        {batches.map((batch) => (
+        {years.map((year) => (
           <button
-            key={batch.id}
+            key={year}
             role="tab"
-            aria-selected={activeBatch === batch.id}
-            className={activeBatch === batch.id ? 'active' : ''}
-            onClick={() => setActiveBatch(batch.id)}
+            aria-selected={activeYear === year}
+            className={activeYear === year ? 'active' : ''}
+            onClick={() => handleTabChange(year)}
           >
-            {batch.label}
+            Batch {year}
           </button>
         ))}
       </div>
 
       <section aria-live="polite" className="batch-section">
-        <p className="batch-description">{currentBatch.description}</p>
-        <div className="profile-grid">
-          {currentBatch.students.map((student) => (
-            <article className="profile-card" key={student.roll}>
-              <div className="card-face card-face--front">
-                <div className="avatar" aria-hidden>{student.name.slice(0, 1)}</div>
-                <h3>{student.name}</h3>
-                <span>{student.roll}</span>
-                <div className="focus-chips">
-                  {student.focus.map((item) => (
-                    <span key={item}>{item}</span>
-                  ))}
-                </div>
-              </div>
-              <div className="card-face card-face--back">
-                <p>{student.about}</p>
-                <div className="profile-links">
-                  {Object.entries(student.links).map(([key, url]) => (
-                    <a key={key} href={url} target="_blank" rel="noreferrer">
-                      {linkIcon(key)}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+        {loading && (
+          <p className="batch-description">Fetching bootcamp profiles for {activeYear}…</p>
+        )}
+
+        {error && (
+          <p className="batch-description error">{error}</p>
+        )}
+
+        {!loading && !error && currentProfiles.length === 0 && (
+          <p className="batch-description">
+            No profiles found for {activeYear}. If you believe this is an error, please ask the bootcamp team to update the database.
+          </p>
+        )}
+
+        {!loading && !error && currentProfiles.length > 0 && (
+          <>
+            <p className="batch-description">
+              Core members and contributors from the {activeYear} cohort.
+            </p>
+            <div className="profile-grid">
+              {currentProfiles.map((profile) => (
+                <article className="profile-card" key={profile.id}>
+                  <div className="card-face card-face--front">
+                    <div className="avatar" aria-hidden>{profile.initials}</div>
+                    <h3>{profile.name}</h3>
+                    <span>{profile.roll}</span>
+                    <div className="focus-chips">
+                      {profile.focus.map((item) => (
+                        <span key={item}>{item}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="card-face card-face--back">
+                    <p>{profile.about}</p>
+                    <div className="profile-links">
+                      {profile.links.map(([key, url]) => (
+                        <a key={key} href={url} target="_blank" rel="noreferrer">
+                          {linkIcon(key)}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
+        )}
       </section>
     </div>
   );

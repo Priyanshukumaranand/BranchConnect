@@ -3,6 +3,43 @@ const User = require('../models/User');
 const OTP = require('../models/OTP');
 const { generateToken } = require('../utils/jwt');
 
+const getFrontendBaseUrl = () => {
+  if (!process.env.FRONTEND_URL) {
+    return 'http://localhost:3000';
+  }
+
+  const origins = process.env.FRONTEND_URL.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return origins[0] || 'http://localhost:3000';
+};
+
+const buildFrontendUrl = (params = {}) => {
+  const base = getFrontendBaseUrl();
+
+  try {
+    const url = new URL(base);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        url.searchParams.set(key, value);
+      }
+    });
+    return url.toString();
+  } catch (error) {
+    const queryString = Object.entries(params)
+      .filter(([, value]) => value !== undefined && value !== null)
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join('&');
+
+    if (!queryString) {
+      return base;
+    }
+
+    return `${base}${base.includes('?') ? '&' : '?'}${queryString}`;
+  }
+};
+
 function sanitizeUser(user) {
   if (!user) return null;
   const { password, img, ...safe } = user.toObject({ getters: true });
@@ -92,15 +129,18 @@ exports.logout = (req, res) => {
 exports.googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
 
 exports.googleAuthCallback = (req, res, next) => {
+  const frontendBaseUrl = getFrontendBaseUrl();
+  const failureRedirect = buildFrontendUrl({ error: 'google-auth' });
+
   passport.authenticate('google', {
-    failureRedirect: process.env.FRONTEND_URL || '/',
+    failureRedirect,
     session: true
   }, (err, user, info) => {
     if (err) {
       return next(err);
     }
     if (!user) {
-      return res.redirect((process.env.FRONTEND_URL || '/') + '?error=google-auth');
+      return res.redirect(failureRedirect);
     }
 
     req.logIn(user, async (loginErr) => {
@@ -116,7 +156,7 @@ exports.googleAuthCallback = (req, res, next) => {
         maxAge: 24 * 60 * 60 * 1000
       });
 
-      return res.redirect(process.env.FRONTEND_URL || '/');
+      return res.redirect(frontendBaseUrl);
     });
   })(req, res, next);
 };

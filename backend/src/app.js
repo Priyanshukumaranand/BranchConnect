@@ -18,18 +18,48 @@ configurePassport(passport);
 const app = express();
 
 const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim())
+  ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim()).filter(Boolean)
   : ['http://localhost:5173', 'http://localhost:3000'];
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  if (isDev) {
+    try {
+      const { hostname, protocol } = new URL(origin);
+
+      if (protocol === 'http:' && hostname === 'localhost') {
+        return true;
+      }
+
+      if (hostname.endsWith('.app.github.dev') || hostname.endsWith('.githubpreview.dev')) {
+        return true;
+      }
+    } catch (error) {
+      return false;
+    }
+  }
+
+  return false;
+};
 
 app.use(helmet());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(compression());
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, origin);
+    if (isAllowedOrigin(origin)) {
+      return callback(null, origin || true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true
 }));
@@ -44,7 +74,7 @@ app.use(attachUser);
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection(true));
 
-app.use('/', routes);
+app.use(['/api', '/'], routes);
 
 app.use((req, res, next) => {
   res.status(404).json({ error: 'Not found' });
