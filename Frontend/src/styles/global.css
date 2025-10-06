@@ -1,0 +1,192 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  color-scheme: light;
+  font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  background-color: var(--color-bg-app);
+  color: var(--color-text-primary);
+
+  --color-bg-app: #f5f7fb;
+  --color-bg-shell: radial-gradient(circle at top, rgba(255, 180, 102, 0.14), transparent 55%), #f5f7fb;
+  --color-surface-base: #ffffff;
+  --color-surface-elevated: rgba(255, 255, 255, 0.85);
+  --color-surface-translucent: rgba(255, 255, 255, 0.72);
+  --color-surface-muted: #eef2fc;
+  --color-border-subtle: rgba(15, 23, 42, 0.08);
+  --color-border-strong: rgba(15, 23, 42, 0.14);
+  --color-overlay: rgba(15, 23, 42, 0.3);
+  --shadow-elevated: 0 18px 38px rgba(15, 23, 42, 0.12);
+
+  --color-text-primary: #101828;
+  --color-text-secondary: #475467;
+  --color-text-muted: #667085;
+  --color-text-contrast: #0b0c10;
+  --color-text-inverse: #f5f6f7;
+
+  --accent-gradient-primary: linear-gradient(135deg, #ff8c42, #ff5f6d);
+  --accent-gradient-secondary: linear-gradient(165deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
+  --accent-gradient-badge: linear-gradient(135deg, #ffb347, #ffcc33);
+  --accent-color-strong: #ff7a59;
+  --accent-color-soft: #f97316;
+  --accent-color-pop: #ffcc66;
+  --hero-glow: radial-gradient(circle at top, rgba(255, 180, 102, 0.18), transparent 65%);
+  --society-glow: radial-gradient(circle at top, rgba(112, 165, 255, 0.18), transparent 70%);
+
+  --header-bg: rgba(255, 255, 255, 0.9);
+  --header-border: rgba(15, 23, 42, 0.12);
+  --header-link: rgba(15, 23, 42, 0.72);
+  --header-link-active: #f97316;
+
+  --footer-bg: rgba(245, 247, 251, 0.92);
+  --footer-text: rgba(52, 64, 84, 0.85);
+  --footer-border: rgba(15, 23, 42, 0.08);
+
+  --chip-bg: rgba(15, 23, 42, 0.08);
+  --chip-border: rgba(15, 23, 42, 0.14);
+
+  --auth-card-bg: rgba(255, 255, 255, 0.9);
+  --auth-border: rgba(15, 23, 42, 0.1);
+  --auth-input-bg: rgba(247, 250, 255, 0.8);
+  --auth-input-border: rgba(15, 23, 42, 0.16);
+  --auth-status-bg: rgba(15, 23, 42, 0.05);
+  --auth-status-border: rgba(15, 23, 42, 0.12);
+  --auth-highlight: #f97316;
+  --auth-error: #ef4444;
+  --auth-success: #16a34a;
+
+  --ghost-btn-border: rgba(15, 23, 42, 0.14);
+  --ghost-btn-color: #344054;
+  --ghost-btn-hover-border: rgba(249, 115, 22, 0.65);
+
+  --tab-bg: rgba(15, 23, 42, 0.05);
+  --tab-border: rgba(15, 23, 42, 0.1);
+  --tab-active-bg: linear-gradient(135deg, rgba(112, 165, 255, 0.92), rgba(112, 165, 255, 0.7));
+  --tab-active-color: #0b0c10;
+  --tab-active-shadow: 0 12px 24px rgba(112, 165, 255, 0.28);
+
+  --carousel-control-bg: rgba(15, 23, 42, 0.45);
+  --carousel-dot-border: rgba(15, 23, 42, 0.55);
+  --carousel-dot-active: #ffb347;
+
+  --society-card-bg: rgba(255, 255, 255, 0.94);
+  --society-card-border: rgba(15, 23, 42, 0.08);
+  --society-overlay: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(15, 23, 42, 0.7));
+
+  --modal-backdrop: rgba(15, 19, 28, 0.55);
+  --input-focus-ring: rgba(249, 115, 22, 0.24);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg-app: #07090c;
+  --color-bg-shell: radial-gradient(circle at top, rgba(255, 153, 0, 0.12), transparent 55%), #0b0c10;
+  --color-surface-base: rgba(12, 15, 21, 0.92);
+  --color-surface-elevated: rgba(15, 18, 24, 0.92);
+  --color-surface-translucent: rgba(15, 18, 24, 0.82);
+  --color-surface-muted: rgba(255, 255, 255, 0.04);
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
+  --color-overlay: rgba(3, 4, 6, 0.65);
+  --shadow-elevated: 0 18px 44px rgba(0, 0, 0, 0.35);
+
+  --color-text-primary: #f5f6f7;
+  --color-text-secondary: rgba(235, 240, 255, 0.76);
+  --color-text-muted: rgba(235, 240, 255, 0.6);
+  --color-text-contrast: #0b0c10;
+  --color-text-inverse: #f5f6f7;
+
+  --accent-gradient-primary: linear-gradient(135deg, #ff8c42, #ff5f6d);
+  --accent-gradient-secondary: linear-gradient(165deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+  --accent-gradient-badge: linear-gradient(135deg, #ffb347, #ffcc33);
+  --accent-color-strong: #ffcf6f;
+  --accent-color-soft: #ffb347;
+  --accent-color-pop: #ffcc66;
+  --hero-glow: radial-gradient(circle at top, rgba(255, 140, 66, 0.2), transparent 65%);
+  --society-glow: radial-gradient(circle at top, rgba(112, 165, 255, 0.18), transparent 70%);
+
+  --header-bg: rgba(10, 12, 16, 0.65);
+  --header-border: rgba(255, 153, 0, 0.25);
+  --header-link: rgba(255, 255, 255, 0.72);
+  --header-link-active: #ffcc66;
+
+  --footer-bg: rgba(5, 6, 9, 0.95);
+  --footer-text: rgba(235, 240, 255, 0.75);
+  --footer-border: rgba(255, 255, 255, 0.1);
+
+  --chip-bg: rgba(255, 255, 255, 0.08);
+  --chip-border: rgba(255, 255, 255, 0.14);
+
+  --auth-card-bg: rgba(18, 21, 27, 0.8);
+  --auth-border: rgba(255, 255, 255, 0.08);
+  --auth-input-bg: rgba(8, 10, 14, 0.75);
+  --auth-input-border: rgba(255, 255, 255, 0.12);
+  --auth-status-bg: rgba(12, 15, 21, 0.9);
+  --auth-status-border: rgba(255, 255, 255, 0.08);
+  --auth-highlight: #ffb347;
+  --auth-error: #ff6b6b;
+  --auth-success: #2ed573;
+
+  --ghost-btn-border: rgba(255, 255, 255, 0.35);
+  --ghost-btn-color: rgba(255, 255, 255, 0.85);
+  --ghost-btn-hover-border: rgba(255, 204, 102, 0.9);
+
+  --tab-bg: rgba(255, 255, 255, 0.05);
+  --tab-border: rgba(255, 255, 255, 0.08);
+  --tab-active-bg: linear-gradient(135deg, rgba(112, 165, 255, 0.9), rgba(112, 165, 255, 0.6));
+  --tab-active-color: #0b0c10;
+  --tab-active-shadow: 0 12px 24px rgba(112, 165, 255, 0.3);
+
+  --carousel-control-bg: rgba(0, 0, 0, 0.45);
+  --carousel-dot-border: rgba(255, 255, 255, 0.6);
+  --carousel-dot-active: #ffb347;
+
+  --society-card-bg: rgba(255, 255, 255, 0.03);
+  --society-card-border: rgba(255, 255, 255, 0.1);
+  --society-overlay: linear-gradient(180deg, rgba(10, 12, 16, 0.1), rgba(10, 12, 16, 0.82));
+
+  --modal-backdrop: rgba(3, 4, 6, 0.72);
+  --input-focus-ring: rgba(255, 179, 71, 0.18);
+}
+
+body {
+  background: var(--color-bg-app);
+  color: var(--color-text-primary);
+  transition: background 200ms ease, color 200ms ease;
+  overflow-x: hidden;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+a,
+a:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+img, video {
+  max-width: 100%;
+  display: block;
+}
+
+section {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+h1 {
+  font-size: clamp(2.3rem, 5vw, 3.1rem);
+  letter-spacing: -0.02em;
+}
+
+p {
+  max-width: 60ch;
+  color: var(--color-text-secondary);
+}
+
+button {
+  font-family: inherit;
+}

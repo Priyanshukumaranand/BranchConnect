@@ -1,0 +1,280 @@
+import React, { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import './Auth.css';
+import { requestOtp, signUp } from '../api/auth';
+
+const initialForm = {
+  fullName: '',
+  rollId: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  otp: ''
+};
+
+const SignUp = () => {
+  const [form, setForm] = useState(initialForm);
+  const [errors, setErrors] = useState({});
+  const [status, setStatus] = useState(null);
+  const [otpStatus, setOtpStatus] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
+    setStatus(null);
+  };
+
+  const validators = useMemo(() => ({
+    fullName: (value) => {
+      if (!value.trim()) return 'Tell us your full name.';
+      if (value.trim().split(' ').length < 2) {
+        return 'Please include both first and last name.';
+      }
+      return undefined;
+    },
+    rollId: (value) => {
+      if (!value.trim()) return 'Roll ID is required.';
+      const pattern = /^b5[0-9]{5}$/i;
+      if (!pattern.test(value)) return 'Expected format: b5##### (e.g. b520123).';
+      return undefined;
+    },
+    email: (value) => {
+      if (!value.trim()) return 'Email is required.';
+      const pattern = /[^\s@]+@[^\s@]+\.[^\s@]+/;
+      if (!pattern.test(value)) return 'Provide a valid email address.';
+      return undefined;
+    },
+    password: (value) => {
+      if (!value.trim()) return 'Choose a password.';
+      if (value.length < 6) return 'Password must be at least 6 characters.';
+      if (!/[A-Z]/.test(value) || !/[0-9]/.test(value)) {
+        return 'Include an uppercase letter and a number for security.';
+      }
+      return undefined;
+    },
+    confirmPassword: (value, fullForm) => {
+      if (!value.trim()) return 'Confirm your password.';
+      if (value !== fullForm.password) return 'Passwords do not match.';
+      return undefined;
+    },
+    otp: (value) => {
+      if (!value.trim()) return 'Enter the 6-digit OTP sent to your email.';
+      if (!/^[0-9]{6}$/.test(value)) return 'OTP should be a 6 digit code.';
+      return undefined;
+    }
+  }), []);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const nextErrors = Object.entries(form).reduce((acc, [key, value]) => {
+      const validator = validators[key];
+      if (validator) {
+        const error = validator(value, form);
+        if (error) acc[key] = error;
+      }
+      return acc;
+    }, {});
+
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setStatus({
+        type: 'error',
+        message: 'Please correct the highlighted fields.'
+      });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setStatus({ type: 'pending', message: 'Creating your account…' });
+      await signUp({
+        name: form.fullName,
+        collegeId: form.rollId,
+        email: form.email,
+        password: form.password,
+        otp: form.otp
+      });
+      setStatus({
+        type: 'success',
+        message: 'Account created! You can now sign in.'
+      });
+      setForm(initialForm);
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        message: error.payload?.error || error.message || 'Unable to sign you up right now.'
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    const emailError = validators.email(form.email);
+    if (emailError) {
+      setErrors((prev) => ({ ...prev, email: emailError }));
+      setOtpStatus({ type: 'error', message: 'Fix your email before requesting OTP.' });
+      return;
+    }
+
+    try {
+      setSendingOtp(true);
+      setOtpStatus({ type: 'pending', message: 'Sending OTP…' });
+      await requestOtp(form.email);
+      setOtpStatus({ type: 'success', message: 'OTP sent! Check your inbox.' });
+    } catch (error) {
+      setOtpStatus({
+        type: 'error',
+        message: error.payload?.error || error.message || 'Could not send OTP.'
+      });
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  return (
+    <section className="auth-page">
+      <div className="auth-headline">
+        <h1>Create your bootcamp account</h1>
+        <p>Unlock mentor feedback, society collaborations, and personalised workshops tailored to your goals.</p>
+      </div>
+
+      <div className="auth-split">
+        <div className="auth-card">
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="form-field">
+              <label htmlFor="fullName">Full name</label>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                autoComplete="name"
+                placeholder="Priyanshu Kumar Anand"
+                value={form.fullName}
+                onChange={handleChange}
+              />
+              <p className="field-hint">Use the name you’d like mentors to recognise.</p>
+              {errors.fullName && <p className="field-error">{errors.fullName}</p>}
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="rollId">Roll ID</label>
+              <input
+                id="rollId"
+                name="rollId"
+                type="text"
+                placeholder="b520123"
+                value={form.rollId}
+                onChange={handleChange}
+              />
+              <p className="field-hint">Helps us connect you with your cohort.</p>
+              {errors.rollId && <p className="field-error">{errors.rollId}</p>}
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@iiit-bh.ac.in"
+                value={form.email}
+                onChange={handleChange}
+              />
+              <p className="field-hint">Institute emails are verified faster.</p>
+              {errors.email && <p className="field-error">{errors.email}</p>}
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                placeholder="Create a password"
+                value={form.password}
+                onChange={handleChange}
+              />
+              <p className="field-hint">Include at least 6 characters, one uppercase letter, and one number.</p>
+              {errors.password && <p className="field-error">{errors.password}</p>}
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="confirmPassword">Confirm password</label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                placeholder="Repeat your password"
+                value={form.confirmPassword}
+                onChange={handleChange}
+              />
+              {errors.confirmPassword && <p className="field-error">{errors.confirmPassword}</p>}
+            </div>
+
+            <div className="form-field otp-field">
+              <label htmlFor="otp">OTP</label>
+              <div className="otp-input-row">
+                <input
+                  id="otp"
+                  name="otp"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="Enter 6 digit code"
+                  value={form.otp}
+                  onChange={handleChange}
+                />
+                <button type="button" className="ghost-btn" onClick={handleSendOtp} disabled={sendingOtp}>
+                  {sendingOtp ? 'Sending…' : 'Send OTP'}
+                </button>
+              </div>
+              {errors.otp && <p className="field-error">{errors.otp}</p>}
+              {otpStatus && (
+                <p className={`field-hint otp-${otpStatus.type}`}>
+                  {otpStatus.message}
+                </p>
+              )}
+            </div>
+
+            <div className="auth-actions">
+              <button type="submit" disabled={submitting}>{submitting ? 'Creating…' : 'Create account'}</button>
+              <Link className="secondary-link" to="/auth/sign-in">Already have one? Sign in</Link>
+            </div>
+          </form>
+
+          {status && (
+            <div className={`auth-status ${status.type}`} role="status">
+              <strong>
+                {status.type === 'success'
+                  ? 'Account ready'
+                  : status.type === 'pending'
+                    ? 'Working on it'
+                    : 'Let’s adjust a few things'}
+              </strong>
+              <span>{status.message}</span>
+            </div>
+          )}
+        </div>
+
+        <aside className="auth-benefits">
+          <h2>Membership perks</h2>
+          <ul>
+            <li>Showcase your portfolio to incoming recruiters.</li>
+            <li>Book mentor hours to unblock tricky challenges.</li>
+            <li>Join exclusive society collaborations and beta projects.</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+  );
+};
+
+export default SignUp;
