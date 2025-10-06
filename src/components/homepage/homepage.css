@@ -327,6 +327,31 @@ main {
   background-color: rgba(0, 0, 0, 0.8);
 }
 
+/* Dots */
+.carousel-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.carousel-dots .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: rgba(255,255,255,0.3);
+  cursor: pointer;
+  padding: 0;
+}
+
+.carousel-dots .dot.active {
+  background: orange;
+  border-color: orange;
+}
+
 /* ---------- VIDEO ---------- */
 .video-container {
   width: 80%;

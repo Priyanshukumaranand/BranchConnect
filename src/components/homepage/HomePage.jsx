@@ -1,42 +1,33 @@
-import React from 'react'
-import style from './homepage.css';
+import React, { useState, useEffect, useCallback } from 'react'
+import './homepage.css';
 import imgc1 from '../../assets/carousel_1.png'
 import imgc2 from '../../assets/carousel_2.png'
 import imgc3 from '../../assets/carousel_3.png'
 import video from '../../assets/video.mp4'
-import { useState } from 'react'
-
-
-
 const HomePage = () => {
-    // const [currentIndex,setCurrentIndex] = useState(0);
-    // const totalItems=3;
+    const totalItems = 3;
+    const [slide, setSlide] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
 
-    // const moveCarousel=(direction)=>{
-    //     setCurrentIndex((prevIndex)=>{
-    //         let newIndex=prevIndex+direction;
-    //         if(newIndex<0){
-    //             newIndex=totalItems-1;
-    //         }
-    //         else if(newIndex>=totalItems){
-    //             newIndex=0;
-    //         }
-    //         return newIndex;
-    //     })
-    // }
-    const [slide,setSlide]=useState(0);
-    const totalItems=3;
+    const moveNext = useCallback(() => {
+        setSlide(prev => (prev === totalItems - 1 ? 0 : prev + 1));
+    }, [totalItems]);
 
-    const moveNext=()=>{
-        setSlide(slide===2?0:slide + 1);
+    const movePrev = () => {
+        setSlide(prev => (prev === 0 ? totalItems - 1 : prev - 1));
     };
 
-    const movePrev=()=>{
-        setSlide(slide===0?2:slide-1);
-    };
+    // Auto-play every 5s
+    useEffect(() => {
+        if (isPaused) return;
+        const id = setInterval(moveNext, 5000);
+        return () => clearInterval(id);
+    }, [moveNext, isPaused]);
+
+    const goTo = (index) => setSlide(index);
 
   return (
-   <div className={style.HomePage}>
+   <div className="homepage">
    <main>
 
 <div className="welcome">
@@ -47,14 +38,31 @@ const HomePage = () => {
     <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga, ratione!</p>
 </div>
 
-<div className="carousel-container">
-    <div className="carousel">
-        <div className="carousel-item"><img src={imgc1} alt="Image 1"/></div>
-        <div className="carousel-item"><img src={imgc2} alt="Image 2"/></div>
-        <div className="carousel-item"><img src={imgc3} alt="Image 3"/></div>
+<div className="carousel-container" aria-roledescription="carousel">
+    <div
+        className="carousel"
+        style={{ transform: `translateX(-${slide * 100}%)` }}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+    >
+        <div className="carousel-item" aria-label="Slide 1 of 3"><img src={imgc1} alt="Showcase 1"/></div>
+        <div className="carousel-item" aria-label="Slide 2 of 3"><img src={imgc2} alt="Showcase 2"/></div>
+        <div className="carousel-item" aria-label="Slide 3 of 3"><img src={imgc3} alt="Showcase 3"/></div>
     </div>
-    <button className="prev" onClick={movePrev}>&#10094;</button>
-    <button className="next" onClick={moveNext}>&#10095;</button>
+    <button className="prev" aria-label="Previous slide" onClick={movePrev}>&#10094;</button>
+    <button className="next" aria-label="Next slide" onClick={moveNext}>&#10095;</button>
+    <div className="carousel-dots" role="tablist" aria-label="Select carousel slide">
+        {Array.from({ length: totalItems }).map((_, i) => (
+            <button
+                key={i}
+                className={`dot ${i === slide ? 'active' : ''}`}
+                aria-label={`Go to slide ${i + 1}`}
+                aria-selected={i === slide}
+                role="tab"
+                onClick={() => goTo(i)}
+            />
+        ))}
+    </div>
 </div>
 
 <div className="video-container">
