@@ -153,6 +153,7 @@ body {
   background: var(--color-bg-app);
   color: var(--color-text-primary);
   transition: background 200ms ease, color 200ms ease;
+  overflow-x: hidden;
 }
 
 * {

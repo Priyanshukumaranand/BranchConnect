@@ -10,7 +10,6 @@ const links = [
   { to: '/batches', label: 'Batches' },
   { to: '/resources', label: 'Resources' },
   { to: '/exams', label: 'Exams' },
-  { to: '/enroll', label: 'Enroll' },
   { to: '/auth/sign-in', label: 'Sign In' }
 ];
 

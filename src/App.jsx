@@ -5,7 +5,6 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Societies from './pages/Societies';
 import Batches from './pages/Batches';
-import Enroll from './pages/Enroll';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
@@ -23,7 +22,6 @@ const App = () => {
         <Route path="about" element={<About />} />
         <Route path="societies" element={<Societies />} />
         <Route path="batches" element={<Batches />} />
-        <Route path="enroll" element={<Enroll />} />
   <Route path="resources" element={<PlacementResources />} />
   <Route path="exams" element={<ExamResources />} />
 

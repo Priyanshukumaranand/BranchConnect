@@ -233,6 +233,36 @@ const supportChannels = [
   }
 ];
 
+const practicePlatforms = [
+  {
+    id: 'gfg',
+    name: 'GeeksforGeeks',
+    icon: '🧩',
+    description:
+      'Topic-wise problem sets, company archives, and detailed editorials that mirror common campus interview rounds.',
+    link: 'https://www.geeksforgeeks.org/explore?page=1&category=Placement%20series',
+    highlights: ['Complete SDE sheet', 'Company interview archives', 'Daily revision problems']
+  },
+  {
+    id: 'leetcode',
+    name: 'LeetCode',
+    icon: '🧠',
+    description:
+      'Refine problem-solving patterns with curated playlists and timed contests that strengthen analytical speed.',
+    link: 'https://leetcode.com/explore/interview/card/top-interview-questions-easy/',
+    highlights: ['Top interview question sets', 'Timed weekly contests', 'Company tagged questions']
+  },
+  {
+    id: 'interviewbit',
+    name: 'InterviewBit',
+    icon: '🚀',
+    description:
+      'Structured track that blends bite-sized tutorials with checkpoint problems for quick revision before interviews.',
+    link: 'https://www.interviewbit.com/courses/programming/',
+    highlights: ['Structured learning paths', 'Checkpoint quizzes', 'Behavioral question bank']
+  }
+];
+
 const PlacementResources = () => {
   return (
     <div className="placement-page">
@@ -312,6 +342,35 @@ const PlacementResources = () => {
             </div>
           </article>
         ))}
+      </section>
+
+      <section className="practice-platforms" aria-labelledby="practice-platforms-heading">
+        <header>
+          <h2 id="practice-platforms-heading">Pair the drive with daily practice</h2>
+          <p>
+            Mix in these verified online platforms to keep your problem-solving sharp. Each link opens a curated track focused on
+            interview-ready patterns.
+          </p>
+        </header>
+        <div className="practice-platforms__grid">
+          {practicePlatforms.map((platform) => (
+            <article key={platform.id} className="platform-card">
+              <div className="platform-card__header">
+                <span className="platform-card__icon" aria-hidden>{platform.icon}</span>
+                <h3>{platform.name}</h3>
+              </div>
+              <p>{platform.description}</p>
+              <ul>
+                {platform.highlights.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <a href={platform.link} target="_blank" rel="noopener noreferrer" className="platform-card__link">
+                Launch playlist ↗
+              </a>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="prep-timeline" aria-labelledby="prep-timeline-heading">

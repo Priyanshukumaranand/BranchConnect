@@ -223,6 +223,54 @@
   color: var(--accent-color-soft);
 }
 
+.practice-platforms {
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2rem);
+}
+
+.practice-platforms__grid {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.6rem);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.platform-card {
+  border-radius: 1.5rem;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-base);
+  padding: clamp(1.4rem, 2.5vw, 1.9rem);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.platform-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.platform-card__icon {
+  font-size: 1.8rem;
+}
+
+.platform-card ul {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.4rem;
+  color: var(--color-text-secondary);
+}
+
+.platform-card li {
+  list-style: disc;
+}
+
+.platform-card__link {
+  margin-top: auto;
+  font-weight: 600;
+  color: var(--accent-color-soft);
+}
+
 .prep-timeline {
   display: grid;
   gap: clamp(1.5rem, 3vw, 2rem);

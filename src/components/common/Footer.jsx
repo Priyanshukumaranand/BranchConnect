@@ -22,7 +22,6 @@ const Footer = () => {
               <li><a href="/batches">Batches</a></li>
               <li><a href="/resources">Placement resources</a></li>
               <li><a href="/exams">Exam resources</a></li>
-              <li><a href="/enroll">Enroll</a></li>
             </ul>
           </div>
           <div>

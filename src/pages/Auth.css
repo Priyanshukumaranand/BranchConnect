@@ -154,6 +154,27 @@
   background: var(--color-surface-elevated);
 }
 
+.alt-signin__google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  font-weight: 600;
+}
+
+.alt-signin__icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #fff;
+  color: #4285f4;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 1px 3px rgba(66, 133, 244, 0.3);
+}
+
 .auth-split {
   display: grid;
   gap: clamp(1.5rem, 3vw, 2.5rem);

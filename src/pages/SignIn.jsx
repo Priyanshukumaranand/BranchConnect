@@ -120,7 +120,10 @@ const SignIn = () => {
           </form>
 
           <div className="alt-signin" aria-live="polite">
-            <button type="button">Continue with Google</button>
+            <button type="button" className="alt-signin__google">
+              <span aria-hidden className="alt-signin__icon">G</span>
+              <span>Continue with Google</span>
+            </button>
             <span>
               New here?{' '}
               <Link className="secondary-link" to="/auth/sign-up">Create an account</Link>
