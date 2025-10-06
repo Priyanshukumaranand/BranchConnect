@@ -1,0 +1,41 @@
+{
+  "name": "ce-bootcamp-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Express API for CE Bootcamp, migrated from the legacy EJS project.",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "compression": "^1.7.4",
+  "connect-flash": "^0.1.1",
+  "connect-mongo": "^5.1.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^4.19.2",
+    "express-rate-limit": "^6.11.2",
+    "express-session": "^1.17.3",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "lusca": "^1.7.0",
+    "mongoose": "^7.6.3",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.8",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-local": "^1.0.0",
+    "validator": "^13.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
