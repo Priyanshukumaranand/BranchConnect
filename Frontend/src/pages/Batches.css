@@ -76,6 +76,17 @@
   transition: transform 400ms ease;
 }
 
+.profile-card__header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: clamp(0.85rem, 3vw, 1.2rem);
+  align-items: center;
+}
+
+.profile-card__header .profile-heading {
+  gap: 0.35rem;
+}
+
 .profile-card:hover .card-face--front {
   transform: rotateY(180deg);
 }
@@ -91,7 +102,7 @@
 
 .profile-portrait {
   position: relative;
-  width: 84px;
+  width: clamp(72px, 18vw, 88px);
   aspect-ratio: 1 / 1;
   border-radius: 1.6rem;
   background: var(--accent-gradient-primary);
@@ -102,6 +113,7 @@
   color: var(--color-text-contrast);
   overflow: hidden;
   box-shadow: var(--card-shadow-soft);
+  flex-shrink: 0;
 }
 
 .profile-portrait span {
@@ -125,10 +137,12 @@
 .profile-heading {
   display: grid;
   gap: 0.3rem;
+  align-content: start;
 }
 
 .card-face--front h3 {
   font-size: 1.3rem;
+  margin: 0;
 }
 
 .card-face--front span {
@@ -139,6 +153,7 @@
 .card-face--front small {
   font-size: 0.78rem;
   color: var(--color-text-muted);
+  margin: 0;
 }
 
 .focus-chips {

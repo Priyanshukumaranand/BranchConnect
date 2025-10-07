@@ -122,9 +122,24 @@ exports.login = async (req, res, next) => {
   }
 };
 
+const resolveCookieSameSite = () => {
+  const allowed = new Set(['lax', 'strict', 'none']);
+  const raw = (process.env.COOKIE_SAMESITE || '').toLowerCase();
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (allowed.has(raw)) {
+    if (raw === 'none' && !isProduction) {
+      return 'lax';
+    }
+    return raw;
+  }
+
+  return isProduction ? 'none' : 'lax';
+};
+
 const cookieOptions = {
   httpOnly: true,
-  sameSite: 'lax',
+  sameSite: resolveCookieSameSite(),
   secure: process.env.NODE_ENV === 'production'
 };
 

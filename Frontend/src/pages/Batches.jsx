@@ -218,17 +218,19 @@ const Batches = () => {
               {currentProfiles.map((profile) => (
                 <article className="profile-card" key={profile.id}>
                   <div className="card-face card-face--front">
-                    <div className={`profile-portrait${profile.image ? ' profile-portrait--photo' : ''}`} aria-hidden>
-                      {profile.image ? (
-                        <img src={profile.image} alt={profile.name} loading="lazy" />
-                      ) : (
-                        <span>{profile.initials}</span>
-                      )}
-                    </div>
-                    <div className="profile-heading">
-                      <h3>{profile.name}</h3>
-                      <span>{profile.roll}</span>
-                      {profile.location && <small>{profile.location}</small>}
+                    <div className="profile-card__header">
+                      <div className={`profile-portrait${profile.image ? ' profile-portrait--photo' : ''}`} aria-hidden>
+                        {profile.image ? (
+                          <img src={profile.image} alt={profile.name} loading="lazy" />
+                        ) : (
+                          <span>{profile.initials}</span>
+                        )}
+                      </div>
+                      <div className="profile-heading">
+                        <h3>{profile.name}</h3>
+                        <span>{profile.roll}</span>
+                        {profile.location && <small>{profile.location}</small>}
+                      </div>
                     </div>
                     <div className="focus-chips">
                       {profile.focus.map((item) => (
