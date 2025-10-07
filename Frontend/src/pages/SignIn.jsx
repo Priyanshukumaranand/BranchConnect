@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './Auth.css';
-import { signIn } from '../api/auth';
 import { API_BASE_URL } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 const initialForm = {
   email: '',
@@ -14,6 +14,23 @@ const SignIn = () => {
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn: authenticate, user, initializing } = useAuth();
+
+  const redirectPath = useMemo(() => {
+    const fromState = location.state?.from;
+    if (fromState?.pathname) {
+      return fromState.pathname + (fromState.search || '') + (fromState.hash || '');
+    }
+    return '/batches';
+  }, [location.state]);
+
+  useEffect(() => {
+    if (!initializing && user) {
+      navigate(redirectPath, { replace: true });
+    }
+  }, [user, initializing, navigate, redirectPath]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -59,11 +76,12 @@ const SignIn = () => {
     try {
       setSubmitting(true);
       setStatus({ type: 'pending', message: 'Signing you in…' });
-      await signIn(form);
+      await authenticate(form);
       setStatus({
         type: 'success',
-        message: 'Signed in! If your backend redirects, the cookie session is now set.'
+        message: 'Signed in! Redirecting you to your batches…'
       });
+      navigate(redirectPath, { replace: true });
     } catch (error) {
       setStatus({
         type: 'error',
@@ -120,7 +138,7 @@ const SignIn = () => {
             </div>
 
             <div className="auth-actions">
-              <button type="submit" disabled={submitting}>{submitting ? 'Signing in…' : 'Sign in'}</button>
+              <button type="submit" disabled={submitting || initializing}>{submitting ? 'Signing in…' : 'Sign in'}</button>
               <Link className="secondary-link" to="/auth/forgot-password">Forgot password?</Link>
             </div>
           </form>

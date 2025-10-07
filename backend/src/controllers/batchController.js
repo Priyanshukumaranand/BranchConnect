@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { imageToDataUrl, hasImageData } = require('../utils/image');
 
 const deriveCollegePrefixFromYear = (value) => {
   if (!value) return null;
@@ -50,23 +51,23 @@ const toBatchYear = (collegeId) => {
   return 1500 + prefixNumber;
 };
 
-const toDataUrl = (image = {}) => {
-  const { data, contentType } = image;
-  if (!data) return null;
-
-  let buffer;
-  if (Buffer.isBuffer(data)) {
-    buffer = data;
-  } else if (typeof data === 'string') {
-    buffer = Buffer.from(data, 'base64');
-  } else if (data?.type === 'Buffer' && Array.isArray(data.data)) {
-    buffer = Buffer.from(data.data);
-  } else {
-    return null;
+const buildAvatar = (user) => {
+  const id = user._id?.toString() || user.id;
+  if (!hasImageData(user.img)) {
+    return {
+      hasAvatar: false,
+      image: null,
+      avatarPath: null,
+      avatarContentType: null
+    };
   }
 
-  const mime = contentType || 'image/png';
-  return `data:${mime};base64,${buffer.toString('base64')}`;
+  return {
+    hasAvatar: true,
+    image: imageToDataUrl(user.img),
+    avatarPath: id ? `/users/${id}/avatar` : null,
+    avatarContentType: user.img?.contentType || null
+  };
 };
 
 const sanitizeUser = (user) => {
@@ -78,6 +79,8 @@ const sanitizeUser = (user) => {
     email: user.email
   };
 
+  const avatar = buildAvatar(user);
+
   return {
     id: user._id?.toString() || user.id,
     name: user.name,
@@ -88,7 +91,10 @@ const sanitizeUser = (user) => {
     place: user.place,
     secret: user.secret,
     socials,
-    image: toDataUrl(user.img),
+    image: avatar.image,
+    hasAvatar: avatar.hasAvatar,
+    avatarPath: avatar.avatarPath,
+    avatarContentType: avatar.avatarContentType,
     createdAt: user.created
   };
 };

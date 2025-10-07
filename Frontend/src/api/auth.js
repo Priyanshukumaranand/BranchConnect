@@ -19,7 +19,10 @@ export const signIn = (credentials) =>
   });
 
 export const signOut = () =>
-  apiFetch('/logout', { method: 'GET' });
+  apiFetch('/logout', { method: 'POST' });
+
+export const fetchCurrentUser = () =>
+  apiFetch('/me', { method: 'GET' });
 
 export const forgotPassword = (email) =>
   apiFetch('/forgetPassword', {

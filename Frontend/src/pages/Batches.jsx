@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import './Batches.css';
 import { fetchBatchMembers } from '../api/batches';
+import { API_BASE_URL } from '../api/client';
 
 const DEFAULT_BATCH_YEARS = ['2024', '2023', '2022'];
 
@@ -49,6 +50,19 @@ const normaliseProfile = (user) => {
     .filter(([, value]) => Boolean(value))
     .map(([key, value]) => [key, key === 'email' && !value.startsWith('mailto:') ? `mailto:${value}` : value]);
 
+  const avatarCandidate = user.image || user.avatarUrl || user.avatarPath;
+  const image = avatarCandidate
+    ? avatarCandidate.startsWith('data:')
+      ? avatarCandidate
+      : (() => {
+        try {
+          return new URL(avatarCandidate, API_BASE_URL).toString();
+        } catch (error) {
+          return avatarCandidate;
+        }
+      })()
+    : null;
+
   return {
     id: user.id || user._id || email || roll || name,
     initials: name.slice(0, 1).toUpperCase(),
@@ -58,7 +72,7 @@ const normaliseProfile = (user) => {
     about: user.about || 'Details coming soon. Reach out to the bootcamp organisers to update this profile.',
     focus: focus.length > 0 ? focus : ['Bootcamp Member'],
     links,
-    image: user.image,
+    image,
     location: user.place || null
   };
 };

@@ -1,10 +1,12 @@
 const User = require('../models/User');
+const { sanitizeUser } = require('../utils/sanitizeUser');
+const { toBuffer, hasImageData } = require('../utils/image');
 
 exports.getMe = (req, res) => {
   if (!req.currentUser) {
     return res.status(401).json({ error: 'Not authenticated.' });
   }
-  return res.json({ user: req.currentUser });
+  return res.json({ user: sanitizeUser(req.currentUser, { includeImageData: true }) });
 };
 
 exports.updateProfile = async (req, res, next) => {
@@ -34,7 +36,7 @@ exports.updateProfile = async (req, res, next) => {
       new: true
     }).select('-password');
 
-    return res.json({ message: 'Profile updated.', user });
+    return res.json({ message: 'Profile updated.', user: sanitizeUser(user, { includeImageData: true }) });
   } catch (error) {
     return next(error);
   }
@@ -42,8 +44,39 @@ exports.updateProfile = async (req, res, next) => {
 
 exports.listUsers = async (req, res, next) => {
   try {
-    const users = await User.find({}).select('-password -img.data');
-    return res.json({ users });
+    const users = await User.find({}).select('-password');
+    return res.json({ users: users.map((user) => sanitizeUser(user)) });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getAvatar = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User id is required.' });
+    }
+
+    const user = await User.findById(userId).select('img updatedAt');
+
+    if (!user || !hasImageData(user.img)) {
+      return res.status(404).json({ error: 'Profile image not found.' });
+    }
+
+    const buffer = toBuffer(user.img.data);
+    if (!buffer) {
+      return res.status(404).json({ error: 'Profile image not found.' });
+    }
+
+    res.setHeader('Content-Type', user.img.contentType || 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    if (user.updatedAt) {
+      res.setHeader('Last-Modified', user.updatedAt.toUTCString());
+    }
+
+    return res.send(buffer);
   } catch (error) {
     return next(error);
   }

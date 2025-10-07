@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Auth.css';
-import { requestOtp, signUp } from '../api/auth';
+import { requestOtp } from '../api/auth';
+import { useAuth } from '../context/AuthContext';
 
 const initialForm = {
   fullName: '',
@@ -19,6 +20,7 @@ const SignUp = () => {
   const [otpStatus, setOtpStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
+  const { signUp: register } = useAuth();
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -91,7 +93,7 @@ const SignUp = () => {
     try {
       setSubmitting(true);
       setStatus({ type: 'pending', message: 'Creating your account…' });
-      await signUp({
+      await register({
         name: form.fullName,
         collegeId: form.rollId,
         email: form.email,

@@ -1,18 +1,30 @@
-import React, { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import React, { useEffect, useMemo, useState } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import './navbar.css'
 import logo from '../../assets/bootcamp_logo_wo_bg.png'
+import { useAuth } from '../../context/AuthContext'
 
-const links = [
-    { to: '/home', label: 'HOME' },
+const baseLinks = [
+    { to: '/', label: 'HOME', end: true },
     { to: '/about', label: 'ABOUT' },
-    { to: '/login', label: 'LOGIN' },
-    { to: '/society', label: 'SOCIETY' }
+    { to: '/societies', label: 'SOCIETIES' }
+]
+
+const authedLinks = [
+    { to: '/batches', label: 'BATCHES' },
+    { to: '/profile', label: 'EDIT PROFILE' }
+]
+
+const guestLinks = [
+    { to: '/auth/sign-in', label: 'SIGN IN' },
+    { to: '/auth/sign-up', label: 'SIGN UP' }
 ]
 
 const Navbar = () => {
     const [menuOpen, setMenuOpen] = useState(false)
     const location = useLocation()
+    const navigate = useNavigate()
+    const { user, initializing, signOut } = useAuth()
 
     const toggleMenu = () => setMenuOpen((open) => !open)
     const closeMenu = () => setMenuOpen(false)
@@ -31,6 +43,38 @@ const Navbar = () => {
     useEffect(() => {
         closeMenu()
     }, [location.pathname])
+
+    const navLinks = useMemo(() => {
+        const links = [...baseLinks]
+        if (user) {
+            links.push(...authedLinks)
+        }
+        if (!user && !initializing) {
+            links.push(...guestLinks)
+        }
+        return links
+    }, [user, initializing])
+
+    const initials = useMemo(() => {
+        if (!user) return null
+        if (user.name) {
+            return user.name
+                .split(' ')
+                .map((part) => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()
+        }
+        return user.email?.[0]?.toUpperCase() || null
+    }, [user])
+
+    const avatarUrl = user?.avatarUrl
+
+    const handleSignOut = async () => {
+        await signOut()
+        closeMenu()
+        navigate('/', { replace: true })
+    }
 
     return (
         <header className="navbar-wrapper">
@@ -53,17 +97,41 @@ const Navbar = () => {
                     <span className="menu-btn__bar" />
                 </button>
 
-                <ul
-                    id="navbar-menu"
-                    className={`menu ${menuOpen ? 'menu--active' : ''}`}
-                >
-                    {links.map(({ to, label }) => (
+                <ul id="navbar-menu" className={`menu ${menuOpen ? 'menu--active' : ''}`}>
+                    {navLinks.map(({ to, label, end }) => (
                         <li key={to}>
-                            <Link to={to} onClick={closeMenu}>
+                            <NavLink
+                                to={to}
+                                onClick={closeMenu}
+                                className={({ isActive }) => `menu__link${isActive ? ' menu__link--active' : ''}`}
+                                end={end}
+                            >
                                 {label}
-                            </Link>
+                            </NavLink>
                         </li>
                     ))}
+
+                    {!initializing && user && (
+                        <li className="menu__account">
+                            <NavLink
+                                to="/profile"
+                                onClick={closeMenu}
+                                className={({ isActive }) => `menu__avatar-link${isActive ? ' menu__avatar-link--active' : ''}`}
+                                aria-label="Edit your profile"
+                            >
+                                <span className="menu__avatar">
+                                    {avatarUrl ? (
+                                        <img src={avatarUrl} alt="" aria-hidden />
+                                    ) : (
+                                        <span aria-hidden>{initials}</span>
+                                    )}
+                                </span>
+                            </NavLink>
+                            <button type="button" onClick={handleSignOut} className="menu__signout">
+                                Sign out
+                            </button>
+                        </li>
+                    )}
                 </ul>
             </nav>
 

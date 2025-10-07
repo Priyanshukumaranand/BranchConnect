@@ -2,6 +2,7 @@ const passport = require('passport');
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const { generateToken } = require('../utils/jwt');
+const { sanitizeUser } = require('../utils/sanitizeUser');
 
 const getFrontendBaseUrl = () => {
   if (!process.env.FRONTEND_URL) {
@@ -39,15 +40,6 @@ const buildFrontendUrl = (params = {}) => {
     return `${base}${base.includes('?') ? '&' : '?'}${queryString}`;
   }
 };
-
-function sanitizeUser(user) {
-  if (!user) return null;
-  const { password, img, ...safe } = user.toObject({ getters: true });
-  if (img && img.data) {
-    safe.hasAvatar = true;
-  }
-  return safe;
-}
 
 exports.signup = async (req, res, next) => {
   try {
@@ -102,6 +94,16 @@ exports.login = async (req, res, next) => {
     if (!validPassword) {
       return res.status(401).json({ error: 'Incorrect password.' });
     }
+
+    await new Promise((resolve, reject) => {
+      req.logIn(user, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
 
     const token = generateToken({ id: user.id, email: user.email });
     res.cookie('jwt', token, {
@@ -165,5 +167,5 @@ exports.me = (req, res) => {
   if (!req.currentUser) {
     return res.status(401).json({ error: 'Not authenticated.' });
   }
-  return res.json({ user: req.currentUser });
+  return res.json({ user: sanitizeUser(req.currentUser) });
 };

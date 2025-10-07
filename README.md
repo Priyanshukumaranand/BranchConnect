@@ -53,6 +53,13 @@ npm run dev
 
 The React app expects the API at `http://localhost:8080`. Adjust the `REACT_APP_API_BASE_URL` if you proxy through a different origin.
 
+## Authentication & protected routes
+
+- The backend issues HTTP-only JWT cookies on sign-in and supports Google OAuth just like the legacy EJS app.
+- The React app keeps the session in sync via a global `AuthProvider`. Refreshing the browser will automatically refresh the current user state.
+- `/batches` and `/profile` are protected routes; users are redirected to `auth/sign-in` if they are not authenticated.
+- Once signed in, the navbar reveals quick links to **Batches**, **Edit Profile**, and a sign-out button. Profile updates (bio, socials, avatar) are available from the new `/profile` page.
+
 ## Available scripts
 
 ### Frontend

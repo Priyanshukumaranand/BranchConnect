@@ -3,6 +3,11 @@ const { verifyToken } = require('../utils/jwt');
 
 async function attachUser(req, res, next) {
   try {
+    if (req.user && !req.currentUser) {
+      req.currentUser = req.user;
+      return next();
+    }
+
     const token = req.cookies?.jwt || (req.headers.authorization && req.headers.authorization.split(' ')[1]);
 
     if (!token) {

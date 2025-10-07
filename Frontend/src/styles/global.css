@@ -190,3 +190,10 @@ p {
 button {
   font-family: inherit;
 }
+
+.route-loading {
+  padding: 3rem 1rem;
+  text-align: center;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
