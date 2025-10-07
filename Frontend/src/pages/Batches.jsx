@@ -13,7 +13,8 @@ const LINK_LABELS = {
   behance: 'Behance',
   dribbble: 'Dribbble',
   portfolio: 'Portfolio',
-  website: 'Website'
+  website: 'Website',
+  email: 'Email'
 };
 
 const linkIcon = (key) => LINK_LABELS[key] || 'Profile';
@@ -29,30 +30,36 @@ const tokenise = (value) => {
 
 const normaliseProfile = (user) => {
   const name = user.name || user.email?.split('@')[0] || 'Bootcamp Member';
-  const roll = user.collegeId ? user.collegeId.toUpperCase() : '—';
+  const roll = user.collegeId ? user.collegeId.toUpperCase() : user.email?.substring(0, 7)?.toUpperCase() || '—';
+  const email = user.email || '';
+  const batchTag = user.batchYear ? `Batch ${user.batchYear}` : null;
   const focus = Array.from(new Set([
-    ...tokenise(user.secret),
-    ...tokenise(user.place)
-  ])).slice(0, 4);
+    batchTag,
+    ...tokenise(user.place),
+    ...tokenise(user.secret)
+  ].filter(Boolean))).slice(0, 3);
 
+  const socials = user.socials || {};
   const links = Object.entries({
-    github: user.github,
-    linkedin: user.linkedin,
-    twitter: user.twitter,
-    instagram: user.instagram,
-    behance: user.behance,
-    dribbble: user.dribbble,
-    portfolio: user.portfolio || user.website
-  }).filter(([, value]) => Boolean(value));
+    instagram: socials.instagram,
+    github: socials.github,
+    linkedin: socials.linkedin,
+    email: socials.email || email
+  })
+    .filter(([, value]) => Boolean(value))
+    .map(([key, value]) => [key, key === 'email' && !value.startsWith('mailto:') ? `mailto:${value}` : value]);
 
   return {
-    id: user._id || user.id || user.email || roll || name,
+    id: user.id || user._id || email || roll || name,
     initials: name.slice(0, 1).toUpperCase(),
     name,
     roll,
+    email,
     about: user.about || 'Details coming soon. Reach out to the bootcamp organisers to update this profile.',
     focus: focus.length > 0 ? focus : ['Bootcamp Member'],
-    links
+    links,
+    image: user.image,
+    location: user.place || null
   };
 };
 
@@ -197,9 +204,18 @@ const Batches = () => {
               {currentProfiles.map((profile) => (
                 <article className="profile-card" key={profile.id}>
                   <div className="card-face card-face--front">
-                    <div className="avatar" aria-hidden>{profile.initials}</div>
-                    <h3>{profile.name}</h3>
-                    <span>{profile.roll}</span>
+                    <div className={`profile-portrait${profile.image ? ' profile-portrait--photo' : ''}`} aria-hidden>
+                      {profile.image ? (
+                        <img src={profile.image} alt={profile.name} loading="lazy" />
+                      ) : (
+                        <span>{profile.initials}</span>
+                      )}
+                    </div>
+                    <div className="profile-heading">
+                      <h3>{profile.name}</h3>
+                      <span>{profile.roll}</span>
+                      {profile.location && <small>{profile.location}</small>}
+                    </div>
                     <div className="focus-chips">
                       {profile.focus.map((item) => (
                         <span key={item}>{item}</span>
@@ -207,10 +223,11 @@ const Batches = () => {
                     </div>
                   </div>
                   <div className="card-face card-face--back">
+                    <h3 className="card-back-title">About</h3>
                     <p>{profile.about}</p>
                     <div className="profile-links">
                       {profile.links.map(([key, url]) => (
-                        <a key={key} href={url} target="_blank" rel="noreferrer">
+                        <a key={key} href={url} target="_blank" rel="noreferrer noopener">
                           {linkIcon(key)}
                         </a>
                       ))}

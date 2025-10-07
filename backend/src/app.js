@@ -36,7 +36,12 @@ const isAllowedOrigin = (origin) => {
     try {
       const { hostname, protocol } = new URL(origin);
 
-      if (protocol === 'http:' && hostname === 'localhost') {
+      const isLoopback = hostname === 'localhost'
+        || hostname === '0.0.0.0'
+        || hostname === '::1'
+        || hostname.startsWith('127.');
+
+      if (protocol === 'http:' && isLoopback) {
         return true;
       }
 
