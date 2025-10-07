@@ -71,9 +71,14 @@ const Navbar = () => {
     const avatarUrl = user?.avatarUrl
 
     const handleSignOut = async () => {
-        await signOut()
-        closeMenu()
-        navigate('/', { replace: true })
+        try {
+            await signOut()
+        } catch (error) {
+            console.error('Failed to sign out', error)
+        } finally {
+            closeMenu()
+            navigate('/', { replace: true })
+        }
     }
 
     return (

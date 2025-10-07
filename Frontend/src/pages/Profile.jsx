@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './Profile.css';
 import { useAuth } from '../context/AuthContext';
+import { fetchAvatarByEmail } from '../api/users';
 
 const emptyForm = {
   name: '',
@@ -38,7 +39,7 @@ const Profile = () => {
   const { user, updateProfile } = useAuth();
   const [form, setForm] = useState(emptyForm);
   const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(() => user?.avatarUrl || null);
   const [status, setStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -85,6 +86,41 @@ const Profile = () => {
       setAvatarPreview(null);
     }
   }, [user, avatarFile]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const hasDataUrl = (value) => typeof value === 'string' && value.startsWith('data:');
+
+    if (!user?.email || avatarFile) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    if (avatarPreview || hasDataUrl(user?.avatarUrl)) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    (async () => {
+      try {
+        const blob = await fetchAvatarByEmail(user.email);
+        if (!isMounted) return;
+        const objectUrl = URL.createObjectURL(blob);
+        setAvatarPreview(objectUrl);
+      } catch (error) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('Unable to fetch avatar by email', error);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.email, avatarFile, avatarPreview, user?.avatarUrl]);
 
   const completion = useMemo(() => {
     const total = PROFILE_COMPLETION_FIELDS.length;
@@ -193,13 +229,15 @@ const Profile = () => {
     return null;
   }
 
+  const displayedAvatar = avatarPreview || user.avatarUrl || null;
+
   return (
     <section className="profile-page" aria-labelledby="profile-heading">
       <div className="profile-hero">
         <div className="profile-hero__media">
           <div className="profile-avatar" aria-hidden>
-            {avatarPreview ? (
-              <img src={avatarPreview} alt="Profile avatar preview" />
+            {displayedAvatar ? (
+              <img src={displayedAvatar} alt="Profile avatar preview" />
             ) : (
               <span>{initials}</span>
             )}

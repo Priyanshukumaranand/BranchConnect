@@ -2,6 +2,8 @@ const User = require('../models/User');
 const { sanitizeUser } = require('../utils/sanitizeUser');
 const { toBuffer, hasImageData } = require('../utils/image');
 
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 exports.getMe = (req, res) => {
   if (!req.currentUser) {
     return res.status(401).json({ error: 'Not authenticated.' });
@@ -36,7 +38,60 @@ exports.updateProfile = async (req, res, next) => {
       new: true
     }).select('-password');
 
-    return res.json({ message: 'Profile updated.', user: sanitizeUser(user, { includeImageData: true }) });
+  return res.json({ message: 'Profile updated.', user: sanitizeUser(user, { includeImageData: true }) });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getByEmail = async (req, res, next) => {
+  try {
+    const rawEmail = (req.query.email || req.params.email || '').trim();
+
+    if (!rawEmail) {
+      return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    const emailRegex = new RegExp(`^${escapeRegex(rawEmail)}$`, 'i');
+    const user = await User.findOne({ email: emailRegex }).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+  return res.json({ user: sanitizeUser(user, { includeImageData: true }) });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getAvatarByEmail = async (req, res, next) => {
+  try {
+    const rawEmail = (req.query.email || req.params.email || '').trim();
+
+    if (!rawEmail) {
+      return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    const emailRegex = new RegExp(`^${escapeRegex(rawEmail)}$`, 'i');
+    const user = await User.findOne({ email: emailRegex }).select('img updatedAt');
+
+    if (!user || !hasImageData(user.img)) {
+      return res.status(404).json({ error: 'Profile image not found.' });
+    }
+
+    const buffer = toBuffer(user.img.data);
+    if (!buffer) {
+      return res.status(404).json({ error: 'Profile image not found.' });
+    }
+
+    res.setHeader('Content-Type', user.img.contentType || 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    if (user.updatedAt) {
+      res.setHeader('Last-Modified', user.updatedAt.toUTCString());
+    }
+
+    return res.send(buffer);
   } catch (error) {
     return next(error);
   }
@@ -45,7 +100,7 @@ exports.updateProfile = async (req, res, next) => {
 exports.listUsers = async (req, res, next) => {
   try {
     const users = await User.find({}).select('-password');
-    return res.json({ users: users.map((user) => sanitizeUser(user)) });
+    return res.json({ users: users.map((user) => sanitizeUser(user, { includeImageData: true })) });
   } catch (error) {
     return next(error);
   }

@@ -16,6 +16,8 @@ const upload = multer({
 
 router.get('/me', requireAuth, userController.getMe);
 router.put('/me', requireAuth, upload.single('profilePicture'), userController.updateProfile);
+router.get('/avatar/by-email', requireAuth, userController.getAvatarByEmail);
+router.get('/lookup/email', requireAuth, userController.getByEmail);
 router.get('/:userId/avatar', requireAuth, userController.getAvatar);
 router.get('/', requireAuth, userController.listUsers);
 

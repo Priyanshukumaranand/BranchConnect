@@ -70,7 +70,7 @@ exports.signup = async (req, res, next) => {
 
     return res.status(201).json({
       message: 'Account created successfully. Please sign in.',
-      user: sanitizeUser(user)
+      user: sanitizeUser(user, { includeImageData: true })
     });
   } catch (error) {
     return next(error);
@@ -115,17 +115,49 @@ exports.login = async (req, res, next) => {
 
     return res.json({
       message: 'Signed in successfully.',
-      user: sanitizeUser(user)
+      user: sanitizeUser(user, { includeImageData: true })
     });
   } catch (error) {
     return next(error);
   }
 };
 
-exports.logout = (req, res) => {
-  res.clearCookie('jwt');
-  req.logout?.(() => {});
-  res.json({ message: 'Signed out.' });
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: 'lax',
+  secure: process.env.NODE_ENV === 'production'
+};
+
+exports.logout = (req, res, next) => {
+  const sendSignedOut = () => {
+    res.clearCookie('jwt', { ...cookieOptions, path: '/' });
+    res.clearCookie('cebootcamp.sid', { ...cookieOptions, path: '/' });
+    res.status(200).json({ message: 'Signed out.' });
+  };
+
+  const destroySession = () => {
+    if (req.session) {
+      req.session.destroy((sessionErr) => {
+        if (sessionErr) {
+          return next(sessionErr);
+        }
+        return sendSignedOut();
+      });
+    } else {
+      sendSignedOut();
+    }
+  };
+
+  if (typeof req.logout === 'function') {
+    req.logout((logoutErr) => {
+      if (logoutErr) {
+        return next(logoutErr);
+      }
+      return destroySession();
+    });
+  } else {
+    destroySession();
+  }
 };
 
 exports.googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
@@ -167,5 +199,5 @@ exports.me = (req, res) => {
   if (!req.currentUser) {
     return res.status(401).json({ error: 'Not authenticated.' });
   }
-  return res.json({ user: sanitizeUser(req.currentUser) });
+  return res.json({ user: sanitizeUser(req.currentUser, { includeImageData: true }) });
 };

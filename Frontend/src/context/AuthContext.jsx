@@ -85,6 +85,10 @@ export const AuthProvider = ({ children }) => {
   const signOut = useCallback(async () => {
     try {
       await apiSignOut();
+      setAuthError(null);
+    } catch (error) {
+      setAuthError(error);
+      throw error;
     } finally {
       setUser(null);
     }

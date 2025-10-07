@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch, API_BASE_URL } from './client';
 
 export const fetchProfile = () =>
   apiFetch('/users/me', { method: 'GET' });
@@ -19,4 +19,33 @@ export const updateProfile = (payload) => {
     body: formData,
     skipJson: true
   });
+};
+
+export const fetchUserByEmail = (email) => {
+  if (!email) {
+    return Promise.reject(new Error('Email is required to fetch user.'));
+  }
+
+  const searchParams = new URLSearchParams({ email });
+  return apiFetch(`/users/lookup/email?${searchParams.toString()}`, { method: 'GET' });
+};
+
+export const fetchAvatarByEmail = async (email) => {
+  if (!email) {
+    throw new Error('Email is required to fetch avatar.');
+  }
+
+  const searchParams = new URLSearchParams({ email });
+  const response = await fetch(`${API_BASE_URL}/users/avatar/by-email?${searchParams.toString()}`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    const error = new Error(response.statusText || 'Failed to fetch avatar');
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.blob();
 };
