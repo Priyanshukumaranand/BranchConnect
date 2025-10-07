@@ -4,6 +4,29 @@ const OTP = require('../models/OTP');
 const { generateToken } = require('../utils/jwt');
 const { sanitizeUser } = require('../utils/sanitizeUser');
 
+const allowedCookieSameSite = new Set(['lax', 'strict', 'none']);
+
+const resolveCookieSameSite = () => {
+  const raw = (process.env.COOKIE_SAMESITE || '').toLowerCase();
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (allowedCookieSameSite.has(raw)) {
+    if (raw === 'none' && !isProduction) {
+      return 'lax';
+    }
+    return raw;
+  }
+
+  return isProduction ? 'none' : 'lax';
+};
+
+const buildCookieOptions = (overrides = {}) => ({
+  httpOnly: true,
+  sameSite: resolveCookieSameSite(),
+  secure: process.env.NODE_ENV === 'production',
+  ...overrides
+});
+
 const getFrontendBaseUrl = () => {
   if (!process.env.FRONTEND_URL) {
     return 'http://localhost:3000';
@@ -106,12 +129,7 @@ exports.login = async (req, res, next) => {
     });
 
     const token = generateToken({ id: user.id, email: user.email });
-    res.cookie('jwt', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000
-    });
+    res.cookie('jwt', token, buildCookieOptions({ maxAge: 24 * 60 * 60 * 1000 }));
 
     return res.json({
       message: 'Signed in successfully.',
@@ -122,31 +140,11 @@ exports.login = async (req, res, next) => {
   }
 };
 
-const resolveCookieSameSite = () => {
-  const allowed = new Set(['lax', 'strict', 'none']);
-  const raw = (process.env.COOKIE_SAMESITE || '').toLowerCase();
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  if (allowed.has(raw)) {
-    if (raw === 'none' && !isProduction) {
-      return 'lax';
-    }
-    return raw;
-  }
-
-  return isProduction ? 'none' : 'lax';
-};
-
-const cookieOptions = {
-  httpOnly: true,
-  sameSite: resolveCookieSameSite(),
-  secure: process.env.NODE_ENV === 'production'
-};
-
 exports.logout = (req, res, next) => {
   const sendSignedOut = () => {
-    res.clearCookie('jwt', { ...cookieOptions, path: '/' });
-    res.clearCookie('cebootcamp.sid', { ...cookieOptions, path: '/' });
+    const clearOptions = buildCookieOptions({ path: '/' });
+    res.clearCookie('jwt', clearOptions);
+    res.clearCookie('cebootcamp.sid', clearOptions);
     res.status(200).json({ message: 'Signed out.' });
   };
 
@@ -198,12 +196,7 @@ exports.googleAuthCallback = (req, res, next) => {
       }
 
       const token = generateToken({ id: user.id, email: user.email });
-      res.cookie('jwt', token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000
-      });
+      res.cookie('jwt', token, buildCookieOptions({ maxAge: 24 * 60 * 60 * 1000 }));
 
       return res.redirect(frontendBaseUrl);
     });

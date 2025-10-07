@@ -16,6 +16,7 @@ const { attachUser } = require('./middleware/auth');
 configurePassport(passport);
 
 const app = express();
+app.set('trust proxy', 1);
 
 const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim()).filter(Boolean)
