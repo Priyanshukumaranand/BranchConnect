@@ -1,6 +1,10 @@
 const User = require('../models/User');
-const { generateToken } = require('../utils/jwt');
+const OTP = require('../models/OTP');
 const sendPasswordResetEmail = require('../utils/sendPasswordResetEmail');
+
+const PASSWORD_RESET_PURPOSE = 'password-reset';
+
+const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 exports.forgotPassword = async (req, res, next) => {
   try {
@@ -9,19 +13,24 @@ exports.forgotPassword = async (req, res, next) => {
       return res.status(400).json({ error: 'Email is required.' });
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(404).json({ error: 'Email not found.' });
     }
 
-    const token = generateToken({ email }, { expiresIn: '1h' });
-    user.passwordResetToken = token;
-    user.passwordResetExpires = Date.now() + 60 * 60 * 1000;
-    await user.save();
+    const otp = generateOtp();
+    await OTP.deleteMany({ email: normalizedEmail, purpose: PASSWORD_RESET_PURPOSE });
+    await OTP.create({ email: normalizedEmail, otp, purpose: PASSWORD_RESET_PURPOSE });
 
-    await sendPasswordResetEmail(email, token);
+    await sendPasswordResetEmail(normalizedEmail, otp);
 
-    return res.json({ message: 'Password reset instructions sent.' });
+    return res.json({ message: 'OTP sent to email.' });
   } catch (error) {
     return next(error);
   }
@@ -29,25 +38,39 @@ exports.forgotPassword = async (req, res, next) => {
 
 exports.resetPassword = async (req, res, next) => {
   try {
-    const { token, password } = req.body;
+    const { email, otp, password } = req.body;
 
-    if (!token || !password) {
-      return res.status(400).json({ error: 'Token and new password are required.' });
+    if (!email || !otp || !password) {
+      return res.status(400).json({ error: 'Email, OTP, and new password are required.' });
     }
 
-    const user = await User.findOne({
-      passwordResetToken: token,
-      passwordResetExpires: { $gt: Date.now() }
-    });
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedOtp = String(otp).trim();
+
+    if (!normalizedEmail || !normalizedOtp) {
+      return res.status(400).json({ error: 'Email, OTP, and new password are required.' });
+    }
+
+    if (!/^[0-9]{6}$/.test(normalizedOtp)) {
+      return res.status(400).json({ error: 'Invalid or expired OTP.' });
+    }
+
+    const recentOtp = await OTP.findOne({ email: normalizedEmail, purpose: PASSWORD_RESET_PURPOSE }).sort({ createdAt: -1 });
+
+    if (!recentOtp || recentOtp.otp !== normalizedOtp) {
+      return res.status(400).json({ error: 'Invalid or expired OTP.' });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
-      return res.status(400).json({ error: 'Invalid or expired token.' });
+      return res.status(404).json({ error: 'Email not found.' });
     }
 
     user.password = password;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
     await user.save();
+
+    await OTP.deleteMany({ email: normalizedEmail, purpose: PASSWORD_RESET_PURPOSE });
 
     return res.json({ message: 'Password reset successfully.' });
   } catch (error) {

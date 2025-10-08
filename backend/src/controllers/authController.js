@@ -77,7 +77,7 @@ exports.signup = async (req, res, next) => {
       return res.status(409).json({ error: 'Email already registered.' });
     }
 
-    const recentOtp = await OTP.findOne({ email }).sort({ createdAt: -1 });
+    const recentOtp = await OTP.findOne({ email, purpose: 'signup' }).sort({ createdAt: -1 });
     if (!recentOtp || recentOtp.otp !== otp) {
       return res.status(400).json({ error: 'Invalid or expired OTP.' });
     }
@@ -89,7 +89,7 @@ exports.signup = async (req, res, next) => {
       password
     });
 
-    await OTP.deleteMany({ email });
+  await OTP.deleteMany({ email, purpose: 'signup' });
 
     return res.status(201).json({
       message: 'Account created successfully. Please sign in.',
