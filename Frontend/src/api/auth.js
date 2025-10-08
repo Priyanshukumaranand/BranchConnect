@@ -1,9 +1,9 @@
 import { apiFetch } from './client';
 
-export const requestOtp = (email) =>
+export const requestOtp = (email, purpose = 'signup') =>
   apiFetch('/generate-otp', {
     method: 'POST',
-    body: { email }
+    body: { email, purpose }
   });
 
 export const signUp = (payload) =>
@@ -30,8 +30,8 @@ export const forgotPassword = (email) =>
     body: { email }
   });
 
-export const resetPassword = (token, password) =>
+export const resetPassword = ({ email, otp, password }) =>
   apiFetch('/reset-password', {
     method: 'POST',
-    body: { token, password }
+    body: { email, otp, password }
   });
