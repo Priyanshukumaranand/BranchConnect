@@ -1,7 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { fetchCurrentUser, signIn as apiSignIn, signOut as apiSignOut, signUp as apiSignUp } from '../api/auth';
 import { updateProfile as apiUpdateProfile } from '../api/users';
-import { API_BASE_URL } from '../api/client';
+import { API_BASE_URL, setApiAuthToken, clearApiAuthToken } from '../api/client';
+
+const TOKEN_STORAGE_KEY = 'cebb.auth.token';
 
 const AuthContext = createContext({
   user: null,
@@ -47,6 +49,17 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let subscribed = true;
 
+    if (typeof window !== 'undefined') {
+      try {
+        const storedToken = window.sessionStorage.getItem(TOKEN_STORAGE_KEY);
+        if (storedToken) {
+          setApiAuthToken(storedToken);
+        }
+      } catch (storageError) {
+        console.warn('Unable to read stored auth token:', storageError);
+      }
+    }
+
     (async () => {
       try {
         const response = await fetchCurrentUser();
@@ -58,6 +71,14 @@ export const AuthProvider = ({ children }) => {
         if (error.status === 401) {
           setUser(null);
           setAuthError(null);
+          if (typeof window !== 'undefined') {
+            try {
+              window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+            } catch (storageError) {
+              console.warn('Unable to clear stored auth token:', storageError);
+            }
+          }
+          clearApiAuthToken();
         } else {
           setAuthError(error);
         }
@@ -75,6 +96,17 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = useCallback(async (credentials) => {
     const response = await apiSignIn(credentials);
+    const token = response?.token;
+    if (token) {
+      setApiAuthToken(token);
+      if (typeof window !== 'undefined') {
+        try {
+          window.sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
+        } catch (storageError) {
+          console.warn('Unable to persist auth token:', storageError);
+        }
+      }
+    }
     setUser(normaliseUser(response?.user));
     setAuthError(null);
     return response;
@@ -91,6 +123,14 @@ export const AuthProvider = ({ children }) => {
       throw error;
     } finally {
       setUser(null);
+      clearApiAuthToken();
+      if (typeof window !== 'undefined') {
+        try {
+          window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+        } catch (storageError) {
+          console.warn('Unable to clear stored auth token:', storageError);
+        }
+      }
     }
   }, []);
 
@@ -104,6 +144,14 @@ export const AuthProvider = ({ children }) => {
       if (error.status === 401) {
         setUser(null);
         setAuthError(null);
+        clearApiAuthToken();
+        if (typeof window !== 'undefined') {
+          try {
+            window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+          } catch (storageError) {
+            console.warn('Unable to clear stored auth token:', storageError);
+          }
+        }
         return null;
       }
       setAuthError(error);

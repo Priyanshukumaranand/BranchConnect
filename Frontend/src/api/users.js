@@ -1,4 +1,4 @@
-import { apiFetch, API_BASE_URL } from './client';
+import { apiFetch, API_BASE_URL, getApiAuthToken } from './client';
 
 export const fetchProfile = () =>
   apiFetch('/users/me', { method: 'GET' });
@@ -38,7 +38,16 @@ export const fetchAvatarByEmail = async (email) => {
   const searchParams = new URLSearchParams({ email });
   const response = await fetch(`${API_BASE_URL}/users/avatar/by-email?${searchParams.toString()}`, {
     method: 'GET',
-    credentials: 'include'
+    credentials: 'include',
+    headers: (() => {
+      const token = getApiAuthToken();
+      if (!token) {
+        return undefined;
+      }
+      return {
+        Authorization: `Bearer ${token}`
+      };
+    })()
   });
 
   if (!response.ok) {

@@ -133,6 +133,7 @@ exports.login = async (req, res, next) => {
 
     return res.json({
       message: 'Signed in successfully.',
+      token,
       user: sanitizeUser(user, { includeImageData: true })
     });
   } catch (error) {

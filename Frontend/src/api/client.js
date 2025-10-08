@@ -1,5 +1,17 @@
 export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 
+let bearerToken = null;
+
+export const setApiAuthToken = (token) => {
+  bearerToken = token || null;
+};
+
+export const getApiAuthToken = () => bearerToken;
+
+export const clearApiAuthToken = () => {
+  bearerToken = null;
+};
+
 const defaultHeaders = {
   'Content-Type': 'application/json'
 };
@@ -34,6 +46,10 @@ export const apiFetch = async (path, options = {}) => {
     },
     ...rest
   };
+
+  if (bearerToken && !init.headers.Authorization) {
+    init.headers.Authorization = `Bearer ${bearerToken}`;
+  }
 
   if (body !== undefined) {
     init.body = skipJson ? body : JSON.stringify(body);
