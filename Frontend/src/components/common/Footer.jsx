@@ -6,10 +6,10 @@ const Footer = () => {
     <footer className="site-footer">
       <div className="site-footer__inner">
         <div className="site-footer__brand">
-          <span className="brand-mark">CE</span>
+          <span className="brand-mark">BC</span>
           <div>
-            <h3>CE Bootcamp</h3>
-            <p>Discover the next wave of computer engineering talent. Portfolios, passion projects, and campus communities in one place.</p>
+            <h3>Branch Connect</h3>
+            <p>Discover every branch across campus. Portfolios, passion projects, and college communities in one place.</p>
           </div>
         </div>
 
@@ -27,9 +27,9 @@ const Footer = () => {
           <div>
             <h4>Support</h4>
             <ul>
-              <li><a href="mailto:hello@cebootcamp.dev">Contact</a></li>
+              <li><a href="mailto:hello@branchconnect.dev">Contact</a></li>
               <li><a href="/auth/forgot-password">Forgot password</a></li>
-              <li><a href="/auth/sign-up">Join the bootcamp</a></li>
+              <li><a href="/auth/sign-up">Join Branch Connect</a></li>
               <li><a href="/server-error" onClick={(e) => e.preventDefault()}>Status</a></li>
             </ul>
           </div>
@@ -45,7 +45,7 @@ const Footer = () => {
         </div>
 
         <div className="site-footer__meta">
-          <p>© {new Date().getFullYear()} CE Bootcamp. Crafted with passion for the next generation of engineers.</p>
+          <p>© {new Date().getFullYear()} Branch Connect. Crafted with passion for the next generation of campus innovators.</p>
           <div className="footer-links" aria-label="Footer links">
             <a href="/" onClick={(e) => e.preventDefault()}>Privacy</a>
             <a href="/" onClick={(e) => e.preventDefault()}>Terms</a>

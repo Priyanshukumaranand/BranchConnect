@@ -10,7 +10,10 @@ const emptyForm = {
   about: '',
   instagram: '',
   linkedin: '',
-  github: ''
+  github: '',
+  leetcode: '',
+  codeforces: '',
+  codechef: ''
 };
 
 const PROFILE_COMPLETION_FIELDS = ['name', 'collegeId', 'place', 'about', 'instagram', 'linkedin', 'github'];
@@ -21,10 +24,17 @@ const SOCIAL_FIELDS = [
   { key: 'github', label: 'GitHub', icon: '💻', placeholder: 'Share your GitHub username or repository' }
 ];
 
+const CP_FIELDS = [
+  { key: 'leetcode', label: 'LeetCode', icon: '🧠', placeholder: 'Share your LeetCode profile link' },
+  { key: 'codeforces', label: 'Codeforces', icon: '⚡', placeholder: 'Add your Codeforces profile link' },
+  { key: 'codechef', label: 'CodeChef', icon: '🏆', placeholder: 'Add your CodeChef profile link' }
+];
+
 const PROFILE_TIPS = [
   'Highlight recent projects or societies you contribute to.',
   'Share how peers can collaborate with you or the tech you love.',
-  'Keep your links updated for upcoming recruitment season.'
+  'Keep your links updated for upcoming recruitment season.',
+  'Drop your CP profiles so teammates can invite you to contests and practice rooms.'
 ];
 
 const deriveBatchYear = (collegeId = '') => {
@@ -66,7 +76,10 @@ const Profile = () => {
       about: user.about || '',
       instagram: user.instagram || '',
       linkedin: user.linkedin || '',
-      github: user.github || ''
+      github: user.github || '',
+      leetcode: user.leetcode || '',
+      codeforces: user.codeforces || '',
+      codechef: user.codechef || ''
     });
   }, [user]);
 
@@ -165,6 +178,14 @@ const Profile = () => {
     [form]
   );
 
+  const cpList = useMemo(
+    () => CP_FIELDS.map((item) => ({
+      ...item,
+      value: form[item.key]?.trim() || ''
+    })),
+    [form]
+  );
+
   const aboutPreview = form.about?.trim() || 'Add a quick introduction so peers know what you are excited about.';
   const firstName = form.name?.trim()?.split(' ')[0];
   const heroHeading = firstName ? `Hey ${firstName}, let’s polish your story.` : 'Let’s get your story ready.';
@@ -252,7 +273,7 @@ const Profile = () => {
           </p>
         </div>
         <div className="profile-hero__body">
-          <span className="profile-hero__eyebrow">Bootcamp profile</span>
+          <span className="profile-hero__eyebrow">Branch Connect profile</span>
           <h1 id="profile-heading">{heroHeading}</h1>
           <p className="profile-hero__intro">{aboutPreview}</p>
           <dl className="profile-hero__meta">
@@ -309,6 +330,21 @@ const Profile = () => {
             </ul>
           </section>
 
+          <section className="profile-card profile-card--cp">
+            <h2>Competitive programming</h2>
+            <ul className="profile-cp-list">
+              {cpList.map((cp) => (
+                <li key={cp.key} className={cp.value ? 'is-active' : ''}>
+                  <span className="profile-cp-list__icon" aria-hidden>{cp.icon}</span>
+                  <div className="profile-cp-list__content">
+                    <p className="profile-cp-list__label">{cp.label}</p>
+                    <p className="profile-cp-list__value">{cp.value || cp.placeholder}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+
           <section className="profile-card profile-card--tips">
             <h2>Make it stand out</h2>
             <ul>
@@ -345,8 +381,8 @@ const Profile = () => {
                   />
                   <p className="field-hint">
                     {rollLocked
-                      ? 'Roll ID is locked. Contact the bootcamp team if it needs to be corrected.'
-                      : 'Example: b520123. This links you to the correct cohort.'}
+                      ? 'Roll ID is locked. Contact the Branch Connect team if it needs to be corrected.'
+                      : 'Example: b520123. This links you to the right branch directory.'}
                   </p>
                 </div>
 
@@ -388,6 +424,50 @@ const Profile = () => {
                 <div className="form-field">
                   <label htmlFor="github">GitHub</label>
                   <input id="github" name="github" value={form.github} onChange={handleChange} placeholder="https://github.com/username" />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="form-section__header">
+                <h2>Competitive programming</h2>
+                <p>Drop your CP handles so we can track leaderboard stats and study group invites.</p>
+              </div>
+              <div className="form-grid form-grid--two">
+                <div className="form-field">
+                  <label htmlFor="leetcode">LeetCode</label>
+                  <input
+                    id="leetcode"
+                    name="leetcode"
+                    value={form.leetcode}
+                    onChange={handleChange}
+                    placeholder="https://leetcode.com/username"
+                  />
+                  <p className="field-hint">Used to feature you on the Branch Connect DSA leaderboard.</p>
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="codeforces">Codeforces</label>
+                  <input
+                    id="codeforces"
+                    name="codeforces"
+                    value={form.codeforces}
+                    onChange={handleChange}
+                    placeholder="https://codeforces.com/profile/username"
+                  />
+                  <p className="field-hint">Helps peers sync up for virtual contests and ladders.</p>
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="codechef">CodeChef</label>
+                  <input
+                    id="codechef"
+                    name="codechef"
+                    value={form.codechef}
+                    onChange={handleChange}
+                    placeholder="https://www.codechef.com/users/username"
+                  />
+                  <p className="field-hint">Optional but great for sharing your long challenge streak.</p>
                 </div>
               </div>
             </div>

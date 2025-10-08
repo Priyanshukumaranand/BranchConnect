@@ -108,8 +108,8 @@ const SignIn = () => {
   return (
     <section className="auth-page">
       <div className="auth-headline">
-        <h1>Welcome back!</h1>
-        <p>Sign in to manage your bootcamp journey, collaborate with societies, and keep tabs on submissions.</p>
+  <h1>Welcome back!</h1>
+  <p>Sign in to stay connected with every branch, collaborate with societies, and keep tabs on submissions.</p>
       </div>
 
       <div className="auth-split">
@@ -181,7 +181,7 @@ const SignIn = () => {
           <ul>
             <li>Track your society or project submissions in real time.</li>
             <li>Collaborate with mentors and peer reviewers seamlessly.</li>
-            <li>Unlock access to bootcamp-only resources and events.</li>
+            <li>Unlock Branch Connect-only resources and campus events.</li>
           </ul>
         </aside>
       </div>

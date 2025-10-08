@@ -25,7 +25,7 @@ const batchHighlights = [
   },
   {
     title: 'Batch 2024 · Freshers',
-    description: 'Fresh energy tackling real-world problems from day one of the bootcamp.',
+    description: 'Fresh energy tackling real-world problems from day one of campus life.',
     to: '/batches?year=2024'
   }
 ];
@@ -33,7 +33,7 @@ const batchHighlights = [
 const gallerySlides = [
   { src: slideOne, alt: 'Robotics showcase' },
   { src: slideTwo, alt: 'Hackathon demo day' },
-  { src: slideThree, alt: 'Cohort collaboration' }
+  { src: slideThree, alt: 'Branch collaboration' }
 ];
 
 const Home = () => {
@@ -68,14 +68,14 @@ const Home = () => {
     <div className="home-page">
       <section className="hero">
         <div className="hero__intro">
-          <p className="hero__eyebrow">Bootcamp · Computer Engineering</p>
+          <p className="hero__eyebrow">Branch Connect · College Network</p>
           <h1>
             {activeHeadline.split(' ').map((word, index) => (
               <span key={word + index} className={index === 0 ? 'accent' : ''}>{word} </span>
             ))}
           </h1>
           <p className="hero__description">
-            Explore student profiles, passion projects, and community-led initiatives from the heart of IIIT Bhubaneswar. We celebrate collaboration, curiosity, and the courage to build bold ideas.
+            Explore student profiles, passion projects, and community-led initiatives from the heart of IIIT Bhubaneswar. We celebrate collaboration, curiosity, and the courage to build bold ideas across every branch.
           </p>
           <div className="hero__actions">
             <Link className="primary" to="/enroll">Enroll now</Link>
@@ -101,7 +101,7 @@ const Home = () => {
       <section className="batches" aria-labelledby="batch-heading">
         <header>
           <h2 id="batch-heading">Meet the batches</h2>
-          <p>Every cohort brings a new wave of creativity. Dive into their journeys, achievements, and future-ready skills.</p>
+          <p>Every batch brings a new wave of creativity. Dive into their journeys, achievements, and future-ready skills.</p>
         </header>
         <div className="batch-grid">
           {batchHighlights.map((batch) => (
@@ -118,7 +118,7 @@ const Home = () => {
       <section className="gallery" aria-labelledby="gallery-heading">
         <header className="section-heading">
           <h2 id="gallery-heading">Gallery</h2>
-          <p>Snapshots from showcase nights, robotics pits, design sprints, and bootcamp celebrations.</p>
+          <p>Snapshots from showcase nights, robotics pits, design sprints, and campus celebrations.</p>
         </header>
         <div
           className="carousel"
@@ -153,7 +153,7 @@ const Home = () => {
       <section className="moments" aria-labelledby="moments-heading">
         <header className="section-heading">
           <h2 id="moments-heading">Moments</h2>
-          <p>Experience the pulse of the bootcamp through highlights captured by the community.</p>
+          <p>Experience the pulse of Branch Connect through highlights captured by the community.</p>
         </header>
         <div className="moments__media">
           <video controls muted playsInline poster={gallerySlides[2].src}>
@@ -163,7 +163,7 @@ const Home = () => {
           <div className="moments__copy">
             <h3>Inside the lab</h3>
             <p>
-              From prototyping wearables to building full-stack dashboards, our cohorts explore diverse domains. Each sprint ends with a showcase where peers, mentors, and alumni exchange feedback and celebrate progress.
+              From prototyping wearables to building full-stack dashboards, our branches explore diverse domains. Each sprint ends with a showcase where peers, mentors, and alumni exchange feedback and celebrate progress.
             </p>
             <Link to="/societies" className="ghost">Meet society leads</Link>
           </div>

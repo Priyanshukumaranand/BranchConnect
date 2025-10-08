@@ -1,6 +1,5 @@
 import React from 'react'
 import './login.css'
-import { Link } from 'react-router-dom';
 const Login = () => {
   return (
     <div>	<div className="container">
@@ -54,9 +53,9 @@ const Login = () => {
 		<div className="panels-container">
 			<div className="panel left-panel">
 				<div className="content">
-					<h3>Welcome to CE Bootcamp!!!</h3>
+					<h3>Welcome to Branch Connect!</h3>
 					<p>
-						Lorem ipsum dolor sit amet consectetur, adipisicing elit. Libero, blanditiis.
+						Plug into cross-branch collaborations, mentor circles, and campus opportunities.
 					</p>
 					<button className="btn transparent" id="sign-up-btn">
 						Sign up
@@ -66,10 +65,9 @@ const Login = () => {
 			</div>
 			<div className="panel right-panel">
 				<div className="content">
-					<h3>Welcome to CE Bootcamp!!!.</h3>
+					<h3>Welcome to Branch Connect!</h3>
 					<p>
-						Thank you for being part of our community. Your presence enriches our
-          shared experiences. Let's continue this journey together!
+						Thanks for being part of our community. Your presence keeps campus collaborations thriving!
 					</p>
 					<button className="btn transparent" id="sign-in-btn">
 						Sign in

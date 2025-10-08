@@ -237,7 +237,7 @@ const RecentChats = () => {
     <section className="recent-chats">
       <header className="recent-chats__header">
         <span className="recent-chats__eyebrow">Inbox</span>
-        <h1>Stay connected with your cohort</h1>
+        <h1>Stay connected with Branch Connect peers</h1>
         <p>All your direct messages live here. Pick up a conversation, clear out old threads, or block members that you no longer want to hear from.</p>
 
         <div className="recent-chats__stats" role="list">

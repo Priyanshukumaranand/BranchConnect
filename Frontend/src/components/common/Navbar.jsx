@@ -72,9 +72,9 @@ const Navbar = () => {
   return (
     <header className="site-header" data-open={isMenuOpen}>
       <div className="site-header__inner">
-        <NavLink to="/" className="brand" aria-label="CE Bootcamp home" onClick={closeMenu}>
-          <span className="brand__logo" aria-hidden>CE</span>
-          <span className="brand__text">Bootcamp</span>
+        <NavLink to="/" className="brand" aria-label="Branch Connect home" onClick={closeMenu}>
+          <span className="brand__logo" aria-hidden>BC</span>
+          <span className="brand__text">Branch Connect</span>
         </NavLink>
         <button
           className="menu-toggle"
@@ -114,7 +114,7 @@ const Navbar = () => {
           <div className="nav-actions">
             {!user && (
               <NavLink to="/auth/sign-up" className="cta" onClick={closeMenu}>
-                Join Cohort
+                Join Branch Connect
               </NavLink>
             )}
             {user && (

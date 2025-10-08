@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './PlacementResources.css';
+import { fetchDsaLeaderboard } from '../api/resources';
 
 const driveFolder = 'https://drive.google.com/drive/folders/1UlIxN-hqY6FrOlk_9kOJfj3-TvWJL4ru';
+
+const CP_PROFILE_ORDER = ['leetcode', 'codeforces', 'codechef'];
+
+const CP_PROFILE_LABELS = {
+  leetcode: 'LeetCode',
+  codeforces: 'Codeforces',
+  codechef: 'CodeChef'
+};
 
 const highlightStats = [
   {
@@ -197,7 +206,7 @@ const faqItems = [
   {
     question: 'How often are the resources refreshed?',
     answer:
-      'Cohort volunteers update the drive after every major placement season. You can always check the resource changelog inside the drive for timestamps and editors.'
+      'Community volunteers update the drive after every major placement season. You can always check the resource changelog inside the drive for timestamps and editors.'
   },
   {
     question: 'What if I only have four weeks before interviews?',
@@ -264,6 +273,49 @@ const practicePlatforms = [
 ];
 
 const PlacementResources = () => {
+  const [leaderboardEntries, setLeaderboardEntries] = useState([]);
+  const [leaderboardStatus, setLeaderboardStatus] = useState('idle');
+  const [leaderboardError, setLeaderboardError] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let isActive = true;
+
+    setLeaderboardStatus('loading');
+    setLeaderboardError(null);
+
+    fetchDsaLeaderboard({ signal: controller.signal })
+      .then((response) => {
+        if (!isActive) {
+          return;
+        }
+        const list = Array.isArray(response?.leaderboard) ? response.leaderboard : [];
+        setLeaderboardEntries(list);
+        setLeaderboardStatus('success');
+      })
+      .catch((error) => {
+        if (!isActive || error.name === 'AbortError') {
+          return;
+        }
+        setLeaderboardError(error.message || 'Unable to load the leaderboard right now.');
+        setLeaderboardStatus('error');
+      });
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, []);
+
+  const leaderboard = useMemo(
+    () => leaderboardEntries.slice().sort((a, b) => {
+      const rankA = Number.isFinite(a?.rank) ? a.rank : Number.MAX_SAFE_INTEGER;
+      const rankB = Number.isFinite(b?.rank) ? b.rank : Number.MAX_SAFE_INTEGER;
+      return rankA - rankB;
+    }),
+    [leaderboardEntries]
+  );
+
   return (
     <div className="placement-page">
       <section className="placement-hero" aria-labelledby="placement-hero-title">
@@ -271,7 +323,7 @@ const PlacementResources = () => {
           <p className="placement-hero__eyebrow">placements · readiness stack</p>
           <h1 id="placement-hero-title">Everything you need for campus placements, curated in one drive</h1>
           <p>
-            Explore templates, problem sets, mock interview scripts, and roadmaps contributed by CE Bootcamp mentors and alumni. The resources below mirror the organisation inside the Drive folder so you can jump straight to what you need.
+            Explore templates, problem sets, mock interview scripts, and roadmaps contributed by Branch Connect mentors and alumni. The resources below mirror the organisation inside the Drive folder so you can jump straight to what you need.
           </p>
           <div className="placement-hero__actions">
             <a className="primary" href={driveFolder} target="_blank" rel="noopener noreferrer">
@@ -316,6 +368,79 @@ const PlacementResources = () => {
                 {collection.ctaLabel}
               </a>
             </div>
+            {collection.id === 'dsa' && (
+              <div className="dsa-leaderboard" role="region" aria-live="polite">
+                <div className="dsa-leaderboard__header">
+                  <h4>Branch Connect DSA leaderboard</h4>
+                  <p>Spotlight on the top 10 problem solvers sharing their CP grind this season.</p>
+                </div>
+
+                {leaderboardStatus === 'loading' && (
+                  <p className="dsa-leaderboard__status">Loading leaderboard…</p>
+                )}
+
+                {leaderboardStatus === 'error' && (
+                  <p className="dsa-leaderboard__status dsa-leaderboard__status--error">
+                    {leaderboardError || 'Unable to load the leaderboard right now.'}
+                  </p>
+                )}
+
+                {leaderboardStatus === 'success' && leaderboard.length === 0 && (
+                  <p className="dsa-leaderboard__status">Leaderboard updates will appear once members log contest results.</p>
+                )}
+
+                {leaderboardStatus === 'success' && leaderboard.length > 0 && (
+                  <ol className="leaderboard-list">
+                    {leaderboard.map((entry) => {
+                      const branchDetails = [entry.branch, entry.batch ? `Batch ${entry.batch}` : null]
+                        .filter(Boolean)
+                        .join(' • ');
+
+                      return (
+                        <li key={`${entry.rank}-${entry.name}`} className="leaderboard-item">
+                          <div className="leaderboard-item__top">
+                            <span className="leaderboard-item__rank" aria-hidden>#{entry.rank}</span>
+                            <div className="leaderboard-item__identity">
+                              <h5>{entry.name}</h5>
+                              <p>{branchDetails || 'Branch Connect member'}</p>
+                            </div>
+                            <div className="leaderboard-item__score">
+                              <strong>{entry.points}</strong>
+                              <span>rating points</span>
+                              {Number.isFinite(entry.solvedCount) && (
+                                <span className="leaderboard-item__score-sub">{`Solved ${entry.solvedCount}`}</span>
+                              )}
+                            </div>
+                          </div>
+                          {entry.highlight && (
+                            <p className="leaderboard-item__highlight">{entry.highlight}</p>
+                          )}
+                          <div
+                            className="leaderboard-item__links"
+                            aria-label={`Competitive programming profiles for ${entry.name}`}
+                          >
+                            {CP_PROFILE_ORDER.map((key) => {
+                              const href = entry.profiles?.[key];
+                              if (!href) {
+                                return null;
+                              }
+                              return (
+                                <a key={key} href={href} target="_blank" rel="noopener noreferrer">
+                                  {CP_PROFILE_LABELS[key]} ↗
+                                </a>
+                              );
+                            })}
+                            {(!entry.profiles || CP_PROFILE_ORDER.every((key) => !entry.profiles?.[key])) && (
+                              <span className="leaderboard-item__links--placeholder">Profiles coming soon</span>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                )}
+              </div>
+            )}
             <div className="resource-collection__grid">
               {collection.resources.map((resource) => (
                 <article key={resource.title} className="resource-card">
@@ -414,7 +539,7 @@ const PlacementResources = () => {
       <section className="faq" aria-labelledby="placement-faq-heading">
         <header>
           <h2 id="placement-faq-heading">Placement prep FAQs</h2>
-          <p>Quick answers to the most common questions we hear from the cohort each season.</p>
+          <p>Quick answers to the most common questions we hear from the community each season.</p>
         </header>
         <div className="faq-list">
           {faqItems.map((faq) => (
@@ -430,7 +555,7 @@ const PlacementResources = () => {
         <div className="placement-cta__copy">
           <h2>Ready to share your own resource?</h2>
           <p>
-            Add your notes, solutions, or interview experiences to the Drive so the next cohort can learn faster. Use clear naming, include a short description, and drop a message in the Friday sync.
+            Add your notes, solutions, or interview experiences to the Drive so the next Branch Connect batch can learn faster. Use clear naming, include a short description, and drop a message in the Friday sync.
           </p>
         </div>
         <a className="primary" href={driveFolder} target="_blank" rel="noopener noreferrer">

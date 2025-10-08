@@ -152,8 +152,8 @@ const SignUp = () => {
   return (
     <section className="auth-page">
       <div className="auth-headline">
-        <h1>Create your bootcamp account</h1>
-        <p>Unlock mentor feedback, society collaborations, and personalised workshops tailored to your goals.</p>
+  <h1>Create your Branch Connect account</h1>
+  <p>Unlock mentor feedback, society collaborations, and personalised workshops tailored to your goals.</p>
       </div>
 
       <div className="auth-split">
@@ -184,7 +184,7 @@ const SignUp = () => {
                 value={form.rollId}
                 onChange={handleChange}
               />
-              <p className="field-hint">Helps us connect you with your cohort.</p>
+              <p className="field-hint">Helps us connect you with the right branch community.</p>
               {errors.rollId && <p className="field-error">{errors.rollId}</p>}
             </div>
 
@@ -282,7 +282,7 @@ const SignUp = () => {
           <ul>
             <li>Showcase your portfolio to incoming recruiters.</li>
             <li>Book mentor hours to unblock tricky challenges.</li>
-            <li>Join exclusive society collaborations and beta projects.</li>
+            <li>Join exclusive society collaborations and campus projects.</li>
           </ul>
         </aside>
       </div>

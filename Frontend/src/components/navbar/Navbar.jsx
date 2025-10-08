@@ -87,8 +87,8 @@ const Navbar = () => {
         <header className="navbar-wrapper">
             <nav className="navbar" aria-label="Primary navigation">
                 <div className="logo">
-                    <img src={logo} alt="CE Bootcamp" />
-                    <p>Bootcamp</p>
+                    <img src={logo} alt="Branch Connect" />
+                    <p>Branch Connect</p>
                 </div>
 
                 <button

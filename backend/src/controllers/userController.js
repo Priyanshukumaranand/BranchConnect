@@ -27,13 +27,16 @@ exports.updateProfile = async (req, res, next) => {
       about: req.body.about,
       instagram: req.body.instagram,
       linkedin: req.body.linkedin,
-      github: req.body.github
+      github: req.body.github,
+      leetcode: req.body.leetcode,
+      codeforces: req.body.codeforces,
+      codechef: req.body.codechef
     };
 
     if (req.currentUser.collegeId) {
       const currentId = req.currentUser.collegeId.trim();
       if (incomingCollegeId && incomingCollegeId.toLowerCase() !== currentId.toLowerCase()) {
-        return res.status(400).json({ error: 'Roll ID cannot be changed. Please contact the bootcamp team for assistance.' });
+  return res.status(400).json({ error: 'Roll ID cannot be changed. Please contact the Branch Connect team for assistance.' });
       }
     } else if (incomingCollegeId) {
       updates.collegeId = incomingCollegeId;

@@ -282,6 +282,53 @@
   font-size: 0.95rem;
 }
 
+.profile-cp-list {
+  list-style: none;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.profile-cp-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px dashed var(--color-border-subtle);
+  border-radius: 1rem;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.profile-cp-list li.is-active {
+  border-style: solid;
+  border-color: rgba(37, 99, 235, 0.55);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.profile-cp-list__icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.14);
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+}
+
+.profile-cp-list li.is-active .profile-cp-list__icon {
+  background: rgba(37, 99, 235, 0.22);
+}
+
+.profile-cp-list__label {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.profile-cp-list__value {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  word-break: break-word;
+}
+
 .profile-card--tips li {
   line-height: 1.4;
 }

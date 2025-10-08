@@ -38,6 +38,18 @@ const userSchema = new mongoose.Schema({
   instagram: String,
   linkedin: String,
   github: String,
+  leetcode: {
+    type: String,
+    trim: true
+  },
+  codeforces: {
+    type: String,
+    trim: true
+  },
+  codechef: {
+    type: String,
+    trim: true
+  },
   img: ImageSchema,
   secret: String,
   created: {

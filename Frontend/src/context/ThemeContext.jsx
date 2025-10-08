@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-const STORAGE_KEY = 'cebootcamp.theme';
+const STORAGE_KEY = 'branchconnect.theme';
 const FALLBACK_THEME = 'dark';
 
 const ThemeContext = createContext({

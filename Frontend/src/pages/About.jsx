@@ -102,10 +102,10 @@ const About = () => {
   return (
     <div className="about-page">
       <section className="about-hero">
-        <p className="about-hero__eyebrow">Building community · Celebrating craft</p>
-        <h1>Dedicated to elevating computer engineering talent.</h1>
+        <p className="about-hero__eyebrow">Building community · Celebrating collaboration</p>
+        <h1>Dedicated to connecting every branch across campus.</h1>
         <p>
-          CE Bootcamp is a student-led initiative from IIIT Bhubaneswar that brings together builders, designers, storytellers, and problem-solvers. We showcase the journeys, skills, and ambitions of every cohort so collaborators and recruiters can connect with rising talent.
+          Branch Connect is a student-led initiative from IIIT Bhubaneswar that brings together builders, designers, storytellers, and problem-solvers. We showcase the journeys, skills, and ambitions of every branch community so collaborators and recruiters can connect with rising talent.
         </p>
       </section>
 
@@ -130,7 +130,7 @@ const About = () => {
       <section className="about-team" aria-labelledby="team-heading">
         <header>
           <h2 id="team-heading">Meet the crew</h2>
-          <p>Our multidisciplinary team keeps this platform evolving, ensuring bootcamp voices are heard loud and clear.</p>
+          <p>Our multidisciplinary team keeps this platform evolving, ensuring Branch Connect voices are heard loud and clear.</p>
         </header>
         <div className="team-grid">
           {team.map((member) => (

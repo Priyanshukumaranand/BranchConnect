@@ -352,7 +352,7 @@ const ChatThread = () => {
   const loadingMember = memberQuery.isLoading;
   const memberError = memberQuery.isError;
   const conversationError = conversationQuery.isError;
-  const conversationTitle = member?.name || member?.email || 'Bootcamp member';
+  const conversationTitle = member?.name || member?.email || 'Branch Connect member';
   const memberEmail = member?.email || null;
   const lastInteraction = conversation?.lastMessage?.sentAt || conversation?.updatedAt || null;
   const lastInteractionIso = lastInteraction ? new Date(lastInteraction).toISOString() : null;
@@ -378,7 +378,7 @@ const ChatThread = () => {
           ← Recent chats
         </button>
         <span className="chat-thread-page__eyebrow">direct chat</span>
-        <h1>{member?.name || member?.email || 'Bootcamp member'}</h1>
+  <h1>{member?.name || member?.email || 'Branch Connect member'}</h1>
       </header>
 
       <div className="chat-thread-shell">

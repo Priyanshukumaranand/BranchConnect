@@ -41,7 +41,7 @@ const tokenise = (value) => {
 };
 
 const normaliseProfile = (user) => {
-  const name = user.name || user.email?.split('@')[0] || 'Bootcamp Member';
+  const name = user.name || user.email?.split('@')[0] || 'Branch Connect Member';
   const roll = user.collegeId ? user.collegeId.toUpperCase() : user.email?.substring(0, 7)?.toUpperCase() || '—';
   const email = user.email || '';
   const batchTag = user.batchYear ? `Batch ${user.batchYear}` : null;
@@ -82,8 +82,8 @@ const normaliseProfile = (user) => {
     name,
     roll,
     email,
-    about: user.about || 'Details coming soon. Reach out to the bootcamp organisers to update this profile.',
-    focus: focus.length > 0 ? focus : ['Bootcamp Member'],
+    about: user.about || 'Details coming soon. Reach out to the Branch Connect organisers to update this profile.',
+    focus: focus.length > 0 ? focus : ['Branch Connect Member'],
     links,
     image,
     location: user.place || null
@@ -250,9 +250,9 @@ const Batches = () => {
   return (
     <div className="batches-page">
       <header className="batches-header">
-        <h1>Find your cohort.</h1>
+        <h1>Connect across every branch.</h1>
         <p>
-          Browse through every batch, discover mentors, and connect with peers. Profiles highlight interests, recent projects, and the communities they nurture.
+          Browse by branch and batch, discover mentors, and connect with peers. Profiles highlight interests, recent projects, and the communities they build on campus.
         </p>
       </header>
 
@@ -277,7 +277,7 @@ const Batches = () => {
 
         <div className="batch-filter-group">
           <span className="batch-filter-label">Batch year</span>
-          <div className="batch-tabs" role="tablist" aria-label="Select bootcamp batch">
+          <div className="batch-tabs" role="tablist" aria-label="Select batch year">
             {years.map((year) => (
               <button
                 key={year}
@@ -304,14 +304,14 @@ const Batches = () => {
 
         {!isInitialLoading && !isRefreshing && !isError && currentProfiles.length === 0 && (
           <p className="batch-description">
-            No profiles found for {activeYear} in {branchDescriptor}. If you believe this is an error, please ask the bootcamp team to update the database.
+            No profiles found for {activeYear} in {branchDescriptor}. If you believe this is an error, please ask the Branch Connect team to update the database.
           </p>
         )}
 
         {!isError && currentProfiles.length > 0 && (
           <>
             <p className="batch-description">
-              Core members and contributors from the {activeYear} {branchDescriptor} cohort{totalProfiles ? ` · Showing ${currentProfiles.length} of ${totalProfiles}` : ''}.
+              Core members and contributors from the {activeYear} {branchDescriptor} community{totalProfiles ? ` · Showing ${currentProfiles.length} of ${totalProfiles}` : ''}.
             </p>
             <div className="profile-grid">
               {currentProfiles.map((profile) => (
@@ -367,7 +367,7 @@ const Batches = () => {
                 </button>
               )}
               {!hasNextPage && currentProfiles.length > 0 && (
-                <p className="batch-description">You have reached the end of the {activeYear} cohort.</p>
+                <p className="batch-description">You have reached the end of the {activeYear} community list.</p>
               )}
             </div>
           </>

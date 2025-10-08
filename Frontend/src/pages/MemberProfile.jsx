@@ -365,7 +365,7 @@ const MemberProfile = () => {
         <div className="member-profile__feedback">
           <button type="button" onClick={() => navigate(-1)} className="member-profile__back">← Back</button>
           <h1>Profile unavailable</h1>
-          <p>We couldn’t load this member’s profile right now. Please try again or reach out to the bootcamp team.</p>
+          <p>We couldn’t load this member’s profile right now. Please try again or reach out to the Branch Connect team.</p>
         </div>
       </section>
     );
@@ -376,7 +376,7 @@ const MemberProfile = () => {
       <header className="member-profile__top">
         <button type="button" onClick={() => navigate(-1)} className="member-profile__back">← Back</button>
         <span className="member-profile__eyebrow">Community member</span>
-        <h1>{member?.name || member?.email || 'Bootcamp Member'}</h1>
+  <h1>{member?.name || member?.email || 'Branch Connect Member'}</h1>
         {member?.collegeId && (
           <p className="member-profile__meta">Roll • {member.collegeId.toUpperCase()}</p>
         )}

@@ -191,6 +191,9 @@ const sanitizeUser = (user) => {
     instagram: user.instagram,
     github: user.github,
     linkedin: user.linkedin,
+    leetcode: user.leetcode,
+    codeforces: user.codeforces,
+    codechef: user.codechef,
     email: user.email
   };
 
