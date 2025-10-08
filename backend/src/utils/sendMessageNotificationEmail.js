@@ -25,7 +25,7 @@ module.exports = async function sendMessageNotificationEmail({ recipient, sender
     return;
   }
 
-  const conversationUrl = `${resolveFrontendBaseUrl()}/members/${senderId}`;
+  const conversationUrl = `${resolveFrontendBaseUrl()}/chats/${senderId}`;
 
   try {
     await mailSender(

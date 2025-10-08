@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import './RecentChats.css';
 import {
@@ -89,6 +89,7 @@ const buildInitials = (participant) => {
 
 const RecentChats = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [feedback, setFeedback] = useState(null);
@@ -138,7 +139,7 @@ const RecentChats = () => {
       } else {
         queryClient.removeQueries({ queryKey: ['chat', 'with'], exact: false });
       }
-      setFeedback({ type: 'success', message: 'Conversation archived.' });
+  setFeedback({ type: 'success', message: 'Conversation deleted.' });
     },
     onError: (error) => {
       setFeedback({ type: 'error', message: error?.message || 'Unable to delete conversation right now.' });
@@ -177,11 +178,40 @@ const RecentChats = () => {
 
   const conversations = useMemo(() => conversationsQuery.data || [], [conversationsQuery.data]);
 
+  const stats = useMemo(() => {
+    if (!Array.isArray(conversations) || conversations.length === 0) {
+      return {
+        total: 0,
+        unread: 0,
+        blocked: 0,
+        active: 0
+      };
+    }
+
+    const unread = conversations.reduce((sum, conversation) => sum + (conversation.unreadCount || 0), 0);
+    const blocked = conversations.filter((conversation) => conversation.isBlockedByCurrentUser).length;
+    const active = conversations.length - blocked;
+
+    return {
+      total: conversations.length,
+      unread,
+      blocked,
+      active: Math.max(active, 0)
+    };
+  }, [conversations]);
+
+  useEffect(() => {
+    if (location.state?.feedback) {
+      setFeedback({ type: 'success', message: location.state.feedback });
+      navigate('.', { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
+
   const handleOpenConversation = (participantId) => {
     if (!participantId) {
       return;
     }
-    navigate(`/members/${participantId}`);
+    navigate(`/chats/${participantId}`);
   };
 
   const renderStatus = () => {
@@ -206,22 +236,56 @@ const RecentChats = () => {
   return (
     <section className="recent-chats">
       <header className="recent-chats__header">
-        <h1>Recent chats</h1>
-        <p>Manage your ongoing conversations, block members, or clear threads you no longer need.</p>
+        <span className="recent-chats__eyebrow">Inbox</span>
+        <h1>Stay connected with your cohort</h1>
+        <p>All your direct messages live here. Pick up a conversation, clear out old threads, or block members that you no longer want to hear from.</p>
+
+        <div className="recent-chats__stats" role="list">
+          <div className="recent-chats__stat-card" role="listitem">
+            <span>Total chats</span>
+            <strong>{stats.total}</strong>
+          </div>
+          <div className="recent-chats__stat-card" role="listitem">
+            <span>Unread messages</span>
+            <strong>{stats.unread}</strong>
+          </div>
+          <div className="recent-chats__stat-card" role="listitem">
+            <span>Active threads</span>
+            <strong>{stats.active}</strong>
+          </div>
+          <div className="recent-chats__stat-card" role="listitem">
+            <span>Blocked chats</span>
+            <strong>{stats.blocked}</strong>
+          </div>
+        </div>
       </header>
 
       {renderStatus()}
 
       {conversationsQuery.isLoading ? (
-        <p className="recent-chats__placeholder">Loading your conversations…</p>
+        <div className="recent-chats__panel recent-chats__placeholder">
+          <h2>Loading your conversations…</h2>
+          <p>We’re fetching your latest messages and notifications.</p>
+        </div>
       ) : conversations.length === 0 ? (
-        <div className="recent-chats__empty">
+        <div className="recent-chats__panel recent-chats__empty">
+          <div className="recent-chats__empty-illustration" aria-hidden>
+            <span>💬</span>
+          </div>
           <h2>No conversations yet</h2>
-          <p>Once you message a member from the batches page, their conversation will appear here.</p>
+          <p>Start a chat from the batches or member profile pages and it’ll appear here for quick access.</p>
+          <button
+            type="button"
+            className="recent-chats__cta"
+            onClick={() => navigate('/batches')}
+          >
+            Explore batches
+          </button>
         </div>
       ) : (
-        <div className="recent-chats__list">
-          {conversations.map((conversation) => {
+        <div className="recent-chats__panel">
+          <div className="recent-chats__list">
+            {conversations.map((conversation) => {
             const otherMember = conversation.otherParticipant || null;
             const avatarUrl = buildAvatarUrl(otherMember);
             const initials = buildInitials(otherMember);
@@ -237,55 +301,74 @@ const RecentChats = () => {
             const blockPending = blockMutation.isPending && blockMutation.variables?.conversationId === conversationId;
             const unblockPending = unblockMutation.isPending && unblockMutation.variables?.conversationId === conversationId;
 
-            return (
-              <article key={conversationId} className="conversation-card">
-                <button
-                  type="button"
-                  className="conversation-card__body"
-                  onClick={() => handleOpenConversation(otherMemberId)}
+              return (
+                <article
+                  key={conversationId}
+                  className="conversation-card"
+                  aria-label={`Conversation with ${otherMember?.name || otherMember?.email || 'member'}`}
                 >
-                  <span className={`conversation-card__avatar${avatarUrl ? ' has-image' : ''}`}>
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="" aria-hidden />
-                    ) : (
-                      <span aria-hidden>{initials}</span>
-                    )}
-                  </span>
-                  <span className="conversation-card__content">
-                    <span className="conversation-card__title">
-                      {otherMember?.name || otherMember?.email || 'Member'}
+                  <div
+                    className="conversation-card__main"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleOpenConversation(otherMemberId)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleOpenConversation(otherMemberId);
+                      }
+                    }}
+                  >
+                    <span className={`conversation-card__avatar${avatarUrl ? ' has-image' : ''}`} aria-hidden>
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="" />
+                      ) : (
+                        <span>{initials}</span>
+                      )}
                     </span>
-                    <span className="conversation-card__preview" title={lastMessagePreview}>
-                      {lastMessagePreview}
-                    </span>
-                  </span>
-                  <span className="conversation-card__meta">
-                    <time dateTime={lastMessageTime}>{formatRelativeTime(lastMessageTime)}</time>
-                    {unreadCount > 0 && (
-                      <span className="conversation-card__badge" aria-label={`${unreadCount} unread messages`}>
-                        {unreadCount}
-                      </span>
-                    )}
-                  </span>
-                </button>
+                    <div className="conversation-card__text">
+                      <div className="conversation-card__row">
+                        <h2>{otherMember?.name || otherMember?.email || 'Member'}</h2>
+                        <time dateTime={lastMessageTime}>{formatRelativeTime(lastMessageTime)}</time>
+                      </div>
+                      <p className="conversation-card__preview" title={lastMessagePreview}>{lastMessagePreview}</p>
+                      <div className="conversation-card__tags">
+                        {unreadCount > 0 && (
+                          <span className="conversation-card__badge" aria-label={`${unreadCount} unread messages`}>
+                            {unreadCount} unread
+                          </span>
+                        )}
+                        {isBlockingCurrentUser && (
+                          <span className="conversation-card__tag conversation-card__tag--warning">They blocked you</span>
+                        )}
+                        {isBlockedByCurrentUser && (
+                          <span className="conversation-card__tag">Blocked</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="conversation-card__actions">
-                  {isBlockingCurrentUser && (
-                    <p className="conversation-card__note" role="note">This member has blocked you.</p>
+                  {(isBlockedByCurrentUser || isBlockingCurrentUser || conversation.blockReason) && (
+                    <div className="conversation-card__notices">
+                      {conversation.blockReason && (
+                        <p className="conversation-card__note" role="note">
+                          Reason noted: {conversation.blockReason}
+                        </p>
+                      )}
+                      {isBlockingCurrentUser && !conversation.blockReason && (
+                        <p className="conversation-card__note" role="note">This member has blocked you.</p>
+                      )}
+                      {isBlockedByCurrentUser && !conversation.blockReason && (
+                        <p className="conversation-card__note" role="note">You’ve blocked this member.</p>
+                      )}
+                    </div>
                   )}
-                  {isBlockedByCurrentUser && (
-                    <p className="conversation-card__note" role="note">You’ve blocked this member.</p>
-                  )}
-                  {conversation.blockReason && (
-                    <p className="conversation-card__note conversation-card__note--muted" role="note">
-                      Reason: {conversation.blockReason}
-                    </p>
-                  )}
-                  <div className="conversation-card__buttons">
+
+                  <div className="conversation-card__actions" aria-label="Conversation actions">
                     {isBlockedByCurrentUser ? (
                       <button
                         type="button"
-                        className="ghost-btn"
+                        className="conversation-card__action"
                         onClick={() => {
                           setFeedback(null);
                           unblockMutation.mutate({ userId: otherMemberId, conversationId });
@@ -297,7 +380,7 @@ const RecentChats = () => {
                     ) : (
                       <button
                         type="button"
-                        className="ghost-btn"
+                        className="conversation-card__action"
                         onClick={() => {
                           const reason = window.prompt('Add an optional note for why you are blocking this member (optional).');
                           setFeedback(null);
@@ -310,20 +393,20 @@ const RecentChats = () => {
                     )}
                     <button
                       type="button"
-                      className="danger-btn"
+                      className="conversation-card__action conversation-card__action--danger"
                       onClick={() => {
                         setFeedback(null);
                         deleteMutation.mutate({ conversationId, userId: otherMemberId });
                       }}
                       disabled={deletePending}
                     >
-                      {deletePending ? 'Removing…' : 'Delete'}
+                      {deletePending ? 'Deleting…' : 'Delete chat'}
                     </button>
                   </div>
-                </div>
-              </article>
-            );
-          })}
+                </article>
+              );
+            })}
+          </div>
         </div>
       )}
     </section>

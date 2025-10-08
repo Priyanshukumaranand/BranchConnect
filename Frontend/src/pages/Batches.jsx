@@ -265,7 +265,7 @@ const Batches = () => {
                         </a>
                       ))}
                     </div>
-                    <Link className="profile-message-link" to={`/members/${profile.id}`}>
+                    <Link className="profile-message-link" to={`/chats/${profile.id}`}>
                       Message {profile.name.split(' ')?.[0] || 'member'}
                     </Link>
                   </div>

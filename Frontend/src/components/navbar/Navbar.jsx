@@ -7,7 +7,8 @@ import { useAuth } from '../../context/AuthContext'
 const baseLinks = [
     { to: '/', label: 'HOME', end: true },
     { to: '/about', label: 'ABOUT' },
-    { to: '/societies', label: 'SOCIETIES' }
+    { to: '/societies', label: 'SOCIETIES' },
+    { to: '/placement', label: 'PLACEMENT' }
 ]
 
 const authedLinks = [

@@ -8,12 +8,13 @@ const baseLinks = [
   { to: '/', label: 'Home', end: true },
   { to: '/about', label: 'About' },
   { to: '/societies', label: 'Societies' },
-  { to: '/resources', label: 'Resources' },
+  { to: '/placement', label: 'Placement' },
   { to: '/exams', label: 'Exams' }
 ];
 
 const authedLinks = [
-  { to: '/batches', label: 'Batches' }
+  { to: '/batches', label: 'Batches' },
+  { to: '/chats', label: 'Chats' }
 ];
 
 const guestLinks = [

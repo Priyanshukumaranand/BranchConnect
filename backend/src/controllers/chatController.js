@@ -461,37 +461,12 @@ exports.deleteConversation = async (req, res, next) => {
       return res.status(404).json({ error: 'Conversation not found.' });
     }
 
-    if (!Array.isArray(conversation.deletedFor)) {
-      conversation.deletedFor = [];
-    }
-
-    const alreadyDeleted = conversation.deletedFor.some((id) => id.toString() === currentUserId.toString());
-    if (!alreadyDeleted) {
-      conversation.deletedFor.push(req.currentUser._id);
-    }
-
-    if (!conversation.unreadCounts) {
-      conversation.unreadCounts = new Map();
-    }
-
-    if (conversation.unreadCounts instanceof Map) {
-      conversation.unreadCounts.set(currentUserId.toString(), 0);
-    } else {
-      conversation.unreadCounts[currentUserId.toString()] = 0;
-    }
-
     await Promise.all([
-      conversation.save(),
-      Message.updateMany({
-        conversation: conversation._id,
-        recipient: currentUserId,
-        readAt: { $exists: false }
-      }, {
-        $set: { readAt: new Date() }
-      })
+      Message.deleteMany({ conversation: conversation._id }),
+      conversation.deleteOne()
     ]);
 
-    return res.json({ success: true });
+    return res.json({ success: true, removed: true });
   } catch (error) {
     return next(error);
   }
