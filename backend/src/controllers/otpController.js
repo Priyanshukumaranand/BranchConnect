@@ -2,6 +2,7 @@ const OTP = require('../models/OTP');
 const mailSender = require('../utils/mailSender');
 const emailVerificationTemplate = require('../templates/emailVerificationTemplate');
 const passwordResetOtpTemplate = require('../templates/passwordResetOtpTemplate');
+const { isInstituteEmail, normaliseInstituteEmail } = require('../utils/college');
 
 const OTP_PURPOSES = new Set(['signup', 'password-reset', 'general']);
 
@@ -34,10 +35,15 @@ const getEmailContent = (purpose) => {
 
 exports.generateOtp = async (req, res, next) => {
   try {
-    const { email, purpose } = req.body;
+    const { purpose } = req.body;
+    const email = req.body.email ? normaliseInstituteEmail(req.body.email) : '';
 
     if (!email) {
       return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    if (!isInstituteEmail(email)) {
+      return res.status(400).json({ error: 'Use your institute email (e.g. b522046@iiit-bh.ac.in).' });
     }
 
     const resolvedPurpose = resolvePurpose(purpose);

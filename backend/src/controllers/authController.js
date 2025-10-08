@@ -3,6 +3,13 @@ const User = require('../models/User');
 const OTP = require('../models/OTP');
 const { generateToken } = require('../utils/jwt');
 const { sanitizeUser } = require('../utils/sanitizeUser');
+const {
+  isCollegeId,
+  isInstituteEmail,
+  normaliseCollegeId,
+  normaliseInstituteEmail,
+  deriveCollegeIdFromEmail
+} = require('../utils/college');
 
 const allowedCookieSameSite = new Set(['lax', 'strict', 'none']);
 
@@ -72,24 +79,40 @@ exports.signup = async (req, res, next) => {
       return res.status(400).json({ error: 'Email, password, and OTP are required.' });
     }
 
-    const existing = await User.findOne({ email });
+    const normalizedEmail = normaliseInstituteEmail(email);
+    if (!isInstituteEmail(normalizedEmail)) {
+      return res.status(400).json({ error: 'Use your institute email (e.g. b522046@iiit-bh.ac.in).' });
+    }
+
+    const derivedCollegeId = deriveCollegeIdFromEmail(normalizedEmail);
+    const normalizedCollegeId = normaliseCollegeId(collegeId || derivedCollegeId);
+
+    if (!isCollegeId(normalizedCollegeId)) {
+      return res.status(400).json({ error: 'College ID must follow the format b[branch][year][roll] (e.g. b522046).' });
+    }
+
+    if (!normalizedEmail.startsWith(normalizedCollegeId)) {
+      return res.status(400).json({ error: 'College ID should match the institute email prefix.' });
+    }
+
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res.status(409).json({ error: 'Email already registered.' });
     }
 
-    const recentOtp = await OTP.findOne({ email, purpose: 'signup' }).sort({ createdAt: -1 });
+    const recentOtp = await OTP.findOne({ email: normalizedEmail, purpose: 'signup' }).sort({ createdAt: -1 });
     if (!recentOtp || recentOtp.otp !== otp) {
       return res.status(400).json({ error: 'Invalid or expired OTP.' });
     }
 
     const user = await User.create({
       name,
-      collegeId,
-      email,
+      collegeId: normalizedCollegeId,
+      email: normalizedEmail,
       password
     });
 
-  await OTP.deleteMany({ email, purpose: 'signup' });
+    await OTP.deleteMany({ email: normalizedEmail, purpose: 'signup' });
 
     return res.status(201).json({
       message: 'Account created successfully. Please sign in.',
@@ -108,9 +131,20 @@ exports.login = async (req, res, next) => {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = normaliseInstituteEmail(email);
+    if (!isInstituteEmail(normalizedEmail)) {
+      return res.status(400).json({ error: 'Use your institute email (e.g. b522046@iiit-bh.ac.in).' });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(404).json({ error: 'Email not found.' });
+    }
+
+    const derivedCollegeId = deriveCollegeIdFromEmail(normalizedEmail);
+    if (!user.collegeId && isCollegeId(derivedCollegeId)) {
+      user.collegeId = derivedCollegeId;
+      await user.save();
     }
 
     const validPassword = await user.comparePassword(password);

@@ -4,6 +4,8 @@ import './Auth.css';
 import { API_BASE_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
+const INSTITUTE_EMAIL_PATTERN = /^b\d{6}@iiit-bh\.ac\.in$/i;
+
 const initialForm = {
   email: '',
   password: ''
@@ -34,16 +36,19 @@ const SignIn = () => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const nextValue = name === 'email' ? value.toLowerCase() : value;
+    setForm((prev) => ({ ...prev, [name]: nextValue }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
     setStatus(null);
   };
 
   const validators = useMemo(() => ({
     email: (value) => {
-      if (!value.trim()) return 'Email address is required.';
-      const pattern = /[^\s@]+@[^\s@]+\.[^\s@]+/;
-      if (!pattern.test(value)) return 'Enter a valid institute email address.';
+      const trimmed = value.trim();
+      if (!trimmed) return 'Email address is required.';
+      if (!INSTITUTE_EMAIL_PATTERN.test(trimmed)) {
+        return 'Use your institute email (e.g. b522046@iiit-bh.ac.in).';
+      }
       return undefined;
     },
     password: (value) => {
@@ -76,7 +81,10 @@ const SignIn = () => {
     try {
       setSubmitting(true);
       setStatus({ type: 'pending', message: 'Signing you in…' });
-      await authenticate(form);
+      await authenticate({
+        email: form.email.trim().toLowerCase(),
+        password: form.password
+      });
       setStatus({
         type: 'success',
         message: 'Signed in! Redirecting you to your batches…'

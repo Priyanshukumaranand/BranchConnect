@@ -4,6 +4,9 @@ import './Auth.css';
 import { requestOtp } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 
+const INSTITUTE_EMAIL_PATTERN = /^b\d{6}@iiit-bh\.ac\.in$/i;
+const COLLEGE_ID_PATTERN = /^b\d{6}$/i;
+
 const initialForm = {
   fullName: '',
   rollId: '',
@@ -24,7 +27,8 @@ const SignUp = () => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const nextValue = ['rollId', 'email'].includes(name) ? value.toLowerCase() : value;
+    setForm((prev) => ({ ...prev, [name]: nextValue }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
     setStatus(null);
   };
@@ -38,15 +42,22 @@ const SignUp = () => {
       return undefined;
     },
     rollId: (value) => {
-      if (!value.trim()) return 'Roll ID is required.';
-      const pattern = /^b5[0-9]{5}$/i;
-      if (!pattern.test(value)) return 'Expected format: b5##### (e.g. b520123).';
+      const trimmed = value.trim();
+      if (!trimmed) return 'Roll ID is required.';
+      if (!COLLEGE_ID_PATTERN.test(trimmed)) {
+        return 'Expected format: b[branch][year][roll] (e.g. b522046).';
+      }
       return undefined;
     },
-    email: (value) => {
-      if (!value.trim()) return 'Email is required.';
-      const pattern = /[^\s@]+@[^\s@]+\.[^\s@]+/;
-      if (!pattern.test(value)) return 'Provide a valid email address.';
+    email: (value, fullForm) => {
+      const trimmed = value.trim();
+      if (!trimmed) return 'Email is required.';
+      if (!INSTITUTE_EMAIL_PATTERN.test(trimmed)) {
+        return 'Use your institute email (e.g. b522046@iiit-bh.ac.in).';
+      }
+      if (fullForm?.rollId && trimmed.split('@')[0] !== fullForm.rollId.trim()) {
+        return 'Email prefix should match your roll ID.';
+      }
       return undefined;
     },
     password: (value) => {
@@ -94,9 +105,9 @@ const SignUp = () => {
       setSubmitting(true);
       setStatus({ type: 'pending', message: 'Creating your account…' });
       await register({
-        name: form.fullName,
-        collegeId: form.rollId,
-        email: form.email,
+        name: form.fullName.trim(),
+        collegeId: form.rollId.trim(),
+        email: form.email.trim(),
         password: form.password,
         otp: form.otp
       });
@@ -116,7 +127,7 @@ const SignUp = () => {
   };
 
   const handleSendOtp = async () => {
-    const emailError = validators.email(form.email);
+    const emailError = validators.email(form.email, form);
     if (emailError) {
       setErrors((prev) => ({ ...prev, email: emailError }));
       setOtpStatus({ type: 'error', message: 'Fix your email before requesting OTP.' });
@@ -126,7 +137,7 @@ const SignUp = () => {
     try {
       setSendingOtp(true);
       setOtpStatus({ type: 'pending', message: 'Sending OTP…' });
-      await requestOtp(form.email);
+  await requestOtp(form.email.trim());
       setOtpStatus({ type: 'success', message: 'OTP sent! Check your inbox.' });
     } catch (error) {
       setOtpStatus({

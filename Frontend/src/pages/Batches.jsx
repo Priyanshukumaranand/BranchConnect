@@ -6,6 +6,15 @@ import { fetchBatchMembers } from '../api/batches';
 import { API_BASE_URL } from '../api/client';
 
 const DEFAULT_BATCH_YEARS = ['2024', '2023', '2022'];
+const DEFAULT_BRANCH_KEY = 'all';
+const BRANCH_OPTIONS = [
+  { key: 'all', label: 'All branches', shortLabel: 'All branches', alias: null },
+  { key: 'cse', label: 'Computer Science & Engineering', shortLabel: 'CSE', alias: 'cse' },
+  { key: 'ece', label: 'Electronics & Communication Engineering', shortLabel: 'ECE', alias: 'ece' },
+  { key: 'eee', label: 'Electrical & Electronics Engineering', shortLabel: 'EEE', alias: 'eee' },
+  { key: 'it', label: 'Information Technology', shortLabel: 'IT', alias: 'it' },
+  { key: 'ce', label: 'Civil Engineering', shortLabel: 'CE', alias: 'ce' }
+];
 const PAGE_SIZE = 12;
 
 const LINK_LABELS = {
@@ -36,8 +45,10 @@ const normaliseProfile = (user) => {
   const roll = user.collegeId ? user.collegeId.toUpperCase() : user.email?.substring(0, 7)?.toUpperCase() || '—';
   const email = user.email || '';
   const batchTag = user.batchYear ? `Batch ${user.batchYear}` : null;
+  const branchTag = user.branch?.short || user.branch?.label || null;
   const focus = Array.from(new Set([
     batchTag,
+    branchTag,
     ...tokenise(user.place),
     ...tokenise(user.secret)
   ].filter(Boolean))).slice(0, 3);
@@ -82,6 +93,16 @@ const normaliseProfile = (user) => {
 const Batches = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialYearFromQuery = searchParams.get('year');
+  const initialBranchFromQuery = searchParams.get('branch');
+
+  const initialBranchKey = useMemo(() => {
+    if (!initialBranchFromQuery) {
+      return DEFAULT_BRANCH_KEY;
+    }
+    const normalized = initialBranchFromQuery.toLowerCase();
+    const match = BRANCH_OPTIONS.find((option) => option.key === normalized);
+    return match ? match.key : DEFAULT_BRANCH_KEY;
+  }, [initialBranchFromQuery]);
 
   const initialYears = useMemo(() => {
     const base = [...DEFAULT_BATCH_YEARS];
@@ -93,6 +114,7 @@ const Batches = () => {
 
   const [availableYears, setAvailableYears] = useState(initialYears);
   const [activeYear, setActiveYear] = useState(() => initialYearFromQuery || initialYears[0]);
+  const [activeBranch, setActiveBranch] = useState(initialBranchKey);
   useEffect(() => {
     setAvailableYears((prev) => (
       initialYearFromQuery && !prev.includes(initialYearFromQuery)
@@ -111,6 +133,19 @@ const Batches = () => {
     }
   }, [activeYear]);
 
+  useEffect(() => {
+    if (initialBranchKey && initialBranchKey !== activeBranch) {
+      setActiveBranch(initialBranchKey);
+    }
+  }, [initialBranchKey, activeBranch]);
+
+  const activeBranchOption = useMemo(
+    () => BRANCH_OPTIONS.find((option) => option.key === activeBranch) || BRANCH_OPTIONS[0],
+    [activeBranch]
+  );
+
+  const branchAlias = activeBranchOption.alias;
+
   const {
     data,
     status,
@@ -120,9 +155,10 @@ const Batches = () => {
     isFetching,
     isFetchingNextPage
   } = useInfiniteQuery({
-    queryKey: ['batches', activeYear],
+    queryKey: ['batches', branchAlias || 'all', activeYear],
     queryFn: ({ pageParam = 1, signal }) => fetchBatchMembers({
       year: activeYear,
+      branch: branchAlias,
       page: pageParam,
       limit: PAGE_SIZE,
       signal
@@ -159,7 +195,7 @@ const Batches = () => {
     return () => {
       observer.disconnect();
     };
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, activeYear]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, activeYear, activeBranch]);
 
   const currentProfiles = useMemo(() => {
     if (!data?.pages) return [];
@@ -177,16 +213,39 @@ const Batches = () => {
     [availableYears]
   );
 
-  const handleTabChange = (year) => {
+  const handleYearChange = (year) => {
     setActiveYear(year);
     const next = new URLSearchParams(searchParams);
     next.set('year', year);
+    if (activeBranch === DEFAULT_BRANCH_KEY) {
+      next.delete('branch');
+    } else {
+      next.set('branch', activeBranch);
+    }
+    setSearchParams(next, { replace: true });
+  };
+
+  const handleBranchChange = (branchKey) => {
+    setActiveBranch(branchKey);
+    const next = new URLSearchParams(searchParams);
+    if (branchKey === DEFAULT_BRANCH_KEY) {
+      next.delete('branch');
+    } else {
+      next.set('branch', branchKey);
+    }
+    if (activeYear) {
+      next.set('year', activeYear);
+    }
     setSearchParams(next, { replace: true });
   };
 
   const isInitialLoading = status === 'pending';
   const isError = status === 'error';
   const isRefreshing = isFetching && !isFetchingNextPage;
+
+  const branchDescriptor = activeBranchOption.key === DEFAULT_BRANCH_KEY
+    ? 'all branches'
+    : `${activeBranchOption.shortLabel || activeBranchOption.label} branch`;
 
   return (
     <div className="batches-page">
@@ -197,23 +256,46 @@ const Batches = () => {
         </p>
       </header>
 
-      <div className="batch-tabs" role="tablist" aria-label="Select bootcamp batch">
-        {years.map((year) => (
-          <button
-            key={year}
-            role="tab"
-            aria-selected={activeYear === year}
-            className={activeYear === year ? 'active' : ''}
-            onClick={() => handleTabChange(year)}
-          >
-            Batch {year}
-          </button>
-        ))}
+      <div className="batch-filters">
+        <div className="batch-filter-group">
+          <span className="batch-filter-label">Branch</span>
+          <div className="batch-tabs" role="tablist" aria-label="Select branch">
+            {BRANCH_OPTIONS.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                role="tab"
+                aria-selected={activeBranch === option.key}
+                className={activeBranch === option.key ? 'active' : ''}
+                onClick={() => handleBranchChange(option.key)}
+              >
+                {option.shortLabel}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="batch-filter-group">
+          <span className="batch-filter-label">Batch year</span>
+          <div className="batch-tabs" role="tablist" aria-label="Select bootcamp batch">
+            {years.map((year) => (
+              <button
+                key={year}
+                role="tab"
+                aria-selected={activeYear === year}
+                className={activeYear === year ? 'active' : ''}
+                onClick={() => handleYearChange(year)}
+              >
+                Batch {year}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <section aria-live="polite" className="batch-section">
         {(isInitialLoading || isRefreshing) && (
-          <p className="batch-description">Fetching bootcamp profiles for {activeYear}…</p>
+          <p className="batch-description">Fetching {branchDescriptor} profiles for {activeYear}…</p>
         )}
 
         {isError && (
@@ -222,14 +304,14 @@ const Batches = () => {
 
         {!isInitialLoading && !isRefreshing && !isError && currentProfiles.length === 0 && (
           <p className="batch-description">
-            No profiles found for {activeYear}. If you believe this is an error, please ask the bootcamp team to update the database.
+            No profiles found for {activeYear} in {branchDescriptor}. If you believe this is an error, please ask the bootcamp team to update the database.
           </p>
         )}
 
         {!isError && currentProfiles.length > 0 && (
           <>
             <p className="batch-description">
-              Core members and contributors from the {activeYear} cohort{totalProfiles ? ` · Showing ${currentProfiles.length} of ${totalProfiles}` : ''}.
+              Core members and contributors from the {activeYear} {branchDescriptor} cohort{totalProfiles ? ` · Showing ${currentProfiles.length} of ${totalProfiles}` : ''}.
             </p>
             <div className="profile-grid">
               {currentProfiles.map((profile) => (

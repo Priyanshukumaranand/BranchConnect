@@ -1,7 +1,11 @@
 import { apiFetch } from './client';
 
-export const fetchBatchMembers = async ({ year, page, limit, signal } = {}) => {
+export const fetchBatchMembers = async ({ branch, year, page, limit, signal } = {}) => {
   const searchParams = new URLSearchParams();
+
+  if (branch) {
+    searchParams.set('branch', branch);
+  }
 
   if (year) {
     searchParams.set('year', year);

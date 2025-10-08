@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const sendPasswordResetEmail = require('../utils/sendPasswordResetEmail');
+const { isInstituteEmail, normaliseInstituteEmail } = require('../utils/college');
 
 const PASSWORD_RESET_PURPOSE = 'password-reset';
 
@@ -13,10 +14,14 @@ exports.forgotPassword = async (req, res, next) => {
       return res.status(400).json({ error: 'Email is required.' });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normaliseInstituteEmail(email);
 
     if (!normalizedEmail) {
       return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    if (!isInstituteEmail(normalizedEmail)) {
+      return res.status(400).json({ error: 'Use your institute email (e.g. b522046@iiit-bh.ac.in).' });
     }
 
     const user = await User.findOne({ email: normalizedEmail });
@@ -44,11 +49,15 @@ exports.resetPassword = async (req, res, next) => {
       return res.status(400).json({ error: 'Email, OTP, and new password are required.' });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normaliseInstituteEmail(email);
     const normalizedOtp = String(otp).trim();
 
     if (!normalizedEmail || !normalizedOtp) {
       return res.status(400).json({ error: 'Email, OTP, and new password are required.' });
+    }
+
+    if (!isInstituteEmail(normalizedEmail)) {
+      return res.status(400).json({ error: 'Use your institute email (e.g. b522046@iiit-bh.ac.in).' });
     }
 
     if (!/^[0-9]{6}$/.test(normalizedOtp)) {
