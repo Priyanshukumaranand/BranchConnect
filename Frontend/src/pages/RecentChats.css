@@ -1,0 +1,217 @@
+.recent-chats {
+  display: grid;
+  gap: 1.5rem;
+  padding: 2rem clamp(1.5rem, 3vw, 3rem);
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.recent-chats__header h1 {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  margin-bottom: 0.5rem;
+}
+
+.recent-chats__header p {
+  color: var(--color-text-muted, #5b6570);
+  max-width: 48rem;
+}
+
+.recent-chats__feedback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f766e;
+}
+
+.recent-chats__feedback button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: inherit;
+  cursor: pointer;
+}
+
+.recent-chats__feedback--error {
+  background: rgba(190, 18, 60, 0.12);
+  color: #be123c;
+}
+
+.recent-chats__placeholder,
+.recent-chats__empty {
+  padding: 2rem;
+  border-radius: 16px;
+  background: var(--panel-bg, hsla(210, 27%, 97%, 0.75));
+  text-align: center;
+  color: var(--color-text-muted, #5b6570);
+}
+
+.recent-chats__empty h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  color: var(--color-text-primary, #161b22);
+}
+
+.recent-chats__list {
+  display: grid;
+  gap: 1rem;
+}
+
+.conversation-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+}
+
+.conversation-card__body {
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.conversation-card__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.2));
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+}
+
+.conversation-card__avatar.has-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.conversation-card__content {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.conversation-card__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #161b22);
+}
+
+.conversation-card__preview {
+  font-size: 0.95rem;
+  color: var(--color-text-muted, #5b6570);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: clamp(12rem, 25vw, 28rem);
+}
+
+.conversation-card__meta {
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #5b6570);
+}
+
+.conversation-card__badge {
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.conversation-card__actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.conversation-card__note {
+  font-size: 0.85rem;
+  color: #ef4444;
+}
+
+.conversation-card__note--muted {
+  color: var(--color-text-muted, #5b6570);
+}
+
+.conversation-card__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ghost-btn {
+  border: 1px solid rgba(15, 118, 110, 0.35);
+  background: transparent;
+  color: #0f766e;
+  border-radius: 999px;
+  padding: 0.45rem 1.25rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.ghost-btn:hover:not(:disabled) {
+  border-color: #0f766e;
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.danger-btn {
+  border: none;
+  background: #dc2626;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.45rem 1.25rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.danger-btn:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.ghost-btn:disabled,
+.danger-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .conversation-card__body {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .conversation-card__meta {
+    grid-row: 2 / 3;
+    grid-column: 2 / 3;
+    justify-items: start;
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .conversation-card__preview {
+    max-width: 100%;
+  }
+}

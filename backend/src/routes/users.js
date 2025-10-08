@@ -19,6 +19,7 @@ router.put('/me', requireAuth, upload.single('profilePicture'), userController.u
 router.get('/avatar/by-email', requireAuth, userController.getAvatarByEmail);
 router.get('/lookup/email', requireAuth, userController.getByEmail);
 router.get('/:userId/avatar', requireAuth, userController.getAvatar);
+router.get('/:userId', requireAuth, userController.getById);
 router.get('/', requireAuth, userController.listUsers);
 
 module.exports = router;

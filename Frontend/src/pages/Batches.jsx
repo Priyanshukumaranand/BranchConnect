@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import './Batches.css';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchBatchMembers } from '../api/batches';
 import { API_BASE_URL } from '../api/client';
 
 const DEFAULT_BATCH_YEARS = ['2024', '2023', '2022'];
+const PAGE_SIZE = 12;
 
 const LINK_LABELS = {
   github: 'GitHub',
@@ -91,74 +93,85 @@ const Batches = () => {
 
   const [availableYears, setAvailableYears] = useState(initialYears);
   const [activeYear, setActiveYear] = useState(() => initialYearFromQuery || initialYears[0]);
-  const [profilesByYear, setProfilesByYear] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
   useEffect(() => {
-    if (initialYearFromQuery && !availableYears.includes(initialYearFromQuery)) {
-      setAvailableYears((prev) => [initialYearFromQuery, ...prev]);
-    }
+    setAvailableYears((prev) => (
+      initialYearFromQuery && !prev.includes(initialYearFromQuery)
+        ? [initialYearFromQuery, ...prev]
+        : prev
+    ));
 
     if (initialYearFromQuery && initialYearFromQuery !== activeYear) {
       setActiveYear(initialYearFromQuery);
     }
-  }, [initialYearFromQuery, availableYears, activeYear]);
+  }, [initialYearFromQuery, activeYear]);
 
   useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
+    if (activeYear) {
+      setAvailableYears((prev) => (prev.includes(activeYear) ? prev : [activeYear, ...prev]));
+    }
+  }, [activeYear]);
 
-    if (profilesByYear[activeYear]) {
-      return () => {
-        cancelled = true;
-        controller.abort();
-      };
+  const {
+    data,
+    status,
+    error,
+    hasNextPage,
+    fetchNextPage,
+    isFetching,
+    isFetchingNextPage
+  } = useInfiniteQuery({
+    queryKey: ['batches', activeYear],
+    queryFn: ({ pageParam = 1, signal }) => fetchBatchMembers({
+      year: activeYear,
+      page: pageParam,
+      limit: PAGE_SIZE,
+      signal
+    }),
+    enabled: Boolean(activeYear),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage) return undefined;
+      if (lastPage.hasMore) {
+        return lastPage.nextPage || (lastPage.page ? lastPage.page + 1 : undefined);
+      }
+      return undefined;
+    }
+  });
+
+  const loadMoreRef = useRef(null);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !hasNextPage) {
+      return undefined;
     }
 
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response = await fetchBatchMembers({
-          year: activeYear,
-          signal: controller.signal
-        });
-
-        if (cancelled) return;
-
-        const members = Array.isArray(response?.users)
-          ? response.users.map(normaliseProfile)
-          : [];
-
-        if (!availableYears.includes(activeYear)) {
-          setAvailableYears((prev) => [activeYear, ...prev]);
-        }
-
-        setProfilesByYear((prev) => ({
-          ...prev,
-          [activeYear]: members
-        }));
-      } catch (fetchError) {
-        if (fetchError.name === 'AbortError' || cancelled) {
-          return;
-        }
-        setError(fetchError?.message || 'Unable to load batch data right now.');
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
       }
-    })();
+    }, {
+      rootMargin: '240px 0px'
+    });
+
+    observer.observe(node);
 
     return () => {
-      cancelled = true;
-      controller.abort();
+      observer.disconnect();
     };
-  }, [activeYear, profilesByYear, availableYears]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, activeYear]);
 
-  const currentProfiles = profilesByYear[activeYear] || [];
+  const currentProfiles = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap((page) => (
+      Array.isArray(page?.users)
+        ? page.users.map(normaliseProfile)
+        : []
+    ));
+  }, [data]);
+
+  const totalProfiles = data?.pages?.[0]?.total ?? 0;
+
   const years = useMemo(
     () => Array.from(new Set(availableYears.filter(Boolean))),
     [availableYears]
@@ -170,6 +183,10 @@ const Batches = () => {
     next.set('year', year);
     setSearchParams(next, { replace: true });
   };
+
+  const isInitialLoading = status === 'pending';
+  const isError = status === 'error';
+  const isRefreshing = isFetching && !isFetchingNextPage;
 
   return (
     <div className="batches-page">
@@ -195,24 +212,24 @@ const Batches = () => {
       </div>
 
       <section aria-live="polite" className="batch-section">
-        {loading && (
+        {(isInitialLoading || isRefreshing) && (
           <p className="batch-description">Fetching bootcamp profiles for {activeYear}…</p>
         )}
 
-        {error && (
-          <p className="batch-description error">{error}</p>
+        {isError && (
+          <p className="batch-description error">{error?.message || 'Unable to load batch data right now.'}</p>
         )}
 
-        {!loading && !error && currentProfiles.length === 0 && (
+        {!isInitialLoading && !isRefreshing && !isError && currentProfiles.length === 0 && (
           <p className="batch-description">
             No profiles found for {activeYear}. If you believe this is an error, please ask the bootcamp team to update the database.
           </p>
         )}
 
-        {!loading && !error && currentProfiles.length > 0 && (
+        {!isError && currentProfiles.length > 0 && (
           <>
             <p className="batch-description">
-              Core members and contributors from the {activeYear} cohort.
+              Core members and contributors from the {activeYear} cohort{totalProfiles ? ` · Showing ${currentProfiles.length} of ${totalProfiles}` : ''}.
             </p>
             <div className="profile-grid">
               {currentProfiles.map((profile) => (
@@ -248,9 +265,28 @@ const Batches = () => {
                         </a>
                       ))}
                     </div>
+                    <Link className="profile-message-link" to={`/members/${profile.id}`}>
+                      Message {profile.name.split(' ')?.[0] || 'member'}
+                    </Link>
                   </div>
                 </article>
               ))}
+            </div>
+            <div className="batch-pagination" aria-live="polite">
+              <div ref={loadMoreRef} />
+              {hasNextPage && (
+                <button
+                  type="button"
+                  className="load-more"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? 'Loading more profiles…' : 'Load more profiles'}
+                </button>
+              )}
+              {!hasNextPage && currentProfiles.length > 0 && (
+                <p className="batch-description">You have reached the end of the {activeYear} cohort.</p>
+              )}
             </div>
           </>
         )}

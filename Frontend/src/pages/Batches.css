@@ -199,6 +199,57 @@
   background: rgba(112, 165, 255, 0.18);
 }
 
+.profile-message-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
+  background: var(--tab-active-bg);
+  color: var(--tab-active-color);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: var(--tab-active-shadow);
+}
+
+.profile-message-link:hover {
+  transform: translateY(-1px);
+}
+
+.batch-pagination {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  margin-top: clamp(1.5rem, 3vw, 2rem);
+}
+
+.batch-pagination .load-more {
+  padding: 0.75rem 1.6rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--tab-active-bg);
+  color: var(--tab-active-color);
+  box-shadow: var(--tab-active-shadow);
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+
+.batch-pagination .load-more:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.batch-pagination .load-more:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
 @media (max-width: 600px) {
   .profile-card {
     min-height: 300px;

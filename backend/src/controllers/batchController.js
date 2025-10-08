@@ -104,13 +104,37 @@ exports.listBatches = async (req, res, next) => {
     const { year } = req.query;
     const query = buildBatchQuery(year);
 
-    const users = await User.find(query)
-      .select('-password')
-      .sort('email')
-      .lean({ getters: true });
+    const limitParam = Number.parseInt(req.query.limit, 10);
+    const pageParam = Number.parseInt(req.query.page, 10);
+
+    const pageSize = Number.isNaN(limitParam)
+      ? 12
+      : Math.min(Math.max(limitParam, 1), 60);
+    const page = Number.isNaN(pageParam)
+      ? 1
+      : Math.max(pageParam, 1);
+
+    const skip = (page - 1) * pageSize;
+
+    const [total, users] = await Promise.all([
+      User.countDocuments(query),
+      User.find(query)
+        .select('-password')
+        .sort('email')
+        .skip(skip)
+        .limit(pageSize)
+        .lean({ getters: true })
+    ]);
+
+    const hasMore = skip + users.length < total;
+    const nextPage = hasMore ? page + 1 : null;
 
     return res.json({
-      total: users.length,
+      total,
+      page,
+      pageSize,
+      hasMore,
+      nextPage,
       users: users.map(sanitizeUser)
     });
   } catch (error) {

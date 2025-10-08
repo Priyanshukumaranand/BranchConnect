@@ -41,6 +41,17 @@ npm run build
 
 Outputs an optimized bundle in `Frontend/build`. Deploy those static files to your hosting provider.
 
+### Member chat
+
+- From the Batches directory, choose **Message** on any profile card to open their member page at `/members/:userId`.
+- Member pages surface their public details plus a React Query–powered chat panel that polls the backend every 5 seconds (and refetches on focus) for new messages.
+- Messages are persisted through the `/chat` API; conversations are created automatically and unread counts reset as soon as you view the thread.
+
+### Batch directory performance
+
+- The batches page now streams profiles with lazy loading and caching via React Query. Profiles load in small chunks (12 at a time) and additional entries are fetched on demand when you scroll or tap **Load more**.
+- React Query is configured globally in `src/index.js`; if you add new data hooks, reuse the shared client to benefit from caching and request deduplication.
+
 ## Testing
 
 ```bash

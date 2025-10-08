@@ -15,6 +15,8 @@ import NotFound from './pages/NotFound';
 import PlacementResources from './pages/PlacementResources';
 import ExamResources from './pages/ExamResources';
 import RequireAuth from './components/common/RequireAuth';
+import MemberProfile from './pages/MemberProfile';
+import RecentChats from './pages/RecentChats';
 
 const App = () => {
   return (
@@ -32,10 +34,26 @@ const App = () => {
           )}
         />
         <Route
+          path="chats"
+          element={(
+            <RequireAuth>
+              <RecentChats />
+            </RequireAuth>
+          )}
+        />
+        <Route
           path="profile"
           element={(
             <RequireAuth>
               <Profile />
+            </RequireAuth>
+          )}
+        />
+        <Route
+          path="members/:userId"
+          element={(
+            <RequireAuth>
+              <MemberProfile />
             </RequireAuth>
           )}
         />

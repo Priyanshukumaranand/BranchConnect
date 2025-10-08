@@ -42,6 +42,7 @@ const Profile = () => {
   const [avatarPreview, setAvatarPreview] = useState(() => user?.avatarUrl || null);
   const [status, setStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const rollLocked = Boolean(user?.collegeId);
 
   const initials = useMemo(() => {
     if (!user?.name) {
@@ -334,8 +335,19 @@ const Profile = () => {
 
                 <div className="form-field">
                   <label htmlFor="collegeId">Roll ID</label>
-                  <input id="collegeId" name="collegeId" value={form.collegeId} onChange={handleChange} autoComplete="off" />
-                  <p className="field-hint">Example: b520123. This links you to the correct cohort.</p>
+                  <input
+                    id="collegeId"
+                    name="collegeId"
+                    value={form.collegeId}
+                    onChange={handleChange}
+                    autoComplete="off"
+                    disabled={rollLocked}
+                  />
+                  <p className="field-hint">
+                    {rollLocked
+                      ? 'Roll ID is locked. Contact the bootcamp team if it needs to be corrected.'
+                      : 'Example: b520123. This links you to the correct cohort.'}
+                  </p>
                 </div>
 
                 <div className="form-field">

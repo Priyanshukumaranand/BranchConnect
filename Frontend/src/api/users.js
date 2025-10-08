@@ -30,6 +30,14 @@ export const fetchUserByEmail = (email) => {
   return apiFetch(`/users/lookup/email?${searchParams.toString()}`, { method: 'GET' });
 };
 
+export const fetchUserById = (userId) => {
+  if (!userId) {
+    return Promise.reject(new Error('User id is required.'));
+  }
+
+  return apiFetch(`/users/${userId}`, { method: 'GET' });
+};
+
 export const fetchAvatarByEmail = async (email) => {
   if (!email) {
     throw new Error('Email is required to fetch avatar.');

@@ -12,6 +12,7 @@ const baseLinks = [
 
 const authedLinks = [
     { to: '/batches', label: 'BATCHES' },
+    { to: '/chats', label: 'CHATS' },
     { to: '/profile', label: 'EDIT PROFILE' }
 ]
 

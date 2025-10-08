@@ -17,15 +17,27 @@ exports.updateProfile = async (req, res, next) => {
       return res.status(401).json({ error: 'Not authenticated.' });
     }
 
+    const incomingCollegeId = typeof req.body.collegeId === 'string'
+      ? req.body.collegeId.trim()
+      : '';
+
     const updates = {
       name: req.body.name,
-      collegeId: req.body.collegeId,
       place: req.body.place,
       about: req.body.about,
       instagram: req.body.instagram,
       linkedin: req.body.linkedin,
       github: req.body.github
     };
+
+    if (req.currentUser.collegeId) {
+      const currentId = req.currentUser.collegeId.trim();
+      if (incomingCollegeId && incomingCollegeId.toLowerCase() !== currentId.toLowerCase()) {
+        return res.status(400).json({ error: 'Roll ID cannot be changed. Please contact the bootcamp team for assistance.' });
+      }
+    } else if (incomingCollegeId) {
+      updates.collegeId = incomingCollegeId;
+    }
 
     if (req.file) {
       updates.img = {
@@ -34,7 +46,7 @@ exports.updateProfile = async (req, res, next) => {
       };
     }
 
-    const user = await User.findByIdAndUpdate(req.currentUser.id, updates, {
+  const user = await User.findByIdAndUpdate(req.currentUser.id, updates, {
       new: true
     }).select('-password');
 
@@ -132,6 +144,26 @@ exports.getAvatar = async (req, res, next) => {
     }
 
     return res.send(buffer);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getById = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User id is required.' });
+    }
+
+    const user = await User.findById(userId).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    return res.json({ user: sanitizeUser(user, { includeImageData: true }) });
   } catch (error) {
     return next(error);
   }
