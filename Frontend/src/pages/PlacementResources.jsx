@@ -12,6 +12,34 @@ const CP_PROFILE_LABELS = {
   codechef: 'CodeChef'
 };
 
+const PROVIDER_PROFILE_ORDER = {
+  codeforces: ['codeforces', 'leetcode', 'codechef'],
+  leetcode: ['leetcode', 'codeforces', 'codechef']
+};
+
+const LEADERBOARD_PROVIDER_META = {
+  codeforces: {
+    title: 'Codeforces rating leaders',
+    description: 'Live snapshot of Branch Connect members climbing the Codeforces ladder.'
+  },
+  leetcode: {
+    title: 'LeetCode contest rating leaders',
+    description: 'Top contest performers sharing their LeetCode grind with the community.'
+  }
+};
+
+const createEmptyProviderData = () => ({ entries: [], totalProfiles: 0 });
+
+const createEmptyLeaderboardState = () => ({
+  codeforces: createEmptyProviderData(),
+  leetcode: createEmptyProviderData()
+});
+
+const toSafeCount = (value, fallback = 0) => {
+  const count = Number(value);
+  return Number.isFinite(count) && count >= 0 ? count : fallback;
+};
+
 const highlightStats = [
   {
     value: '12+',
@@ -273,7 +301,8 @@ const practicePlatforms = [
 ];
 
 const PlacementResources = () => {
-  const [leaderboardEntries, setLeaderboardEntries] = useState([]);
+  const [leaderboardData, setLeaderboardData] = useState(() => createEmptyLeaderboardState());
+  const [leaderboardSummary, setLeaderboardSummary] = useState(null);
   const [leaderboardStatus, setLeaderboardStatus] = useState('idle');
   const [leaderboardError, setLeaderboardError] = useState(null);
 
@@ -289,8 +318,24 @@ const PlacementResources = () => {
         if (!isActive) {
           return;
         }
-        const list = Array.isArray(response?.leaderboard) ? response.leaderboard : [];
-        setLeaderboardEntries(list);
+        const normaliseProvider = (payload) => {
+          const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+          return {
+            entries,
+            totalProfiles: toSafeCount(payload?.totalProfiles, entries.length)
+          };
+        };
+
+        const nextData = {
+          codeforces: normaliseProvider(response?.leaderboard?.codeforces),
+          leetcode: normaliseProvider(response?.leaderboard?.leetcode)
+        };
+
+        setLeaderboardData(nextData);
+        setLeaderboardSummary({
+          generatedAt: response?.generatedAt ?? null,
+          summary: response?.summary ?? null
+        });
         setLeaderboardStatus('success');
       })
       .catch((error) => {
@@ -307,14 +352,62 @@ const PlacementResources = () => {
     };
   }, []);
 
-  const leaderboard = useMemo(
-    () => leaderboardEntries.slice().sort((a, b) => {
-      const rankA = Number.isFinite(a?.rank) ? a.rank : Number.MAX_SAFE_INTEGER;
-      const rankB = Number.isFinite(b?.rank) ? b.rank : Number.MAX_SAFE_INTEGER;
-      return rankA - rankB;
+  const leaderboardSections = useMemo(
+    () => Object.entries(leaderboardData).map(([provider, payload]) => {
+      const meta = LEADERBOARD_PROVIDER_META[provider] || {
+        title: `${provider} leaderboard`,
+        description: ''
+      };
+      const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+      return {
+        provider,
+        ...meta,
+        entries,
+        totalProfiles: toSafeCount(payload?.totalProfiles, entries.length)
+      };
     }),
-    [leaderboardEntries]
+    [leaderboardData]
   );
+
+  const hasAnyLeaderboardEntries = useMemo(
+    () => leaderboardSections.some((section) => section.entries.length > 0),
+    [leaderboardSections]
+  );
+
+  const leaderboardRefreshLabel = useMemo(() => {
+    if (!leaderboardSummary?.generatedAt) {
+      return null;
+    }
+    const timestamp = new Date(leaderboardSummary.generatedAt);
+    if (Number.isNaN(timestamp.getTime())) {
+      return null;
+    }
+    return timestamp.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  }, [leaderboardSummary?.generatedAt]);
+
+  const linkedProfilesLabel = useMemo(() => {
+    const summary = leaderboardSummary?.summary;
+    if (!summary) {
+      return null;
+    }
+
+    const parts = [];
+    const codeforcesProfiles = toSafeCount(summary?.codeforces?.totalProfiles);
+    const leetcodeProfiles = toSafeCount(summary?.leetcode?.totalProfiles);
+
+    if (codeforcesProfiles > 0) {
+      parts.push(`Codeforces ${codeforcesProfiles}`);
+    }
+    if (leetcodeProfiles > 0) {
+      parts.push(`LeetCode ${leetcodeProfiles}`);
+    }
+
+    if (parts.length === 0) {
+      return null;
+    }
+
+    return `Profiles linked · ${parts.join(' • ')}`;
+  }, [leaderboardSummary?.summary]);
 
   return (
     <div className="placement-page">
@@ -371,8 +464,14 @@ const PlacementResources = () => {
             {collection.id === 'dsa' && (
               <div className="dsa-leaderboard" role="region" aria-live="polite">
                 <div className="dsa-leaderboard__header">
-                  <h4>Branch Connect DSA leaderboard</h4>
-                  <p>Spotlight on the top 10 problem solvers sharing their CP grind this season.</p>
+                  <h4>Branch Connect CP leaderboards</h4>
+                  <p>Live ratings pulled directly from Codeforces and LeetCode profiles shared by the community.</p>
+                  {leaderboardRefreshLabel && (
+                    <span className="dsa-leaderboard__timestamp">Updated {leaderboardRefreshLabel}</span>
+                  )}
+                  {linkedProfilesLabel && (
+                    <span className="dsa-leaderboard__meta">{linkedProfilesLabel}</span>
+                  )}
                 </div>
 
                 {leaderboardStatus === 'loading' && (
@@ -385,59 +484,120 @@ const PlacementResources = () => {
                   </p>
                 )}
 
-                {leaderboardStatus === 'success' && leaderboard.length === 0 && (
-                  <p className="dsa-leaderboard__status">Leaderboard updates will appear once members log contest results.</p>
-                )}
-
-                {leaderboardStatus === 'success' && leaderboard.length > 0 && (
-                  <ol className="leaderboard-list">
-                    {leaderboard.map((entry) => {
-                      const branchDetails = [entry.branch, entry.batch ? `Batch ${entry.batch}` : null]
-                        .filter(Boolean)
-                        .join(' • ');
+                {leaderboardStatus === 'success' && (
+                  <div className="dsa-leaderboard__lists">
+                    {leaderboardSections.map((section) => {
+                      const profileOrder = PROVIDER_PROFILE_ORDER[section.provider] || CP_PROFILE_ORDER;
+                      const emptyMessage = section.provider === 'codeforces'
+                        ? 'Link your Codeforces handle in your Branch Connect profile to appear on this board.'
+                        : 'Link your LeetCode username in your Branch Connect profile to appear on this board.';
 
                       return (
-                        <li key={`${entry.rank}-${entry.name}`} className="leaderboard-item">
-                          <div className="leaderboard-item__top">
-                            <span className="leaderboard-item__rank" aria-hidden>#{entry.rank}</span>
-                            <div className="leaderboard-item__identity">
-                              <h5>{entry.name}</h5>
-                              <p>{branchDetails || 'Branch Connect member'}</p>
-                            </div>
-                            <div className="leaderboard-item__score">
-                              <strong>{entry.points}</strong>
-                              <span>rating points</span>
-                              {Number.isFinite(entry.solvedCount) && (
-                                <span className="leaderboard-item__score-sub">{`Solved ${entry.solvedCount}`}</span>
-                              )}
-                            </div>
-                          </div>
-                          {entry.highlight && (
-                            <p className="leaderboard-item__highlight">{entry.highlight}</p>
-                          )}
-                          <div
-                            className="leaderboard-item__links"
-                            aria-label={`Competitive programming profiles for ${entry.name}`}
-                          >
-                            {CP_PROFILE_ORDER.map((key) => {
-                              const href = entry.profiles?.[key];
-                              if (!href) {
-                                return null;
-                              }
-                              return (
-                                <a key={key} href={href} target="_blank" rel="noopener noreferrer">
-                                  {CP_PROFILE_LABELS[key]} ↗
-                                </a>
-                              );
-                            })}
-                            {(!entry.profiles || CP_PROFILE_ORDER.every((key) => !entry.profiles?.[key])) && (
-                              <span className="leaderboard-item__links--placeholder">Profiles coming soon</span>
+                        <section
+                          key={section.provider}
+                          className="leaderboard-section"
+                          aria-labelledby={`leaderboard-${section.provider}`}
+                        >
+                          <div className="leaderboard-section__header">
+                            <h5 id={`leaderboard-${section.provider}`}>{section.title}</h5>
+                            {section.description && <p>{section.description}</p>}
+                            {section.totalProfiles > 0 && (
+                              <span className="leaderboard-section__meta">
+                                {`Profiles linked: ${section.totalProfiles}`}
+                              </span>
                             )}
                           </div>
-                        </li>
+
+                          {section.entries.length === 0 ? (
+                            <p className="leaderboard-section__empty">{emptyMessage}</p>
+                          ) : (
+                            <ol className="leaderboard-list">
+                              {section.entries.map((entry) => {
+                                const itemKey = entry.userId || `${section.provider}-${entry.rank}-${entry.handle || entry.name}`;
+                                const subtitle = entry.subtitle
+                                  || (entry.handle ? `@${entry.handle}` : null)
+                                  || 'Branch Connect member';
+                                const ratingDisplay = Number.isFinite(entry.rating)
+                                  ? entry.rating.toLocaleString()
+                                  : '—';
+
+                                return (
+                                  <li key={itemKey} className="leaderboard-item">
+                                    <div className="leaderboard-item__top">
+                                      <span className="leaderboard-item__rank" aria-hidden>#{entry.rank}</span>
+                                      <div className="leaderboard-item__identity">
+                                        <h5>{entry.name}</h5>
+                                        <p>{subtitle}</p>
+                                      </div>
+                                      <div className="leaderboard-item__score">
+                                        <strong>{ratingDisplay}</strong>
+                                        <span>{entry.ratingLabel || 'Rating'}</span>
+                                        {(entry.stats || []).map((stat) => {
+                                          if (!stat) {
+                                            return null;
+                                          }
+                                          const rawValue = stat.value ?? stat.count;
+                                          if (rawValue === undefined || rawValue === null || rawValue === '') {
+                                            return null;
+                                          }
+                                          const numericValue = typeof rawValue === 'number' ? rawValue : Number(rawValue);
+                                          const isNumeric = Number.isFinite(numericValue);
+                                          const valueText = isNumeric
+                                            ? stat.label.includes('%')
+                                              ? `${numericValue}%`
+                                              : numericValue.toLocaleString()
+                                            : String(rawValue);
+
+                                          return (
+                                            <span
+                                              key={`${stat.label}-${valueText}`}
+                                              className="leaderboard-item__score-sub"
+                                            >
+                                              {`${stat.label}: ${valueText}`}
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                    {entry.highlight && (
+                                      <p className="leaderboard-item__highlight">{entry.highlight}</p>
+                                    )}
+                                    <div
+                                      className="leaderboard-item__links"
+                                      aria-label={`Competitive programming profiles for ${entry.name}`}
+                                    >
+                                      {profileOrder.map((key) => {
+                                        const href = entry.profiles?.[key];
+                                        if (!href) {
+                                          return null;
+                                        }
+                                        return (
+                                          <a key={key} href={href} target="_blank" rel="noopener noreferrer">
+                                            {CP_PROFILE_LABELS[key]} ↗
+                                          </a>
+                                        );
+                                      })}
+                                      {(!entry.profiles || profileOrder.every((key) => !entry.profiles?.[key])) && (
+                                        <span className="leaderboard-item__links--placeholder">
+                                          Add your CP profiles from the Branch Connect profile page
+                                        </span>
+                                      )}
+                                    </div>
+                                  </li>
+                                );
+                              })}
+                            </ol>
+                          )}
+                        </section>
                       );
                     })}
-                  </ol>
+                  </div>
+                )}
+
+                {leaderboardStatus === 'success' && !hasAnyLeaderboardEntries && (
+                  <p className="dsa-leaderboard__status">
+                    Leaderboard updates will appear once members link their CP profiles.
+                  </p>
                 )}
               </div>
             )}

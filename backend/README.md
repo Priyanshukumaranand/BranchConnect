@@ -62,6 +62,17 @@ backend/
 └── .env.example         # Template for environment variables
 ```
 
+## Competitive programming leaderboard
+
+The `GET /resources/dsa-leaderboard` endpoint now assembles two live leaderboards sourced from member profiles:
+
+- **Codeforces** — Calls the public `user.info` API in batches to retrieve the latest rating and title for every stored handle.
+- **LeetCode** — Uses the public GraphQL endpoint to fetch contest ratings, contest count, and total problems solved per username.
+
+Only users who add their Codeforces/LeetCode links in the Branch Connect profile page are considered. Results are cached in-memory for ten minutes to avoid hammering the upstream services; expect the first request after the cache expires to take a little longer while the data refreshes.
+
+If either upstream service is unreachable, that provider's leaderboard gracefully falls back to an empty list while leaving the other provider untouched.
+
 ## Troubleshooting
 
 - **`MONGO_URI is not defined`**: Copy `.env.example` to `.env` and fill in the values before starting the server.

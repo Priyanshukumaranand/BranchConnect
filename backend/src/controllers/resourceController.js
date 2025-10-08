@@ -1,4 +1,4 @@
-const dsaLeaderboard = require('../data/dsaLeaderboard');
+const { getCompetitiveProgrammingLeaderboard } = require('../services/leaderboardService');
 
 exports.listResources = (req, res) => {
   res.json({
@@ -11,14 +11,22 @@ exports.listResources = (req, res) => {
   });
 };
 
-exports.getDsaLeaderboard = (req, res) => {
-  const limitParam = Number.parseInt(req.query.limit, 10);
-  const limit = Number.isNaN(limitParam) ? 10 : Math.min(Math.max(limitParam, 1), 50);
+exports.getDsaLeaderboard = async (req, res, next) => {
+  try {
+    const limitParam = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isNaN(limitParam) ? undefined : limitParam;
 
-  return res.json({
-    leaderboard: dsaLeaderboard
-      .slice()
-      .sort((a, b) => a.rank - b.rank)
-      .slice(0, limit)
-  });
+    const leaderboard = await getCompetitiveProgrammingLeaderboard({ limit });
+
+    return res.json({
+      leaderboard: {
+        codeforces: leaderboard.codeforces,
+        leetcode: leaderboard.leetcode
+      },
+      summary: leaderboard.summary,
+      generatedAt: leaderboard.generatedAt
+    });
+  } catch (error) {
+    return next(error);
+  }
 };
