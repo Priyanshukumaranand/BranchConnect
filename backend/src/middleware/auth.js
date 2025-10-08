@@ -8,6 +8,15 @@ async function attachUser(req, res, next) {
       return next();
     }
 
+    if (!req.currentUser && req.session?.passport?.user) {
+      const sessionUserId = req.session.passport.user;
+      const sessionUser = await User.findById(sessionUserId).select('-password');
+      if (sessionUser) {
+        req.currentUser = sessionUser;
+        return next();
+      }
+    }
+
     const token = req.cookies?.jwt || (req.headers.authorization && req.headers.authorization.split(' ')[1]);
 
     if (!token) {
@@ -15,14 +24,23 @@ async function attachUser(req, res, next) {
     }
 
     const decoded = verifyToken(token);
-    if (!decoded || !decoded.email) {
+    if (!decoded) {
       return next();
     }
 
-    const user = await User.findOne({ email: decoded.email }).select('-password');
-    if (user) {
-      req.currentUser = user;
+    let user = null;
+
+    if (decoded.id) {
+      user = await User.findById(decoded.id).select('-password');
+    } else if (decoded.email) {
+      user = await User.findOne({ email: decoded.email }).select('-password');
     }
+
+    if (!user) {
+      return next();
+    }
+
+    req.currentUser = user;
 
     return next();
   } catch (error) {
