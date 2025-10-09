@@ -12,6 +12,8 @@ const configurePassport = require('./config/passport');
 const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
 const { attachUser } = require('./middleware/auth');
+const { getSocketServer } = require('./socket');
+const { getRedisHealth } = require('./config/redis');
 
 configurePassport(passport);
 
@@ -76,6 +78,17 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(attachUser);
+
+app.get('/socket/ping', (req, res) => {
+  const io = getSocketServer();
+  res.json({
+    status: 'ok',
+    socket: Boolean(io),
+    connections: io ? io.engine.clientsCount : 0,
+    redis: getRedisHealth(),
+    timestamp: new Date().toISOString()
+  });
+});
 
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection(true));

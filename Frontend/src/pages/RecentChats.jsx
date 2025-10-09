@@ -296,6 +296,8 @@ const RecentChats = () => {
             const unreadCount = conversation.unreadCount || 0;
             const conversationId = conversation.id;
             const otherMemberId = otherMember?.id;
+            const isOtherOnline = Boolean(conversation.isOtherParticipantOnline || otherMember?.isOnline);
+            const lastSeenAt = conversation.otherParticipantLastSeenAt || otherMember?.lastSeenAt || null;
 
             const deletePending = deleteMutation.isPending && deleteMutation.variables?.conversationId === conversationId;
             const blockPending = blockMutation.isPending && blockMutation.variables?.conversationId === conversationId;
@@ -337,6 +339,13 @@ const RecentChats = () => {
                           <span className="conversation-card__badge" aria-label={`${unreadCount} unread messages`}>
                             {unreadCount} unread
                           </span>
+                        )}
+                        {isOtherOnline ? (
+                          <span className="conversation-card__tag conversation-card__tag--online">Online now</span>
+                        ) : lastSeenAt ? (
+                          <span className="conversation-card__tag conversation-card__tag--muted">Last seen {formatRelativeTime(lastSeenAt)}</span>
+                        ) : (
+                          <span className="conversation-card__tag conversation-card__tag--muted">Last seen NA</span>
                         )}
                         {isBlockingCurrentUser && (
                           <span className="conversation-card__tag conversation-card__tag--warning">They blocked you</span>

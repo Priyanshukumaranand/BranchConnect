@@ -4,9 +4,10 @@ const Message = require('../models/Message');
 const User = require('../models/User');
 const BlockedUser = require('../models/BlockedUser');
 const { sanitizeUser } = require('../utils/sanitizeUser');
-const sendMessageNotificationEmail = require('../utils/sendMessageNotificationEmail');
+const { broadcastNewMessage, broadcastConversationUpdate, broadcastMessagesRead, isUserOnline } = require('../socket');
 
 const MAX_PAGE_SIZE = 20;
+const MESSAGE_NOTIFICATION_DELAY_MINUTES = Number.parseInt(process.env.MESSAGE_NOTIFICATION_DELAY_MINUTES, 10) || 30;
 
 const toObjectId = (value) => {
   if (!value) return null;
@@ -80,6 +81,12 @@ const formatConversation = (conversation, currentUserId, meta = {}) => {
   }
 
   const otherParticipant = participants.find((participant) => participant.id && participant.id !== currentIdStr) || null;
+  const isOtherOnline = otherParticipant?.id ? isUserOnline(otherParticipant.id) : false;
+
+  if (otherParticipant) {
+    otherParticipant.isOnline = isOtherOnline;
+    otherParticipant.lastSeenAt = otherParticipant.lastSeenAt || null;
+  }
   const otherId = otherParticipant?.id || null;
 
   return {
@@ -95,8 +102,10 @@ const formatConversation = (conversation, currentUserId, meta = {}) => {
         }
       : null,
     unreadCount: unreadCounts[currentIdStr] || 0,
-    isBlockedByCurrentUser: Boolean(otherId && blockedByCurrent.has(otherId)),
-    isBlockingCurrentUser: Boolean(otherId && blockedCurrent.has(otherId)),
+  isBlockedByCurrentUser: Boolean(otherId && blockedByCurrent.has(otherId)),
+  isBlockingCurrentUser: Boolean(otherId && blockedCurrent.has(otherId)),
+  isOtherParticipantOnline: isOtherOnline,
+  otherParticipantLastSeenAt: otherParticipant?.lastSeenAt || null,
     blockReason: otherId ? blockedByCurrent.get(otherId) || null : null,
     updatedAt: conversation.updatedAt,
     createdAt: conversation.createdAt
@@ -341,11 +350,20 @@ exports.sendMessageToUser = async (req, res, next) => {
       return res.status(403).json({ error: 'This member is not accepting messages from you.' });
     }
 
+    const notificationScheduledFor = new Date(Date.now() + MESSAGE_NOTIFICATION_DELAY_MINUTES * 60 * 1000);
+
     const message = await Message.create({
       conversation: conversation._id,
       sender: currentUserId,
       recipient: recipientId,
-      body
+      body,
+      notificationScheduledFor
+    });
+
+    setImmediate(() => {
+      User.findByIdAndUpdate(currentUserId, { lastSeenAt: new Date() }).catch((error) => {
+        console.warn('[chat] Failed to update lastSeenAt after sending message:', error?.message || error);
+      });
     });
 
     conversation.lastMessage = {
@@ -381,18 +399,15 @@ exports.sendMessageToUser = async (req, res, next) => {
       buildBlockMaps(req.currentUser._id)
     ]);
 
-    const recipient = refreshedConversation.participants.find((participant) => participant._id?.toString?.() === recipientId.toString());
-    const sender = refreshedConversation.participants.find((participant) => participant._id?.toString?.() === currentUserId.toString()) || req.currentUser;
+    const formattedMessage = formatMessage(populatedMessage, req.currentUser._id);
+    const formattedConversation = formatConversation(refreshedConversation, req.currentUser._id, blockMeta);
 
-    await sendMessageNotificationEmail({
-      recipient,
-      sender,
-      message: populatedMessage
-    });
+    broadcastNewMessage(formattedMessage, formattedConversation);
+    broadcastConversationUpdate(formattedConversation);
 
     return res.status(201).json({
-      message: formatMessage(populatedMessage, req.currentUser._id),
-      conversation: formatConversation(refreshedConversation, req.currentUser._id, blockMeta)
+      message: formattedMessage,
+      conversation: formattedConversation
     });
   } catch (error) {
     return next(error);
@@ -411,19 +426,37 @@ exports.markConversationRead = async (req, res, next) => {
     const conversation = await Conversation.findOne({
       _id: conversationId,
       participants: currentUserId
-    });
+    }).populate('participants');
 
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found.' });
     }
 
-    await Message.updateMany({
+    const unreadMessages = await Message.find({
       conversation: conversation._id,
       recipient: currentUserId,
       readAt: { $exists: false }
-    }, {
-      $set: { readAt: new Date() }
-    });
+    }).select('_id');
+
+    const readAt = new Date();
+    const readMessageIds = unreadMessages.map((doc) => doc._id?.toString?.()).filter(Boolean);
+
+    if (unreadMessages.length > 0) {
+      await Message.updateMany({
+        conversation: conversation._id,
+        recipient: currentUserId,
+        readAt: { $exists: false }
+      }, {
+        $set: {
+          readAt,
+          notificationEmailCancelledAt: readAt
+        },
+        $unset: {
+          notificationScheduledFor: '',
+          notificationEmailError: ''
+        }
+      });
+    }
 
     if (!conversation.unreadCounts) {
       conversation.unreadCounts = new Map();
@@ -435,9 +468,21 @@ exports.markConversationRead = async (req, res, next) => {
       conversation.unreadCounts[currentUserId.toString()] = 0;
     }
 
-    await conversation.save();
+  await conversation.save();
 
-    return res.json({ success: true });
+  const blockMeta = await buildBlockMaps(req.currentUser._id);
+  const formattedConversation = formatConversation(conversation, req.currentUser._id, blockMeta);
+  broadcastConversationUpdate(formattedConversation);
+
+  if (readMessageIds.length > 0) {
+    broadcastMessagesRead(conversation, {
+      messageIds: readMessageIds,
+      readerId: currentUserId,
+      readAt
+    });
+  }
+
+  return res.json({ success: true });
   } catch (error) {
     return next(error);
   }
@@ -500,13 +545,21 @@ exports.blockUser = async (req, res, next) => {
     const participantKey = buildParticipantKey(toObjectId(currentUserId), toObjectId(userId));
     const conversation = await Conversation.findOne({ participantKey });
     if (conversation) {
+      const blockReadAt = new Date();
       await Promise.all([
         Message.updateMany({
           conversation: conversation._id,
           recipient: currentUserId,
           readAt: { $exists: false }
         }, {
-          $set: { readAt: new Date() }
+          $set: {
+            readAt: blockReadAt,
+            notificationEmailCancelledAt: blockReadAt
+          },
+          $unset: {
+            notificationScheduledFor: '',
+            notificationEmailError: ''
+          }
         }),
         Conversation.updateOne({ _id: conversation._id }, {
           $set: {

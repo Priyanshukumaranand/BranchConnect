@@ -17,6 +17,10 @@ A refreshed codebase for the CE Bootcamp portal. The project is now split into a
 - npm 9+ (ships with Node 18)
 - A running MongoDB instance for the API (local or hosted)
 
+## Documentation
+
+- [`docs/realtime-chat.md`](docs/realtime-chat.md): End-to-end guide for the Redis-backed Socket.IO chat rollout, including env setup, verification steps, and deployment checklist.
+
 ## Quick start
 
 ### 1. Install dependencies

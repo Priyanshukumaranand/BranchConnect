@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,6 +13,7 @@ import {
   unblockUser
 } from '../api/chat';
 import { API_BASE_URL } from '../api/client';
+import { connectSocket, onSocketEvent, getSocketStatus } from '../api/socket';
 
 const MESSAGE_PAGE_SIZE = 20;
 
@@ -84,8 +85,12 @@ const ChatThread = () => {
   const [draft, setDraft] = useState('');
   const [composerError, setComposerError] = useState(null);
   const [panelStatus, setPanelStatus] = useState(null);
+  const [socketStatus, setSocketStatus] = useState(() => getSocketStatus());
+  const [socketError, setSocketError] = useState(null);
+  const [, forceRelativeRefresh] = useReducer((count) => count + 1, 0);
   const threadRef = useRef(null);
   const lastMessageTimestampRef = useRef(null);
+  const isSocketConnected = socketStatus === 'connected';
 
   useEffect(() => {
     if (currentUser?.id && userId && currentUser.id === userId) {
@@ -110,16 +115,16 @@ const ChatThread = () => {
       signal
     }),
     getNextPageParam: (lastPage) => (lastPage?.pagination?.hasMore ? lastPage.pagination.nextCursor : undefined),
-    refetchInterval: 5000,
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true,
+  refetchInterval: isSocketConnected ? false : 8000,
+  refetchIntervalInBackground: !isSocketConnected,
+  refetchOnWindowFocus: !isSocketConnected,
     refetchOnReconnect: true
   });
 
   const conversationQueryKey = useMemo(() => ['chat', 'with', userId], [userId]);
   const conversationListQueryKey = useMemo(() => ['chat', 'conversations'], []);
 
-  const applyConversationMeta = (updates) => {
+  const applyConversationMeta = useCallback((updates) => {
     if (!updates) return;
     queryClient.setQueryData(conversationQueryKey, (previous) => {
       if (!previous) return previous;
@@ -136,23 +141,75 @@ const ChatThread = () => {
         }))
       };
     });
-  };
+  }, [conversationQueryKey, queryClient]);
 
-  const updateConversationListMeta = (conversationId, updates) => {
-    if (!conversationId || !updates) return;
+  const updateConversationListMeta = useCallback((targetConversationId, updates) => {
+    if (!targetConversationId || !updates) return;
     queryClient.setQueryData(conversationListQueryKey, (previous = []) => {
       if (!Array.isArray(previous)) return previous;
-      return previous.map((item) => (item.id === conversationId ? { ...item, ...updates } : item));
+      return previous.map((item) => (item.id === targetConversationId ? { ...item, ...updates } : item));
     });
-  };
+  }, [conversationListQueryKey, queryClient]);
 
-  const removeConversationFromList = (conversationId) => {
-    if (!conversationId) return;
+  const removeConversationFromList = useCallback((targetConversationId) => {
+    if (!targetConversationId) return;
     queryClient.setQueryData(conversationListQueryKey, (previous = []) => {
       if (!Array.isArray(previous)) return previous;
-      return previous.filter((item) => item.id !== conversationId);
+      return previous.filter((item) => item.id !== targetConversationId);
     });
-  };
+  }, [conversationListQueryKey, queryClient]);
+
+  useEffect(() => {
+    if (!currentUser?.id) {
+      return undefined;
+    }
+
+    const client = connectSocket();
+    setSocketStatus(client.connected ? 'connected' : 'connecting');
+    setSocketError(null);
+
+    const unsubscribeConnect = onSocketEvent('connect', () => {
+      setSocketStatus('connected');
+      setSocketError(null);
+    });
+
+    const unsubscribeDisconnect = onSocketEvent('disconnect', (reason) => {
+      setSocketStatus(reason === 'io server disconnect' ? 'disconnected' : 'reconnecting');
+    });
+
+    const unsubscribeError = onSocketEvent('connect_error', (error) => {
+      setSocketStatus('error');
+      setSocketError(error?.message || 'Realtime connection failed. Falling back to polling.');
+    });
+
+    const unsubscribeReconnectAttempt = onSocketEvent('reconnect_attempt', () => {
+      setSocketStatus('reconnecting');
+    });
+
+    const unsubscribeReconnect = onSocketEvent('reconnect', () => {
+      setSocketStatus('connected');
+      setSocketError(null);
+      queryClient.invalidateQueries({ queryKey: conversationListQueryKey });
+      if (conversationQueryKey) {
+        queryClient.invalidateQueries({ queryKey: conversationQueryKey });
+      }
+    });
+
+    const unsubscribeReconnectFailed = onSocketEvent('reconnect_failed', () => {
+      setSocketStatus('error');
+      setSocketError('Realtime reconnection failed. Continuing with polling.');
+    });
+
+    return () => {
+      unsubscribeConnect();
+      unsubscribeDisconnect();
+      unsubscribeError();
+      unsubscribeReconnectAttempt();
+      unsubscribeReconnect();
+      unsubscribeReconnectFailed();
+    };
+  }, [currentUser?.id, queryClient, conversationListQueryKey, conversationQueryKey]);
+
 
   const conversation = conversationQuery.data?.pages?.[0]?.conversation || null;
   const conversationId = conversation?.id || null;
@@ -160,6 +217,27 @@ const ChatThread = () => {
   const isBlockingCurrentUser = Boolean(conversation?.isBlockingCurrentUser);
   const blockReason = conversation?.blockReason || null;
   const composerDisabled = isBlockedByCurrentUser || isBlockingCurrentUser;
+  const socketStatusLabel = useMemo(() => {
+    switch (socketStatus) {
+      case 'connected':
+        return 'Live updates enabled';
+      case 'reconnecting':
+        return 'Reconnecting to live updates…';
+      case 'connecting':
+        return 'Connecting to live updates…';
+      case 'error':
+        return socketError || 'Realtime offline — falling back to polling';
+      default:
+        return 'Offline — refreshing every few seconds';
+    }
+  }, [socketError, socketStatus]);
+
+  const socketStatusVariant = useMemo(() => {
+    if (socketStatus === 'connected') return 'online';
+    if (socketStatus === 'error') return 'error';
+    if (socketStatus === 'reconnecting') return 'warning';
+    return 'idle';
+  }, [socketStatus]);
 
   const composerPlaceholder = useMemo(() => {
     if (isBlockedByCurrentUser) {
@@ -174,9 +252,263 @@ const ChatThread = () => {
 
   const messages = useMemo(() => {
     const pages = conversationQuery.data?.pages || [];
-    const merged = pages.flatMap((page) => page.messages || []);
+    const byId = new Map();
+
+    pages.forEach((page) => {
+      (page.messages || []).forEach((message) => {
+        if (!message?.id) {
+          return;
+        }
+
+        const existing = byId.get(message.id);
+        if (!existing) {
+          byId.set(message.id, message);
+          return;
+        }
+
+        const existingUpdatedAt = existing?.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+        const messageUpdatedAt = message?.updatedAt ? new Date(message.updatedAt).getTime() : 0;
+
+        if (messageUpdatedAt >= existingUpdatedAt) {
+          byId.set(message.id, { ...existing, ...message });
+        }
+      });
+    });
+
+    const merged = Array.from(byId.values());
     return merged.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [conversationQuery.data]);
+
+  const formatMessageMeta = useCallback((message) => {
+    if (!message) {
+      return '';
+    }
+
+    const sentLabel = formatRelativeTime(message.createdAt);
+
+    if (!message.isOwn) {
+      return sentLabel;
+    }
+
+    if (message.readAt) {
+      return `Seen • ${formatRelativeTime(message.readAt)}`;
+    }
+
+    return `Sent • ${sentLabel}`;
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser?.id) {
+      return undefined;
+    }
+
+    const unsubscribeMessage = onSocketEvent('message:new', (payload) => {
+      if (!payload?.conversationId || !payload?.message) {
+        return;
+      }
+
+      if (conversationId && payload.conversationId === conversationId) {
+        queryClient.setQueryData(conversationQueryKey, (previous) => {
+          if (!previous) {
+            return previous;
+          }
+
+          const alreadyExists = previous.pages.some((page) =>
+            (page.messages || []).some((existing) => existing.id === payload.message.id)
+          );
+
+          if (alreadyExists) {
+            return previous;
+          }
+
+          const nextPages = previous.pages.map((page, index, array) => {
+            if (index === array.length - 1) {
+              return {
+                ...page,
+                messages: [...(page.messages || []), payload.message]
+              };
+            }
+            return page;
+          });
+
+          return {
+            ...previous,
+            pages: nextPages
+          };
+        });
+        lastMessageTimestampRef.current = payload.message.createdAt;
+      }
+
+      queryClient.invalidateQueries({ queryKey: conversationListQueryKey });
+    });
+
+    const unsubscribeConversation = onSocketEvent('conversation:update', (updatedConversation) => {
+      if (!updatedConversation?.id) {
+        return;
+      }
+
+      updateConversationListMeta(updatedConversation.id, updatedConversation);
+
+      if (conversationId && updatedConversation.id === conversationId) {
+        applyConversationMeta(updatedConversation);
+      }
+    });
+
+    const unsubscribeMessageRead = onSocketEvent('message:read', (payload) => {
+      if (!payload?.conversationId || !Array.isArray(payload.messageIds) || payload.messageIds.length === 0) {
+        return;
+      }
+
+      if (!conversationId || payload.conversationId !== conversationId) {
+        return;
+      }
+
+      const readAtIso = payload.readAt || new Date().toISOString();
+      const messageIds = new Set(payload.messageIds);
+
+      queryClient.setQueryData(conversationQueryKey, (previous) => {
+        if (!previous) {
+          return previous;
+        }
+
+        const nextPages = previous.pages.map((page) => {
+          if (!page?.messages) {
+            return page;
+          }
+
+          const updatedMessages = page.messages.map((message) => {
+            if (!message || !messageIds.has(message.id)) {
+              return message;
+            }
+
+            if (message.readAt) {
+              return message;
+            }
+
+            return {
+              ...message,
+              readAt: readAtIso
+            };
+          });
+
+          return {
+            ...page,
+            messages: updatedMessages
+          };
+        });
+
+        return {
+          ...previous,
+          pages: nextPages
+        };
+      });
+    });
+
+    return () => {
+      unsubscribeMessage();
+      unsubscribeConversation();
+      unsubscribeMessageRead();
+    };
+  }, [
+    currentUser?.id,
+    conversationId,
+    conversationQueryKey,
+    queryClient,
+    conversationListQueryKey,
+    updateConversationListMeta,
+    applyConversationMeta
+  ]);
+
+  useEffect(() => {
+    if (!currentUser?.id) {
+      return undefined;
+    }
+
+    const handlePresence = (payload) => {
+      if (!payload?.userId) {
+        return;
+      }
+
+      const isOnline = payload.status === 'online';
+      const lastSeenAt = payload.lastSeenAt || null;
+
+      queryClient.setQueryData(conversationListQueryKey, (previous = []) => {
+        if (!Array.isArray(previous)) {
+          return previous;
+        }
+
+        return previous.map((item) => {
+          if (item?.otherParticipant?.id !== payload.userId) {
+            return item;
+          }
+
+          const updatedOther = {
+            ...item.otherParticipant,
+            isOnline,
+            lastSeenAt
+          };
+
+          return {
+            ...item,
+            otherParticipant: updatedOther,
+            isOtherParticipantOnline: isOnline,
+            otherParticipantLastSeenAt: lastSeenAt
+          };
+        });
+      });
+
+      queryClient.setQueryData(conversationQueryKey, (previous) => {
+        if (!previous) {
+          return previous;
+        }
+
+        return {
+          ...previous,
+          pages: previous.pages.map((page) => {
+            if (!page?.conversation?.otherParticipant?.id || page.conversation.otherParticipant.id !== payload.userId) {
+              return page;
+            }
+
+            const updatedOther = {
+              ...page.conversation.otherParticipant,
+              isOnline,
+              lastSeenAt
+            };
+
+            return {
+              ...page,
+              conversation: {
+                ...page.conversation,
+                otherParticipant: updatedOther,
+                isOtherParticipantOnline: isOnline,
+                otherParticipantLastSeenAt: lastSeenAt
+              }
+            };
+          })
+        };
+      });
+
+      if (payload.userId === userId) {
+        queryClient.setQueryData(['member-profile', userId], (previousMember) => {
+          if (!previousMember) {
+            return previousMember;
+          }
+
+          return {
+            ...previousMember,
+            isOnline,
+            lastSeenAt
+          };
+        });
+      }
+    };
+
+    const unsubscribePresence = onSocketEvent('presence:update', handlePresence);
+
+    return () => {
+      unsubscribePresence();
+    };
+  }, [currentUser?.id, queryClient, conversationListQueryKey, conversationQueryKey, userId]);
 
   useEffect(() => {
     const thread = threadRef.current;
@@ -348,6 +680,58 @@ const ChatThread = () => {
   };
 
   const member = memberQuery.data || null;
+  const conversationPartner = useMemo(() => {
+    if (conversation?.otherParticipant?.id === userId) {
+      return conversation.otherParticipant;
+    }
+
+    const fallback = (conversation?.participants || []).find((participant) => participant?.id === userId);
+    if (fallback) {
+      return fallback;
+    }
+
+    if (member?.id === userId) {
+      return member;
+    }
+
+    return null;
+  }, [conversation, member, userId]);
+
+  const presence = useMemo(() => {
+    const source = conversationPartner || (member?.id === userId ? member : null);
+    const isOnline = source?.isOnline
+      ?? (conversationPartner ? conversation?.isOtherParticipantOnline : undefined)
+      ?? false;
+    const lastSeenAt = source?.lastSeenAt
+      || (conversationPartner ? conversation?.otherParticipantLastSeenAt : undefined)
+      || (member?.id === userId ? member?.lastSeenAt : undefined)
+      || null;
+
+    return {
+      isOnline: Boolean(isOnline),
+      lastSeenAt
+    };
+  }, [conversationPartner, conversation, member, userId]);
+  const presenceLabel = presence.isOnline
+    ? 'Online now'
+    : presence.lastSeenAt
+      ? `Last seen ${formatRelativeTime(presence.lastSeenAt)}`
+      : 'Last seen NA';
+
+  useEffect(() => {
+    const shouldTrackMessages = messages.length > 0;
+    const shouldTrackPresence = !presence.isOnline && Boolean(presence.lastSeenAt);
+
+    if (!shouldTrackMessages && !shouldTrackPresence) {
+      return undefined;
+    }
+
+    const interval = setInterval(() => {
+      forceRelativeRefresh();
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [messages.length, presence.isOnline, presence.lastSeenAt, forceRelativeRefresh]);
   const avatarUrl = buildAvatarUrl(member);
   const loadingMember = memberQuery.isLoading;
   const memberError = memberQuery.isError;
@@ -398,6 +782,14 @@ const ChatThread = () => {
               )}
             </div>
             {memberEmail && <p>{memberEmail}</p>}
+            {presenceLabel && (
+              <p
+                className={`chat-thread__presence${presence.isOnline ? ' chat-thread__presence--online' : ''}`}
+                role="status"
+              >
+                {presenceLabel}
+              </p>
+            )}
             <div className="chat-thread__badges">
               {isBlockingCurrentUser && (
                 <span className="chat-thread__badge chat-thread__badge--warning">They blocked you</span>
@@ -405,6 +797,13 @@ const ChatThread = () => {
               {isBlockedByCurrentUser && (
                 <span className="chat-thread__badge">Blocked</span>
               )}
+            </div>
+            <div
+              className={`chat-thread__connection chat-thread__connection--${socketStatusVariant}`}
+              role="status"
+            >
+              <span className="chat-thread__connection-indicator" aria-hidden />
+              <span>{socketStatusLabel}</span>
             </div>
           </div>
           <div className="chat-thread__actions" aria-label="Conversation actions">
@@ -498,7 +897,11 @@ const ChatThread = () => {
                   className={`chat-message${message.isOwn ? ' chat-message--own' : ''}`}
                 >
                   <p className="chat-message__body">{message.body}</p>
-                  <span className="chat-message__meta">{formatRelativeTime(message.createdAt)}</span>
+                  <span
+                    className={`chat-message__meta${message.isOwn && message.readAt ? ' chat-message__meta--seen' : ''}`}
+                  >
+                    {formatMessageMeta(message)}
+                  </span>
                 </div>
               ))
             )}

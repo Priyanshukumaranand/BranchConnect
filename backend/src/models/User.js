@@ -50,6 +50,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  lastSeenAt: {
+    type: Date,
+    default: Date.now
+  },
   img: ImageSchema,
   secret: String,
   created: {
