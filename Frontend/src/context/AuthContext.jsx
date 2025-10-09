@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { fetchCurrentUser, signIn as apiSignIn, signOut as apiSignOut, signUp as apiSignUp } from '../api/auth';
 import { updateProfile as apiUpdateProfile } from '../api/users';
 import { API_BASE_URL, setApiAuthToken, clearApiAuthToken } from '../api/client';
+import { refreshSocketAuth, disconnectSocket } from '../api/socket';
 
 const TOKEN_STORAGE_KEY = 'cebb.auth.token';
 
@@ -54,6 +55,7 @@ export const AuthProvider = ({ children }) => {
         const storedToken = window.sessionStorage.getItem(TOKEN_STORAGE_KEY);
         if (storedToken) {
           setApiAuthToken(storedToken);
+          refreshSocketAuth();
         }
       } catch (storageError) {
         console.warn('Unable to read stored auth token:', storageError);
@@ -99,6 +101,7 @@ export const AuthProvider = ({ children }) => {
     const token = response?.token;
     if (token) {
       setApiAuthToken(token);
+      refreshSocketAuth();
       if (typeof window !== 'undefined') {
         try {
           window.sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
@@ -124,6 +127,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       clearApiAuthToken();
+      disconnectSocket();
       if (typeof window !== 'undefined') {
         try {
           window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
@@ -139,6 +143,7 @@ export const AuthProvider = ({ children }) => {
       const response = await fetchCurrentUser();
       setUser(normaliseUser(response?.user));
       setAuthError(null);
+      refreshSocketAuth();
       return normaliseUser(response?.user);
     } catch (error) {
       if (error.status === 401) {

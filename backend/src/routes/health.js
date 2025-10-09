@@ -1,7 +1,16 @@
 const router = require('express').Router();
+const { getRedisHealth } = require('../config/redis');
 
 router.get('/', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const redis = getRedisHealth();
+
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    services: {
+      redis
+    }
+  });
 });
 
 module.exports = router;

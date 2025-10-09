@@ -29,6 +29,7 @@ Edit `.env` with your secrets before running the server.
 | `FRONTEND_URL` | Allowed origin for cookies and CORS (e.g., `http://localhost:3000`). |
 | `MAIL_HOST`, `MAIL_USER`, `MAIL_PASS` | SMTP settings for OTP and password-reset emails. |
 | `CLIENT_ID`, `CLIENT_SECRET`, `CALLBACK_URL` | Google OAuth credentials (optional). |
+| `REDIS_URL` **or** (`REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD`, `REDIS_TLS`) | Redis connection used for realtime messaging and caching. Leave unset to disable Redis in local development. |
 
 ### Development server
 
