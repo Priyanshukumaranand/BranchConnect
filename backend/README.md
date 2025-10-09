@@ -1,4 +1,4 @@
-# CE Bootcamp Backend
+# Branch Connect Backend
 
 Express + MongoDB API that powers the CE Bootcamp frontend. The codebase mirrors the legacy EJS application while exposing REST endpoints that the React SPA can consume.
 
@@ -93,3 +93,45 @@ All chat endpoints require authentication and live under the `/chat` prefix:
 | `POST /chat/conversations/:conversationId/read` | Marks all unread messages in the conversation as read for the current user. |
 
 Responses include denormalised participant details (name, email, avatar metadata) so the frontend can render chat threads without additional lookups.
+
+## Running the backend locally with Docker Compose
+
+These steps will start the backend together with a local MongoDB and Redis container using the provided `docker-compose.yml` at the repository root.
+
+1. Copy the example env and edit secrets:
+
+```powershell
+cd C:\Users\priya\Downloads\BranchBase
+Copy-Item .\backend\.env.example .\backend\.env -Force
+notepad .\backend\.env
+```
+
+2. Start the stack (build and run detached):
+
+```powershell
+docker compose up --build -d
+```
+
+3. Check running services and health:
+
+```powershell
+docker compose ps
+docker compose logs -f backend
+```
+
+4. Verify the app is healthy (health endpoint):
+
+```powershell
+Invoke-WebRequest -Uri http://localhost:8080/socket/ping -UseBasicParsing | Select-Object -ExpandProperty Content | ConvertFrom-Json
+```
+
+5. Stop and remove containers and volumes when finished:
+
+```powershell
+docker compose down -v
+```
+
+Notes
+- The repo `docker-compose.yml` includes healthchecks for `backend`, `mongo`, and `redis` to ensure readiness before downstream services connect.
+- If you run into connection errors, check `docker compose logs backend` and ensure `backend/.env` contains the correct `MONGO_URI` and Redis configuration (the example uses the compose service names `mongo` and `redis`).
+

@@ -1,0 +1,1 @@
+- [x] Document Azure deployment process for the backend container (pending guidance).
