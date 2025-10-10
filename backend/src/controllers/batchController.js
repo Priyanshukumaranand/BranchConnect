@@ -165,26 +165,41 @@ const toBranchDetails = (collegeId) => {
   };
 };
 
-const buildAvatar = (user) => {
+const buildAvatar = (user, { includeImageData = false, baseUrl = null } = {}) => {
   const id = user._id?.toString() || user.id;
   if (!hasImageData(user.img)) {
     return {
       hasAvatar: false,
-      image: null,
       avatarPath: null,
-      avatarContentType: null
+      avatarContentType: null,
+      avatarUrl: null,
+      image: null
     };
+  }
+
+  const avatarPath = id ? `/users/${id}/avatar` : null;
+  let avatarUrl = null;
+
+  if (avatarPath && baseUrl) {
+    try {
+      const resolved = new URL(avatarPath, baseUrl);
+      avatarUrl = resolved.toString();
+    } catch (error) {
+      avatarUrl = null;
+    }
   }
 
   return {
     hasAvatar: true,
-    image: imageToDataUrl(user.img),
-    avatarPath: id ? `/users/${id}/avatar` : null,
-    avatarContentType: user.img?.contentType || null
+    image: includeImageData ? imageToDataUrl(user.img) : null,
+    avatarPath,
+    avatarContentType: user.img?.contentType || null,
+    avatarUrl
   };
 };
 
-const sanitizeUser = (user) => {
+const sanitizeUser = (user, options = {}) => {
+  const { includeImageData = false, baseUrl = null } = options;
   const batchYear = user.batchYear || toBatchYear(user.collegeId);
   const branch = toBranchDetails(user.collegeId);
   const socials = {
@@ -197,9 +212,9 @@ const sanitizeUser = (user) => {
     email: user.email
   };
 
-  const avatar = buildAvatar(user);
+  const avatar = buildAvatar(user, { includeImageData, baseUrl });
 
-  return {
+  const sanitized = {
     id: user._id?.toString() || user.id,
     name: user.name,
     email: user.email,
@@ -210,12 +225,18 @@ const sanitizeUser = (user) => {
     place: user.place,
     secret: user.secret,
     socials,
-    image: avatar.image,
     hasAvatar: avatar.hasAvatar,
     avatarPath: avatar.avatarPath,
     avatarContentType: avatar.avatarContentType,
+    avatarUrl: avatar.avatarUrl,
     createdAt: user.created
   };
+
+  if (includeImageData && avatar.image) {
+    sanitized.image = avatar.image;
+  }
+
+  return sanitized;
 };
 
 exports.listBatches = async (req, res, next) => {
@@ -234,6 +255,11 @@ exports.listBatches = async (req, res, next) => {
       : Math.max(pageParam, 1);
 
     const skip = (page - 1) * pageSize;
+
+    const includeImageData = ['1', 'true', 'yes', 'inline'].includes(String(req.query.includeImages || req.query.includeImage || req.query.images).toLowerCase());
+    const protocol = req.protocol || 'http';
+    const host = req.get ? req.get('host') : null;
+    const baseUrl = host ? `${protocol}://${host}` : null;
 
     const [total, users] = await Promise.all([
       User.countDocuments(query),
@@ -254,7 +280,7 @@ exports.listBatches = async (req, res, next) => {
       pageSize,
       hasMore,
       nextPage,
-      users: users.map(sanitizeUser)
+      users: users.map((user) => sanitizeUser(user, { includeImageData, baseUrl }))
     });
   } catch (error) {
     return next(error);
