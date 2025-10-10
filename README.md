@@ -122,7 +122,7 @@ flowchart LR
     AS[App Service (Containers)]
     Blob[Azure Blob Storage]
     KV[Azure Key Vault]
-    Monitor[Azure Monitor & Autoscale]
+    Monitor[Azure Monitor &amp; Autoscale]
   end
   subgraph Data
     DB[MongoDB (Atlas / Self-hosted)]
@@ -164,7 +164,7 @@ sequenceDiagram
   participant BlobStore as Azure Blob Storage
   participant Users as Users
 
-  Dev->>ACR: Build & push image (branchbase-backend:TAG)
+  Dev->>ACR: Build &amp; push image (branchbase-backend:TAG)
   WebApp->>ACR: Pull latest approved image
   WebApp->>MongoDB: Query/Update data
   WebApp->>RedisCache: Cache sessions, publish events
@@ -179,6 +179,72 @@ sequenceDiagram
 2. SPA requests user state from Backend API at /api/me (cookie-based auth or bearer token).
 3. Backend validates session/JWT, queries MongoDB (and Redis for ephemeral state), and returns user data with avatar URLs pointing to either App Service / Blob Storage.
 4. For avatar uploads, the backend either uploads files to Blob Storage and returns blob URLs, or serves them directly from the database (not recommended at scale).
+
+### Chat runtime architecture
+
+Key pieces in the chat stack:
+- `backend/src/controllers/chatController.js` owns REST endpoints that create conversations, persist messages, and drive read receipts.
+- `backend/src/socket/index.js` wraps Socket.IO, authenticates clients with JWTs, and emits realtime updates for message delivery, presence, and read receipts.
+- `backend/src/config/redis.js` provisions a shared Redis connection so Socket.IO instances can coordinate through the Redis adapter when you scale horizontally.
+- `backend/src/jobs/messageNotificationScheduler.js` scans queued messages and sends deferred email notifications when recipients stay offline.
+
+#### Message send and delivery (REST → realtime)
+
+```mermaid
+sequenceDiagram
+  participant UserA as Frontend (Sender)
+  participant API as Express REST API
+  participant Mongo as MongoDB
+  participant Socket as Socket layer
+  participant UserB as Frontend (Recipient)
+
+  UserA->>API: POST /api/chat/users/:id/messages
+  API->>Mongo: upsert conversation + persist message
+  API-->>UserA: 201 Created (message payload)
+  API->>Socket: broadcastNewMessage(message)
+  Socket->>Mongo: update unread counts + lastSeenAt (async)
+  Socket->>UserB: emit "message:new" via WebSocket
+  Socket->>UserA: emit "message:new" echo for local sync
+```
+
+Highlights:
+- REST writes remain the source of truth; Socket.IO only fans out events after MongoDB commits succeed.
+- Presence and unread counts are recalculated on the server so each client receives consistent metadata.
+- Clients may optimistically render sends, but the authoritative payload (IDs, timestamps, read state) flows through the realtime channel.
+
+#### Socket presence, scaling, and Redis adapter
+
+```mermaid
+flowchart LR
+  subgraph Browser Clients
+    A[User A Browser]
+    B[User B Browser]
+  end
+
+  subgraph Node Cluster
+    API1[Express + Socket.IO Instance 1]
+    API2[Express + Socket.IO Instance 2]
+  end
+
+  subgraph Redis Layer
+    Cache[(Redis Pub/Sub)]
+  end
+
+  A -- WebSocket handshake + JWT --> API1
+  B -- WebSocket handshake + JWT --> API2
+  API1 -- publish presence/message events --> Cache
+  API2 -- subscribe + deliver events --> Cache
+  Cache -- fan-out --> API1
+  Cache -- fan-out --> API2
+  API1 -- emit presence:update --> A
+  API2 -- emit message:new / presence:update --> B
+```
+
+How this maps to code:
+- `createSocketServer` authenticates sockets, joins each user to a private room (`user:{id}`), and wires up presence counters so the API can expose `isUserOnline`.
+- When Redis credentials exist, the server duplicates the base Redis client to create the Socket.IO Redis adapter (`pubClient` and `subClient`), unlocking cross-instance fan-out.
+- `broadcastNewMessage`, `broadcastConversationUpdate`, and `broadcastMessagesRead` target both participants by room ID, and the adapter ensures every instance relays the same payload.
+- If Redis is unavailable, Socket.IO falls back to an in-memory adapter, so realtime still functions in single-instance development environments.
 
 ### Production deployment pattern (recommended)
 
