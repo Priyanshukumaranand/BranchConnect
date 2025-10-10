@@ -17,10 +17,6 @@ A refreshed codebase for the CE Bootcamp portal. The project is now split into a
 - npm 9+ (ships with Node 18)
 - A running MongoDB instance for the API (local or hosted)
 
-## Documentation
-
-- [`docs/realtime-chat.md`](docs/realtime-chat.md): End-to-end guide for the Redis-backed Socket.IO chat rollout, including env setup, verification steps, and deployment checklist.
-
 ## Quick start
 
 ### 1. Install dependencies
@@ -117,16 +113,16 @@ flowchart LR
     U[Users / Frontend SPA]
   end
   subgraph Azure
-    FE[Static Hosting / CDN]
-    ACR[Azure Container Registry]
-    AS[App Service (Containers)]
-    Blob[Azure Blob Storage]
-    KV[Azure Key Vault]
-    Monitor[Azure Monitor &amp; Autoscale]
+    FE["Static Hosting / CDN"]
+    ACR["Azure Container Registry"]
+    AS["App Service (Containers)"]
+    Blob["Azure Blob Storage"]
+    KV["Azure Key Vault"]
+  Monitor["Azure Monitor and Autoscale"]
   end
   subgraph Data
-    DB[MongoDB (Atlas / Self-hosted)]
-    Redis[Redis Cache]
+    DB["MongoDB (Atlas / Self-hosted)"]
+    Redis["Redis Cache"]
   end
 
   U --> FE
@@ -164,13 +160,13 @@ sequenceDiagram
   participant BlobStore as Azure Blob Storage
   participant Users as Users
 
-  Dev->>ACR: Build &amp; push image (branchbase-backend:TAG)
+  Dev->>ACR: Build and push image tagged branchbase-backend
   WebApp->>ACR: Pull latest approved image
-  WebApp->>MongoDB: Query/Update data
-  WebApp->>RedisCache: Cache sessions, publish events
-  WebApp->>BlobStore: Store/Retrieve avatar assets
+  WebApp->>MongoDB: Query or update data
+  WebApp->>RedisCache: Cache sessions and publish events
+  WebApp->>BlobStore: Store or retrieve avatar assets
   Users->>WebApp: HTTPS requests (API + WebSocket)
-  WebApp-->>Users: Responses & realtime events
+  WebApp-->>Users: Responses and realtime events
 ```
 
 ### Data flow (request example)
@@ -199,12 +195,12 @@ sequenceDiagram
   participant UserB as Frontend (Recipient)
 
   UserA->>API: POST /api/chat/users/:id/messages
-  API->>Mongo: upsert conversation + persist message
+  API->>Mongo: Upsert conversation and persist message
   API-->>UserA: 201 Created (message payload)
   API->>Socket: broadcastNewMessage(message)
-  Socket->>Mongo: update unread counts + lastSeenAt (async)
-  Socket->>UserB: emit "message:new" via WebSocket
-  Socket->>UserA: emit "message:new" echo for local sync
+  Socket->>Mongo: Update unread counts and lastSeenAt (async)
+  Socket->>UserB: Emit message:new via WebSocket
+  Socket->>UserA: Emit message:new echo for local sync
 ```
 
 Highlights:
@@ -245,6 +241,86 @@ How this maps to code:
 - When Redis credentials exist, the server duplicates the base Redis client to create the Socket.IO Redis adapter (`pubClient` and `subClient`), unlocking cross-instance fan-out.
 - `broadcastNewMessage`, `broadcastConversationUpdate`, and `broadcastMessagesRead` target both participants by room ID, and the adapter ensures every instance relays the same payload.
 - If Redis is unavailable, Socket.IO falls back to an in-memory adapter, so realtime still functions in single-instance development environments.
+
+#### Socket authentication handshake
+
+```mermaid
+sequenceDiagram
+  participant Client as Browser client
+  participant Gateway as Socket.IO gateway
+  participant JWT as JWT utility
+  participant Mongo as MongoDB
+
+  Client->>Gateway: WebSocket upgrade with JWT cookie/token
+  Gateway->>JWT: verifyToken(token)
+  JWT-->>Gateway: Decoded payload
+  Gateway->>Mongo: Fetch user profile without password
+  Mongo-->>Gateway: User document
+  Gateway-->>Client: Connection established (join user_room)
+  Gateway->>Client: Emit presence update (online)
+```
+
+#### Conversation pagination via REST
+
+```mermaid
+sequenceDiagram
+  participant User as Frontend client
+  participant API as Express REST API
+  participant Mongo as MongoDB
+
+  User->>API: GET /api/chat/conversations
+  API->>Mongo: Find conversations for current user
+  Mongo-->>API: Conversation list with metadata
+  API-->>User: JSON payload (participants, unread counts)
+
+  User->>API: GET /api/chat/conversations/:id/messages?limit=20&before=cursor
+  API->>Mongo: Query messages ordered by createdAt desc
+  Mongo-->>API: Page of messages
+  API-->>User: Messages plus next cursor
+```
+
+#### Read receipt propagation
+
+```mermaid
+sequenceDiagram
+  participant Recipient as Recipient client
+  participant API as Express REST API
+  participant Mongo as MongoDB
+  participant Socket as Socket layer
+  participant Sender as Sender client
+
+  Recipient->>API: POST /api/chat/conversations/:id/read
+  API->>Mongo: Mark messages read and update unread counts
+  Mongo-->>API: Updated conversation state
+  API-->>Recipient: 200 OK (read summary)
+  API->>Socket: broadcastMessagesRead(conversation, messageIds)
+  Socket->>Recipient: Emit message read confirmation
+  Socket->>Sender: Emit message read to sync sender UI
+```
+
+#### Offline notification scheduler
+
+```mermaid
+flowchart TD
+  subgraph Scheduler
+    Cron["Message notification scheduler job"]
+  end
+  subgraph Database
+    Pending["Messages awaiting notification window"]
+  end
+  subgraph Services
+    Mailer["Email sender (SES/SMTP)"]
+  end
+  subgraph Users
+    Inbox["Recipient inbox"]
+  end
+
+  Cron --> Pending
+  Pending --> Cron
+  Cron -->|Compose summary email| Mailer
+  Mailer --> Inbox
+  Cron -->|Mark notification sent / update attempts| Pending
+```
 
 ### Production deployment pattern (recommended)
 
@@ -346,17 +422,3 @@ The front-end build output is `Frontend/build/`. Host that folder on any static 
 - Confirm container image is present in ACR: `az acr repository show --name <acr> --repository branchbase-backend`.
 - Health check: GET `https://<app-name>.azurewebsites.net/socket/ping`.
 - If images or avatars do not load due to CORS, double-check `FRONTEND_URL` and Helmet/CORS middleware in `backend/src/app.js`.
-
-## Where to look next
-
-- `backend/README.md` contains backend-specific run instructions and Docker Compose dev instructions. Keep the backend README for low-level developer guidance; this root README is intended as a higher-level system and deployment guide.
-- Consider adding a `deploy/` folder with the official GitHub Actions YAML and an ARM/Bicep template if you want fully repeatable infra-as-code.
-
----
-
-If you'd like, I can also:
-
-- Add the GitHub Actions workflow file to `.github/workflows/` and a minimal `deploy` script under `deploy/`.
-- Create an ARM/Bicep template or Terraform module to provision the ACR + App Service and assign the roles automatically.
-
-Tell me which of those you'd like me to implement next and I'll create the files and run a quick validation locally.
