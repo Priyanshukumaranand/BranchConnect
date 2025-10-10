@@ -113,30 +113,64 @@ Mermaid visual (simple component diagram):
 
 ```mermaid
 flowchart LR
-	subgraph Users
-		U[Users / Frontend SPA]
-	end
-	subgraph Azure
-		FE[CDN / Static Host]
-		ACR[Azure Container Registry]
-		AS[App Service (Containers)]
-		Blob[Azure Blob Storage]
-		KV[Azure Key Vault]
-		Monitor[Azure Monitor / Autoscale]
-	end
-	subgraph Data
-		DB[MongoDB (Atlas)]
-		Redis[Redis]
-	end
+  subgraph Users
+    U[Users / Frontend SPA]
+  end
+  subgraph Azure
+    FE[Static Hosting / CDN]
+    ACR[Azure Container Registry]
+    AS[App Service (Containers)]
+    Blob[Azure Blob Storage]
+    KV[Azure Key Vault]
+    Monitor[Azure Monitor & Autoscale]
+  end
+  subgraph Data
+    DB[MongoDB (Atlas / Self-hosted)]
+    Redis[Redis Cache]
+  end
 
-	U --> FE
-	FE --> AS
-	AS --> DB
-	AS --> Redis
-	AS --> Blob
-	AS --> KV
-	ACR --> AS
-	Monitor --> AS
+  U --> FE
+  FE --> AS
+  AS --> DB
+  AS --> Redis
+  AS --> Blob
+  AS --> KV
+  ACR --> AS
+  Monitor --> AS
+```
+
+Component responsibilities:
+
+| Layer | Technology | Why it is used |
+|-------|------------|----------------|
+| Frontend delivery | Azure Static Web Apps or CDN | Serves the React build assets globally with edge caching. |
+| API hosting | Azure App Service (Linux container) | Runs the Express backend in a managed environment with autoscale and health checks. |
+| Container registry | Azure Container Registry | Stores versioned Docker images; integrates with App Service using managed identity. |
+| Database | MongoDB Atlas (recommended) | Primary source of truth for user profiles, batches, conversations, etc. |
+| Cache & realtime | Redis (Azure Cache for Redis or self-hosted) | Session store, rate limiting, Socket.IO adapter. |
+| Object storage | Azure Blob Storage (optional) | Offloads heavy avatars/files from MongoDB for cheaper, scalable storage. |
+| Secrets | Azure Key Vault (optional) | Centralized secret management with rotation and App Service referencing. |
+| Monitoring | Azure Monitor & Application Insights | Metrics, logs, and autoscale rules. |
+
+Deployment workflow visual:
+
+```mermaid
+sequenceDiagram
+  participant Dev as Developer/GitHub Actions
+  participant ACR as Azure Container Registry
+  participant WebApp as Azure App Service
+  participant MongoDB as MongoDB
+  participant RedisCache as Redis
+  participant BlobStore as Azure Blob Storage
+  participant Users as Users
+
+  Dev->>ACR: Build & push image (branchbase-backend:TAG)
+  WebApp->>ACR: Pull latest approved image
+  WebApp->>MongoDB: Query/Update data
+  WebApp->>RedisCache: Cache sessions, publish events
+  WebApp->>BlobStore: Store/Retrieve avatar assets
+  Users->>WebApp: HTTPS requests (API + WebSocket)
+  WebApp-->>Users: Responses & realtime events
 ```
 
 ### Data flow (request example)
@@ -158,7 +192,6 @@ flowchart LR
 ### Example Azure CLI commands (PowerShell friendly)
 
 Replace placeholders like `<RG>`, `<ACR_NAME>`, `<APP_NAME>`, `<LOCATION>`, and secret values with your own.
-
 ```powershell
 # create resource group
 az group create --name rg-branchbase-sea --location southeastasia
@@ -205,32 +238,32 @@ This example uses the Azure CLI to build in ACR and then updates the Web App to 
 name: Build and deploy backend to ACR/App Service
 
 on:
-	push:
-		branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
-	build-and-deploy:
-		runs-on: ubuntu-latest
-		steps:
-			- name: Checkout
-				uses: actions/checkout@v4
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-			- name: Login to Azure
-				uses: azure/login@v1
-				with:
-					creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-			- name: Build & push image to ACR (server-side)
-				run: |
-					az acr build --registry ${{ secrets.ACR_NAME }} --image branchbase-backend:${{ github.sha }} --file backend/Dockerfile backend
+      - name: Build & push image to ACR (server-side)
+        run: |
+          az acr build --registry ${{ secrets.ACR_NAME }} --image branchbase-backend:${{ github.sha }} --file backend/Dockerfile backend
 
-			- name: Update Web App to use new image
-				run: |
-					ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.ACR_NAME }} --query loginServer -o tsv)
-					az webapp config container set --name ${{ secrets.APP_NAME }} --resource-group ${{ secrets.RESOURCE_GROUP }} --docker-custom-image-name $ACR_LOGIN_SERVER/branchbase-backend:${{ github.sha }}
+      - name: Update Web App to use new image
+        run: |
+          ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.ACR_NAME }} --query loginServer -o tsv)
+          az webapp config container set --name ${{ secrets.APP_NAME }} --resource-group ${{ secrets.RESOURCE_GROUP }} --docker-custom-image-name $ACR_LOGIN_SERVER/branchbase-backend:${{ github.sha }}
 
-			- name: Restart webapp
-				run: az webapp restart --name ${{ secrets.APP_NAME }} --resource-group ${{ secrets.RESOURCE_GROUP }}
+      - name: Restart webapp
+        run: az webapp restart --name ${{ secrets.APP_NAME }} --resource-group ${{ secrets.RESOURCE_GROUP }}
 ```
 
 Notes:
