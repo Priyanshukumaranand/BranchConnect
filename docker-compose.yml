@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: branchbase-backend:latest
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - branchbase_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:8080/socket/ping', res => { process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1));\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  mongo:
+    image: mongo:6.0
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - "27017:27017"
+    networks:
+      - branchbase_net
+    healthcheck:
+      test: ["CMD-SHELL", "mongo --quiet --eval \"db.adminCommand('ping')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7.2-alpine
+    command: ["redis-server", "--save", "60", "1"]
+    ports:
+      - "6379:6379"
+    networks:
+      - branchbase_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  mongo-data:
+
+networks:
+  branchbase_net:
+    driver: bridge
