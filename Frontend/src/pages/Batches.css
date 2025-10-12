@@ -100,7 +100,6 @@
   grid-template-columns: auto 1fr;
   gap: clamp(0.85rem, 3vw, 1.2rem);
   align-items: center;
-  min-width: 0;
 }
 
 .profile-card__header .profile-heading {
@@ -158,13 +157,11 @@
   display: grid;
   gap: 0.3rem;
   align-content: start;
-  min-width: 0;
 }
 
 .card-face--front h3 {
   font-size: 1.3rem;
   margin: 0;
-  word-break: break-word;
 }
 
 .card-face--front span {
@@ -182,7 +179,6 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  width: 100%;
 }
 
 .focus-chips span {
