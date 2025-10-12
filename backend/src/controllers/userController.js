@@ -21,16 +21,18 @@ exports.updateProfile = async (req, res, next) => {
       ? req.body.collegeId.trim()
       : '';
 
+    // Helper to safely assign string values
+    const safeString = v => typeof v === 'string' ? v : undefined;
     const updates = {
-      name: req.body.name,
-      place: req.body.place,
-      about: req.body.about,
-      instagram: req.body.instagram,
-      linkedin: req.body.linkedin,
-      github: req.body.github,
-      leetcode: req.body.leetcode,
-      codeforces: req.body.codeforces,
-      codechef: req.body.codechef
+      name: safeString(req.body.name),
+      place: safeString(req.body.place),
+      about: safeString(req.body.about),
+      instagram: safeString(req.body.instagram),
+      linkedin: safeString(req.body.linkedin),
+      github: safeString(req.body.github),
+      leetcode: safeString(req.body.leetcode),
+      codeforces: safeString(req.body.codeforces),
+      codechef: safeString(req.body.codechef)
     };
 
     if (req.currentUser.collegeId) {
