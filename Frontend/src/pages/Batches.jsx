@@ -40,6 +40,17 @@ const tokenise = (value) => {
     .filter(Boolean);
 };
 
+const truncate = (value, limit = 180) => {
+  if (!value) return '';
+  const trimmed = value.trim();
+  if (trimmed.length <= limit) {
+    return trimmed;
+  }
+  const sliceEnd = trimmed.lastIndexOf(' ', limit - 3);
+  const safeIndex = sliceEnd > limit / 2 ? sliceEnd : limit - 3;
+  return `${trimmed.slice(0, safeIndex).trim()}...`;
+};
+
 const normaliseProfile = (user) => {
   const name = user.name || user.email?.split('@')[0] || 'Branch Connect Member';
   const roll = user.collegeId ? user.collegeId.toUpperCase() : user.email?.substring(0, 7)?.toUpperCase() || '—';
@@ -82,7 +93,7 @@ const normaliseProfile = (user) => {
     name,
     roll,
     email,
-    about: user.about || 'Details coming soon. Reach out to the Branch Connect organisers to update this profile.',
+    about: truncate(user.about || 'Details coming soon. Reach out to the Branch Connect organisers to update this profile.'),
     focus: focus.length > 0 ? focus : ['Branch Connect Member'],
     links,
     image,
@@ -94,6 +105,7 @@ const Batches = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialYearFromQuery = searchParams.get('year');
   const initialBranchFromQuery = searchParams.get('branch');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const initialBranchKey = useMemo(() => {
     if (!initialBranchFromQuery) {
@@ -206,12 +218,38 @@ const Batches = () => {
     ));
   }, [data]);
 
+  const filteredProfiles = useMemo(() => {
+    const value = searchTerm.trim().toLowerCase();
+    if (!value) {
+      return currentProfiles;
+    }
+
+    return currentProfiles.filter((profile) => {
+      const haystack = [
+        profile.name,
+        profile.roll,
+        profile.about,
+        ...profile.focus
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(value);
+    });
+  }, [currentProfiles, searchTerm]);
+
   const totalProfiles = data?.pages?.[0]?.total ?? 0;
 
   const years = useMemo(
     () => Array.from(new Set(availableYears.filter(Boolean))),
     [availableYears]
   );
+
+  const searchValue = searchTerm.trim();
+  const searchActive = searchValue.length > 0;
+  const visibleProfiles = filteredProfiles;
+  const visibleCount = visibleProfiles.length;
 
   const handleYearChange = (year) => {
     setActiveYear(year);
@@ -247,6 +285,12 @@ const Batches = () => {
     ? 'all branches'
     : `${activeBranchOption.shortLabel || activeBranchOption.label} branch`;
 
+  const description = searchActive
+    ? visibleCount
+      ? `${visibleCount} match${visibleCount === 1 ? '' : 'es'} for "${searchValue}" in the ${activeYear} ${branchDescriptor} community.`
+      : `No matches for "${searchValue}" in the ${activeYear} ${branchDescriptor} community yet.`
+    : `Core members and contributors from the ${activeYear} ${branchDescriptor} community${totalProfiles ? ` · Showing ${visibleCount} of ${totalProfiles}` : ''}.`;
+
   return (
     <div className="batches-page">
       <header className="batches-header">
@@ -256,40 +300,52 @@ const Batches = () => {
         </p>
       </header>
 
-      <div className="batch-filters">
-        <div className="batch-filter-group">
-          <span className="batch-filter-label">Branch</span>
-          <div className="batch-tabs" role="tablist" aria-label="Select branch">
-            {BRANCH_OPTIONS.map((option) => (
-              <button
-                key={option.key}
-                type="button"
-                role="tab"
-                aria-selected={activeBranch === option.key}
-                className={activeBranch === option.key ? 'active' : ''}
-                onClick={() => handleBranchChange(option.key)}
-              >
-                {option.shortLabel}
-              </button>
-            ))}
+      <div className="batch-controls">
+        <div className="batch-filters">
+          <div className="batch-filter-group">
+            <span className="batch-filter-label">Branch</span>
+            <div className="batch-tabs" role="tablist" aria-label="Select branch">
+              {BRANCH_OPTIONS.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeBranch === option.key}
+                  className={activeBranch === option.key ? 'active' : ''}
+                  onClick={() => handleBranchChange(option.key)}
+                >
+                  {option.shortLabel}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="batch-filter-group">
+            <span className="batch-filter-label">Batch year</span>
+            <div className="batch-tabs" role="tablist" aria-label="Select batch year">
+              {years.map((year) => (
+                <button
+                  key={year}
+                  role="tab"
+                  aria-selected={activeYear === year}
+                  className={activeYear === year ? 'active' : ''}
+                  onClick={() => handleYearChange(year)}
+                >
+                  Batch {year}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="batch-filter-group">
-          <span className="batch-filter-label">Batch year</span>
-          <div className="batch-tabs" role="tablist" aria-label="Select batch year">
-            {years.map((year) => (
-              <button
-                key={year}
-                role="tab"
-                aria-selected={activeYear === year}
-                className={activeYear === year ? 'active' : ''}
-                onClick={() => handleYearChange(year)}
-              >
-                Batch {year}
-              </button>
-            ))}
-          </div>
+        <div className="batch-search">
+          <input
+            type="search"
+            aria-label="Search members"
+            placeholder="Search by name, roll, or focus"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
         </div>
       </div>
 
@@ -310,50 +366,56 @@ const Batches = () => {
 
         {!isError && currentProfiles.length > 0 && (
           <>
-            <p className="batch-description">
-              Core members and contributors from the {activeYear} {branchDescriptor} community{totalProfiles ? ` · Showing ${currentProfiles.length} of ${totalProfiles}` : ''}.
-            </p>
-            <div className="profile-grid">
-              {currentProfiles.map((profile) => (
-                <article className="profile-card" key={profile.id}>
-                  <div className="card-face card-face--front">
-                    <div className="profile-card__header">
-                      <div className={`profile-portrait${profile.image ? ' profile-portrait--photo' : ''}`} aria-hidden>
-                        {profile.image ? (
-                          <img src={profile.image} alt={profile.name} loading="lazy" />
-                        ) : (
-                          <span>{profile.initials}</span>
-                        )}
+            <p className="batch-description">{description}</p>
+            {visibleProfiles.length > 0 ? (
+              <div className="profile-grid">
+                {visibleProfiles.map((profile) => (
+                  <article className="profile-card" key={profile.id}>
+                    <div className="card-face card-face--front">
+                      <div className="profile-card__header">
+                        <div className={`profile-portrait${profile.image ? ' profile-portrait--photo' : ''}`} aria-hidden>
+                          {profile.image ? (
+                            <img src={profile.image} alt={profile.name} loading="lazy" />
+                          ) : (
+                            <span>{profile.initials}</span>
+                          )}
+                        </div>
+                        <div className="profile-heading">
+                          <h3>{profile.name}</h3>
+                          <span>{profile.roll}</span>
+                          {profile.location && <small>{profile.location}</small>}
+                        </div>
                       </div>
-                      <div className="profile-heading">
-                        <h3>{profile.name}</h3>
-                        <span>{profile.roll}</span>
-                        {profile.location && <small>{profile.location}</small>}
+                      <div className="focus-chips">
+                        {profile.focus.map((item) => (
+                          <span key={item}>{item}</span>
+                        ))}
                       </div>
                     </div>
-                    <div className="focus-chips">
-                      {profile.focus.map((item) => (
-                        <span key={item}>{item}</span>
-                      ))}
+                    <div className="card-face card-face--back">
+                      <h3 className="card-back-title">About</h3>
+                      <p>{profile.about}</p>
+                      <div className="profile-links">
+                        {profile.links.map(([key, url]) => (
+                          <a key={key} href={url} target="_blank" rel="noreferrer noopener">
+                            {linkIcon(key)}
+                          </a>
+                        ))}
+                      </div>
+                      <Link className="profile-message-link" to={`/chats/${profile.id}`}>
+                        Message {profile.name.split(' ')?.[0] || 'member'}
+                      </Link>
                     </div>
-                  </div>
-                  <div className="card-face card-face--back">
-                    <h3 className="card-back-title">About</h3>
-                    <p>{profile.about}</p>
-                    <div className="profile-links">
-                      {profile.links.map(([key, url]) => (
-                        <a key={key} href={url} target="_blank" rel="noreferrer noopener">
-                          {linkIcon(key)}
-                        </a>
-                      ))}
-                    </div>
-                    <Link className="profile-message-link" to={`/chats/${profile.id}`}>
-                      Message {profile.name.split(' ')?.[0] || 'member'}
-                    </Link>
-                  </div>
-                </article>
-              ))}
-            </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="profile-empty">
+                <p>
+                  No matches yet.{searchActive ? ' Adjust your search or load more profiles to explore the community.' : ' Load more profiles to discover more members.'}
+                </p>
+              </div>
+            )}
             <div className="batch-pagination" aria-live="polite">
               <div ref={loadMoreRef} />
               {hasNextPage && (

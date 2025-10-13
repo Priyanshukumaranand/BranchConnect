@@ -218,6 +218,16 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.chat-thread--inactive {
+  place-items: center;
+  text-align: center;
+  gap: 1.25rem;
+}
+
+.chat-thread--inactive .chat-thread__hint {
+  max-width: 28ch;
+}
+
 .chat-thread__hint {
   text-align: center;
   color: var(--color-text-muted);

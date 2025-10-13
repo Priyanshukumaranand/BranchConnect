@@ -28,6 +28,39 @@
   gap: clamp(1rem, 2.5vw, 1.6rem);
 }
 
+.batch-controls {
+  display: grid;
+  gap: clamp(1.1rem, 3vw, 1.8rem);
+}
+
+.batch-search {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.batch-search input {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.7rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-subtle);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  transition: border 160ms ease, box-shadow 160ms ease;
+}
+
+.batch-search input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.batch-search input:focus {
+  outline: 3px solid var(--input-focus-ring, rgba(112, 165, 255, 0.45));
+  outline-offset: 2px;
+  border-color: var(--accent-color-soft, rgba(112, 165, 255, 0.65));
+  box-shadow: 0 0 0 4px rgba(112, 165, 255, 0.12);
+}
+
 .batch-filter-group {
   display: grid;
   gap: 0.6rem;
@@ -198,6 +231,17 @@
   color: var(--color-text-muted);
 }
 
+.card-face--back p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  line-clamp: 5;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .profile-links {
   display: inline-flex;
   flex-wrap: wrap;
@@ -325,5 +369,16 @@
 
   .profile-message-link {
     width: 100%;
+  }
+}
+
+@media (min-width: 900px) {
+  .batch-controls {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+    align-items: start;
+  }
+
+  .batch-search {
+    justify-content: flex-end;
   }
 }

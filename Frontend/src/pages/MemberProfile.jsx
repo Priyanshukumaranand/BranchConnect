@@ -83,6 +83,9 @@ const MemberProfile = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
+  const conversationQueryKey = useMemo(() => ['chat', 'with', userId], [userId]);
+  const conversationListQueryKey = useMemo(() => ['chat', 'conversations'], []);
+  const [shouldLoadConversation, setShouldLoadConversation] = useState(false);
   const [draft, setDraft] = useState('');
   const [composerError, setComposerError] = useState(null);
   const [panelStatus, setPanelStatus] = useState(null);
@@ -101,9 +104,16 @@ const MemberProfile = () => {
     enabled: Boolean(userId)
   });
 
+  useEffect(() => {
+    const cachedConversation = queryClient.getQueryData(conversationQueryKey);
+    setShouldLoadConversation(Boolean(cachedConversation));
+  }, [conversationQueryKey, queryClient]);
+
+  const conversationQueryEnabled = shouldLoadConversation && Boolean(userId) && !!currentUser?.id;
+
   const conversationQuery = useInfiniteQuery({
-    queryKey: ['chat', 'with', userId],
-    enabled: Boolean(userId) && !!currentUser?.id,
+    queryKey: conversationQueryKey,
+    enabled: conversationQueryEnabled,
     initialPageParam: null,
     queryFn: ({ pageParam, signal }) => fetchConversationWithUser({
       userId,
@@ -117,9 +127,6 @@ const MemberProfile = () => {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true
   });
-
-  const conversationQueryKey = useMemo(() => ['chat', 'with', userId], [userId]);
-  const conversationListQueryKey = useMemo(() => ['chat', 'conversations'], []);
 
   const applyConversationMeta = (updates) => {
     if (!updates) return;
@@ -232,6 +239,7 @@ const MemberProfile = () => {
       setDraft('');
       setComposerError(null);
       setPanelStatus(null);
+      setShouldLoadConversation(true);
       queryClient.setQueryData(conversationQueryKey, (previous) => {
         if (!previous) {
           return {
@@ -347,7 +355,12 @@ const MemberProfile = () => {
   };
 
   const handleLoadOlder = () => {
-    if (conversationQuery.hasNextPage && !conversationQuery.isFetchingNextPage) {
+    if (!shouldLoadConversation) {
+      setShouldLoadConversation(true);
+      return;
+    }
+
+    if (conversationQueryEnabled && conversationQuery.hasNextPage && !conversationQuery.isFetchingNextPage) {
       conversationQuery.fetchNextPage();
     }
   };
@@ -495,40 +508,58 @@ const MemberProfile = () => {
               )}
             </header>
 
-            <div className="chat-thread" ref={threadRef}>
-              {conversationQuery.isPending && (
-                <p className="chat-thread__hint">Loading conversation…</p>
-              )}
+            {shouldLoadConversation ? (
+              <div className="chat-thread" ref={threadRef}>
+                {conversationQueryEnabled && conversationQuery.isPending && (
+                  <p className="chat-thread__hint">Loading conversation…</p>
+                )}
 
-              {!conversationQuery.isPending && conversationQuery.hasNextPage && (
+                {conversationQueryEnabled && !conversationQuery.isPending && conversationQuery.hasNextPage && (
+                  <button
+                    type="button"
+                    className="chat-thread__load-more"
+                    onClick={handleLoadOlder}
+                    disabled={conversationQuery.isFetchingNextPage}
+                  >
+                    {conversationQuery.isFetchingNextPage ? 'Loading…' : 'Load earlier messages'}
+                  </button>
+                )}
+
+                {conversationQueryEnabled && conversationQuery.isFetchingNextPage && (
+                  <p className="chat-thread__hint">Loading earlier messages…</p>
+                )}
+
+                {messages.length === 0 && (!conversationQueryEnabled || !conversationQuery.isPending) && (
+                  <p className="chat-thread__hint">Say hi and start the conversation.</p>
+                )}
+
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`chat-bubble${message.isOwn ? ' chat-bubble--own' : ''}`}
+                  >
+                    <p>{message.body}</p>
+                    <span>{formatRelativeTime(message.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="chat-thread chat-thread--inactive">
+                <p className="chat-thread__hint">
+                  Send a message to start the conversation. If you already have a chat history, load it to catch up.
+                </p>
                 <button
                   type="button"
                   className="chat-thread__load-more"
-                  onClick={handleLoadOlder}
-                  disabled={conversationQuery.isFetchingNextPage}
+                  onClick={() => {
+                    setPanelStatus(null);
+                    setShouldLoadConversation(true);
+                  }}
                 >
-                  {conversationQuery.isFetchingNextPage ? 'Loading…' : 'Load earlier messages'}
+                  Show previous messages
                 </button>
-              )}
-
-              {conversationQuery.isFetchingNextPage && (
-                <p className="chat-thread__hint">Loading earlier messages…</p>
-              )}
-
-              {messages.length === 0 && !conversationQuery.isPending && (
-                <p className="chat-thread__hint">Say hi and start the conversation.</p>
-              )}
-
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`chat-bubble${message.isOwn ? ' chat-bubble--own' : ''}`}
-                >
-                  <p>{message.body}</p>
-                  <span>{formatRelativeTime(message.createdAt)}</span>
-                </div>
-              ))}
-            </div>
+              </div>
+            )}
 
             <form className="chat-composer" onSubmit={handleSubmit}>
               <textarea
