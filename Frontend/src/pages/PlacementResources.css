@@ -109,6 +109,285 @@
   color: var(--color-text-muted);
 }
 
+.mcp-assistant {
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2rem);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1.8rem;
+  background: var(--color-surface-translucent);
+  padding: clamp(1.5rem, 3vw, 2.3rem);
+}
+
+.mcp-assistant__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.mcp-assistant__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.3rem;
+}
+
+.mcp-assistant__statusbar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.mcp-assistant__hint {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.status-pill--success {
+  color: #0b8a4a;
+  border-color: rgba(11, 138, 74, 0.25);
+  background: rgba(11, 138, 74, 0.08);
+}
+
+.status-pill--error {
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.25);
+  background: rgba(192, 57, 43, 0.08);
+}
+
+.status-pill--pending {
+  color: var(--color-text-secondary);
+}
+
+.status-pill--muted {
+  color: var(--color-text-muted);
+}
+
+.mcp-grid {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.mcp-card {
+  border-radius: 1.4rem;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-base);
+  padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  display: grid;
+  gap: 0.9rem;
+}
+
+.mcp-card--wide {
+  grid-column: 1 / -1;
+}
+
+.mcp-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.mcp-card__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.35rem;
+}
+
+.mcp-card__header h3,
+.mcp-card__header p {
+  margin: 0;
+}
+
+.mcp-form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.mcp-form--grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  column-gap: 1rem;
+}
+
+.mcp-form label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.mcp-form input,
+.mcp-form textarea {
+  width: 100%;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--color-surface-elevated, var(--color-surface-base));
+  color: var(--color-text-primary);
+}
+
+.mcp-form textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.mcp-inline-fields {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mcp-inline-fields input {
+  width: 120px;
+}
+
+.mcp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mcp-inline-status {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.mcp-error {
+  color: var(--color-danger, #c0392b);
+  font-weight: 600;
+}
+
+.mcp-result {
+  border-radius: 1rem;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-translucent);
+  padding: 0.85rem 1rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.mcp-result__answer {
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.mcp-result__sources ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mcp-source__summary,
+.mcp-source__skills {
+  color: var(--color-text-secondary);
+}
+
+.mcp-score {
+  border-radius: 0.9rem;
+  background: var(--accent-gradient-secondary);
+  padding: 0.75rem 0.9rem;
+  display: grid;
+  gap: 0.3rem;
+  align-items: flex-start;
+}
+
+.mcp-score__value {
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
+.mcp-score__skills,
+.mcp-score__meta {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.mcp-resume-card,
+.mcp-resume-chip {
+  border-radius: 1rem;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-base);
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mcp-resume-card__top,
+.mcp-resume-chip__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.mcp-resume-card__summary,
+.mcp-resume-chip__summary {
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.mcp-resume-card__meta,
+.mcp-resume-chip__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.mcp-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border: 1px solid var(--ghost-btn-border);
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  color: var(--accent-color-soft);
+}
+
+.mcp-resume-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.mcp-resume-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.mcp-resume-chip__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mcp-card__header .ghost,
+.mcp-assistant__statusbar .ghost {
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+}
+
 .resource-collections header,
 .prep-timeline header,
 .support-section header,

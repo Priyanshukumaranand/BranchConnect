@@ -1,9 +1,31 @@
 const User = require('../models/User');
 
 const CODEFORCES_API_URL = 'https://codeforces.com/api/user.info';
+const LEETCODE_RATING_API_URL = 'https://leetcode-api-faisalshohag.vercel.app';
+const LEETCODE_BADGE_API_URL = 'https://leetcode-badge.vercel.app/api/users';
 const LEETCODE_GRAPHQL_URL = 'https://leetcode.com/graphql';
+const LEETCODE_GRAPHQL_ENABLED = process.env.LEETCODE_ENABLE_GRAPHQL === 'true';
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const REQUEST_TIMEOUT_MS = 8000;
+
+const LEETCODE_CONTEST_QUERY = `
+  query userContestRankingInfo($username: String!) {
+    userContestRanking(username: $username) {
+      rating
+      attendedContestsCount
+      globalRanking
+      topPercentage
+    }
+    matchedUser(username: $username) {
+      submitStatsGlobal {
+        acSubmissionNum {
+          difficulty
+          count
+        }
+      }
+    }
+  }
+`;
 
 const providerCache = {
   codeforces: new Map(), // handle -> { fetchedAt, data }
@@ -20,6 +42,18 @@ const titleCase = (value = '') => value
 const toNumberOrNull = (value) => {
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
+};
+
+const parseTopPercentage = (value) => {
+  if (value == null) {
+    return null;
+  }
+  const match = /top\s+([\d.]+)%/i.exec(String(value));
+  if (!match) {
+    return null;
+  }
+  const numeric = Number(match[1]);
+  return Number.isFinite(numeric) ? numeric : null;
 };
 
 const isCacheEntryValid = (entry) => {
@@ -52,6 +86,68 @@ const fetchWithTimeout = async (url, options = {}) => {
     if (signal) {
       signal.removeEventListener('abort', abortHandler);
     }
+  }
+};
+
+const fetchLeetCodeContestData = async (username, { signal } = {}) => {
+  try {
+    const response = await fetchWithTimeout(LEETCODE_GRAPHQL_URL, {
+      method: 'POST',
+      signal,
+      timeout: 5000,
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'BranchConnectLeaderboardBot/1.0 (+https://branchconnect.example)',
+        Accept: 'application/json',
+        Referer: 'https://leetcode.com'
+      },
+      body: JSON.stringify({
+        operationName: 'userContestRankingInfo',
+        variables: { username },
+        query: LEETCODE_CONTEST_QUERY
+      })
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await response.json();
+    if (!payload || typeof payload !== 'object') {
+      return null;
+    }
+
+    return payload.data ?? null;
+  } catch (error) {
+    return null;
+  }
+};
+
+const fetchLeetCodeBadgeData = async (username, { signal } = {}) => {
+  try {
+    const url = `${LEETCODE_BADGE_API_URL}/${encodeURIComponent(username)}?region=global`;
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      signal,
+      timeout: 5000,
+      headers: {
+        'User-Agent': 'BranchConnectLeaderboardBot/1.0 (+https://branchconnect.example)',
+        Accept: 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await response.json();
+    if (!payload || typeof payload !== 'object' || payload.error) {
+      return null;
+    }
+
+    return payload;
+  } catch (error) {
+    return null;
   }
 };
 
@@ -208,41 +304,17 @@ const loadLeetCodeProfiles = async (usernames, { signal } = {}) => {
     }
 
     try {
-      const response = await fetchWithTimeout(LEETCODE_GRAPHQL_URL, {
-        method: 'POST',
-        signal,
-        headers: {
-          'User-Agent': 'BranchConnectLeaderboardBot/1.0 (+https://branchconnect.example)',
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Referer: 'https://leetcode.com'
-        },
-        body: JSON.stringify({
-          query: `query getUserContestRanking($username: String!) {
-            userContestRanking(username: $username) {
-              rating
-              attendedContestsCount
-              globalRanking
-              topPercentage
-            }
-            matchedUser(username: $username) {
-              submitStatsGlobal {
-                acSubmissionNum {
-                  difficulty
-                  count
-                }
-              }
-              submitStats {
-                acSubmissionNum {
-                  difficulty
-                  count
-                }
-              }
-            }
-          }`,
-          variables: { username }
-        })
-      });
+      const response = await fetchWithTimeout(
+        `${LEETCODE_RATING_API_URL}/${encodeURIComponent(username)}`,
+        {
+          method: 'GET',
+          signal,
+          headers: {
+            'User-Agent': 'BranchConnectLeaderboardBot/1.0 (+https://branchconnect.example)',
+            Accept: 'application/json'
+          }
+        }
+      );
 
       if (!response.ok) {
         storeCache('leetcode', lower, null);
@@ -251,22 +323,175 @@ const loadLeetCodeProfiles = async (usernames, { signal } = {}) => {
       }
 
       const payload = await response.json();
-      const ranking = payload?.data?.userContestRanking || null;
-      const matchedUser = payload?.data?.matchedUser || null;
+      const root = payload?.data || payload || {};
+      const ranking = root?.userContestRanking
+        || root?.contestRanking
+        || root?.contestRankingData
+        || root?.contest || null;
+      const matchedUser = root?.matchedUser || root?.profile || null;
 
       const submissionStats = matchedUser?.submitStatsGlobal?.acSubmissionNum
         || matchedUser?.submitStats?.acSubmissionNum
+        || root?.submissionCalendar
+        || root?.acSubmissionNum
         || [];
 
-      const solvedAll = submissionStats.find((item) => item?.difficulty === 'All');
+      const solvedAllEntry = Array.isArray(submissionStats)
+        ? submissionStats.find((item) => item?.difficulty === 'All')
+        : null;
+
+      const solvedFallback = toNumberOrNull(root?.totalSolved)
+        ?? toNumberOrNull(root?.totalQuestionsSolved)
+        ?? toNumberOrNull(root?.solvedProblem)
+        ?? toNumberOrNull(root?.totalSolvedProblems)
+        ?? null;
+
+      const ratingValue = toNumberOrNull(ranking?.rating ?? ranking?.contestRating ?? root?.leetcodeContestRating);
+      const contestCountValue = toNumberOrNull(
+        ranking?.attendedContestsCount
+        ?? ranking?.attendedContests
+        ?? ranking?.contestAttend
+        ?? root?.totalContestParticipated
+      );
+      const globalRankingValue = toNumberOrNull(
+        ranking?.globalRanking
+        ?? ranking?.ranking
+        ?? ranking?.globalRank
+        ?? ranking?.contestRanking
+        ?? root?.ranking
+      );
+      const topPercentageValue = ranking?.topPercentage != null
+        ? Number(ranking.topPercentage)
+        : ranking?.topPercent != null
+          ? Number(ranking.topPercent)
+          : null;
+
+      const solvedCountValue = toNumberOrNull(solvedAllEntry?.count)
+        ?? solvedFallback;
 
       const data = {
-        rating: ranking?.rating != null ? Math.round(Number(ranking.rating)) : null,
-        contestCount: toNumberOrNull(ranking?.attendedContestsCount),
-        globalRanking: toNumberOrNull(ranking?.globalRanking),
-        topPercentage: ranking?.topPercentage != null ? Number(ranking.topPercentage) : null,
-        solvedCount: toNumberOrNull(solvedAll?.count)
+        rating: Number.isFinite(ratingValue) ? Math.round(ratingValue) : null,
+        contestCount: Number.isFinite(contestCountValue) ? contestCountValue : null,
+        globalRanking: Number.isFinite(globalRankingValue) ? globalRankingValue : null,
+        topPercentage: Number.isFinite(topPercentageValue) ? Number(topPercentageValue.toFixed(1)) : null,
+        solvedCount: Number.isFinite(solvedCountValue) ? solvedCountValue : null
       };
+
+      const needsBadgeData =
+        data.rating == null
+        || data.globalRanking == null
+        || data.topPercentage == null
+        || data.solvedCount == null;
+
+      if (needsBadgeData) {
+        const badgeData = await fetchLeetCodeBadgeData(username, { signal });
+        if (badgeData) {
+          if (data.rating == null) {
+            const badgeRating = toNumberOrNull(badgeData.rating);
+            if (badgeRating != null) {
+              data.rating = Math.round(badgeRating);
+            }
+          }
+
+          if (data.globalRanking == null) {
+            const badgeGlobalRank = toNumberOrNull(badgeData.ranking);
+            if (badgeGlobalRank != null) {
+              data.globalRanking = badgeGlobalRank;
+            }
+          }
+
+          if (data.topPercentage == null) {
+            const badgeTopPercent = parseTopPercentage(badgeData.ratingQuantile);
+            if (badgeTopPercent != null) {
+              data.topPercentage = Number(badgeTopPercent.toFixed(1));
+            }
+          }
+
+          if (data.solvedCount == null) {
+            const badgeSolved = toNumberOrNull(badgeData.solved);
+            if (badgeSolved != null) {
+              data.solvedCount = badgeSolved;
+            }
+          }
+        }
+      }
+
+      if (
+        LEETCODE_GRAPHQL_ENABLED
+        && (
+        data.rating == null
+        || data.contestCount == null
+        || data.globalRanking == null
+        || data.topPercentage == null
+        || data.solvedCount == null
+        )
+      ) {
+        const graphData = await fetchLeetCodeContestData(username, { signal });
+        if (graphData) {
+          const graphRanking = graphData.userContestRanking
+            || graphData.contestRanking
+            || graphData.contestRankingData
+            || graphData.contest
+            || null;
+          const graphStats = graphData.matchedUser?.submitStatsGlobal?.acSubmissionNum
+            || graphData.matchedUser?.submitStats?.acSubmissionNum
+            || [];
+
+          if (data.rating == null && graphRanking) {
+            const graphRating = toNumberOrNull(
+              graphRanking.rating
+              ?? graphRanking.contestRating
+              ?? graphRanking.currentRating
+            );
+            if (graphRating != null) {
+              data.rating = Math.round(graphRating);
+            }
+          }
+
+          if (data.contestCount == null && graphRanking) {
+            const graphContestCount = toNumberOrNull(
+              graphRanking.attendedContestsCount
+              ?? graphRanking.attendedContests
+              ?? graphRanking.contestAttend
+            );
+            if (graphContestCount != null) {
+              data.contestCount = graphContestCount;
+            }
+          }
+
+          if (data.globalRanking == null && graphRanking) {
+            const graphGlobalRank = toNumberOrNull(
+              graphRanking.globalRanking
+              ?? graphRanking.ranking
+              ?? graphRanking.globalRank
+              ?? graphRanking.contestRanking
+            );
+            if (graphGlobalRank != null) {
+              data.globalRanking = graphGlobalRank;
+            }
+          }
+
+          if (data.topPercentage == null && graphRanking) {
+            const rawTopPercentage = graphRanking.topPercentage ?? graphRanking.topPercent;
+            if (rawTopPercentage != null) {
+              const numericTop = Number(rawTopPercentage);
+              if (Number.isFinite(numericTop)) {
+                data.topPercentage = Number(numericTop.toFixed(1));
+              }
+            }
+          }
+
+          if (data.solvedCount == null) {
+            const fallbackSolvedEntry = Array.isArray(graphStats)
+              ? graphStats.find((item) => item?.difficulty === 'All')
+              : null;
+            const fallbackSolved = toNumberOrNull(fallbackSolvedEntry?.count);
+            if (fallbackSolved != null) {
+              data.solvedCount = fallbackSolved;
+            }
+          }
+        }
+      }
 
       storeCache('leetcode', lower, data);
       results.set(lower, data);
@@ -381,6 +606,7 @@ const composeLeetCodeLeaderboard = async (participants, limit, { signal } = {}) 
       const data = usernameData.get(participant.leetcodeUsername.toLowerCase());
       const rating = toNumberOrNull(data?.rating);
       const solvedCount = toNumberOrNull(data?.solvedCount);
+      const globalRanking = toNumberOrNull(data?.globalRanking);
 
       if (!Number.isFinite(rating) && !Number.isFinite(solvedCount)) {
         return null;
@@ -389,11 +615,14 @@ const composeLeetCodeLeaderboard = async (participants, limit, { signal } = {}) 
       const ratingValue = Number.isFinite(rating) && rating > 0 ? Math.round(rating) : null;
 
       const stats = [];
-      if (Number.isFinite(data?.contestCount) && data.contestCount > 0) {
-        stats.push({ label: 'Contests', value: data.contestCount });
+      if (Number.isFinite(globalRanking) && globalRanking > 0) {
+        stats.push({ label: 'Rank', value: globalRanking });
       }
       if (Number.isFinite(data?.solvedCount) && data.solvedCount >= 0) {
         stats.push({ label: 'Solved', value: data.solvedCount });
+      }
+      if (Number.isFinite(data?.contestCount) && data.contestCount > 0) {
+        stats.push({ label: 'Contests', value: data.contestCount });
       }
       if (Number.isFinite(data?.topPercentage) && data.topPercentage > 0) {
         stats.push({ label: 'Top %', value: Number(data.topPercentage.toFixed(1)) });
@@ -415,7 +644,18 @@ const composeLeetCodeLeaderboard = async (participants, limit, { signal } = {}) 
         stats,
         profiles: participant.profiles,
         userId: participant.id,
-        sortScore: ratingValue ?? (Number.isFinite(solvedCount) ? solvedCount * 0.0001 : -Infinity)
+        sortScore: (() => {
+          if (ratingValue != null) {
+            return ratingValue;
+          }
+          if (Number.isFinite(solvedCount)) {
+            return solvedCount;
+          }
+          if (Number.isFinite(globalRanking)) {
+            return Number.MAX_SAFE_INTEGER - globalRanking;
+          }
+          return -Infinity;
+        })()
       };
     })
     .filter(Boolean)
