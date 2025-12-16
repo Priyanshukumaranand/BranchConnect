@@ -371,7 +371,7 @@ const Batches = () => {
               <div className="profile-grid">
                 {visibleProfiles.map((profile) => (
                   <article className="profile-card" key={profile.id}>
-                    <div className="card-face card-face--front">
+                    <Link className="profile-card__link" to={`/members/${profile.id}`}>
                       <div className="profile-card__header">
                         <div className={`profile-portrait${profile.image ? ' profile-portrait--photo' : ''}`} aria-hidden>
                           {profile.image ? (
@@ -382,30 +382,19 @@ const Batches = () => {
                         </div>
                         <div className="profile-heading">
                           <h3>{profile.name}</h3>
-                          <span>{profile.roll}</span>
-                          {profile.location && <small>{profile.location}</small>}
+                          <div className="profile-heading__row">
+                            <span className="meta-chip">{profile.roll}</span>
+                            {profile.location && <span className="meta-chip meta-chip--muted">{profile.location}</span>}
+                          </div>
                         </div>
                       </div>
+
                       <div className="focus-chips">
                         {profile.focus.map((item) => (
                           <span key={item}>{item}</span>
                         ))}
                       </div>
-                    </div>
-                    <div className="card-face card-face--back">
-                      <h3 className="card-back-title">About</h3>
-                      <p>{profile.about}</p>
-                      <div className="profile-links">
-                        {profile.links.map(([key, url]) => (
-                          <a key={key} href={url} target="_blank" rel="noreferrer noopener">
-                            {linkIcon(key)}
-                          </a>
-                        ))}
-                      </div>
-                      <Link className="profile-message-link" to={`/chats/${profile.id}`}>
-                        Message {profile.name.split(' ')?.[0] || 'member'}
-                      </Link>
-                    </div>
+                    </Link>
                   </article>
                 ))}
               </div>

@@ -372,6 +372,21 @@ const MemberProfile = () => {
   const memberError = memberQuery.isError;
   const conversationError = conversationQuery.isError;
 
+  const contactLinks = useMemo(() => {
+    if (!member) return [];
+    const socials = member.socials || {};
+    const entries = [
+      ['Email', member.email ? (member.email.startsWith('mailto:') ? member.email : `mailto:${member.email}`) : null],
+      ['LinkedIn', socials.linkedin || member.linkedin],
+      ['GitHub', socials.github || member.github],
+      ['Instagram', socials.instagram || member.instagram],
+      ['Portfolio', socials.portfolio || member.portfolio],
+      ['Website', socials.website || member.website]
+    ];
+
+    return entries.filter(([, value]) => Boolean(value));
+  }, [member]);
+
   if (memberError) {
     return (
       <section className="member-profile">
@@ -388,47 +403,57 @@ const MemberProfile = () => {
     <section className="member-profile">
       <header className="member-profile__top">
         <button type="button" onClick={() => navigate(-1)} className="member-profile__back">← Back</button>
-        <span className="member-profile__eyebrow">Community member</span>
-  <h1>{member?.name || member?.email || 'Branch Connect Member'}</h1>
-        {member?.collegeId && (
-          <p className="member-profile__meta">Roll • {member.collegeId.toUpperCase()}</p>
-        )}
-        {batchYear && (
-          <p className="member-profile__meta">Batch {batchYear}</p>
-        )}
+        <div className="member-profile__hero">
+          <div className={`member-profile__avatar${avatarUrl ? ' has-image' : ''}`}>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={`${member?.name || 'Member'} avatar`} />
+            ) : (
+              <span>{(member?.name || member?.email || '?').slice(0, 2).toUpperCase()}</span>
+            )}
+          </div>
+          <div className="member-profile__heading">
+            <span className="member-profile__eyebrow">Community member</span>
+            <h1>{member?.name || member?.email || 'Branch Connect Member'}</h1>
+            <div className="member-profile__tags">
+              {member?.collegeId && (
+                <span className="member-profile__tag">Roll · {member.collegeId.toUpperCase()}</span>
+              )}
+              {batchYear && (
+                <span className="member-profile__tag">Batch {batchYear}</span>
+              )}
+              {member?.place && (
+                <span className="member-profile__tag">{member.place}</span>
+              )}
+            </div>
+          </div>
+        </div>
       </header>
 
       <div className="member-profile__body">
         <aside className="member-profile__sidebar">
           <div className="member-profile__card">
-            <div className={`member-profile__avatar${avatarUrl ? ' has-image' : ''}`}>{avatarUrl ? (
-              <img src={avatarUrl} alt={`${member?.name || 'Member'} avatar`} />
-            ) : (
-              <span>{(member?.name || member?.email || '?').slice(0, 2).toUpperCase()}</span>
-            )}
-            </div>
+            <h2>About</h2>
             <div className="member-profile__info">
-              <p>{member?.place || 'Location not shared yet.'}</p>
-              <p>{member?.about || 'This member hasn’t added an introduction yet.'}</p>
+              <p className="member-profile__about">{member?.about || 'This member hasn’t added an introduction yet.'}</p>
+              <ul className="member-profile__facts">
+                <li>{member?.place || 'Location not shared yet.'}</li>
+                {member?.collegeId && <li>Roll • {member.collegeId.toUpperCase()}</li>}
+                {batchYear && <li>Batch {batchYear}</li>}
+              </ul>
             </div>
           </div>
 
           <div className="member-profile__links">
             <h2>Connect</h2>
-            <ul>
-              {['instagram', 'linkedin', 'github', 'email'].map((key) => {
-                const value = key === 'email' ? member?.email : member?.[key];
-                if (!value) {
-                  return null;
-                }
-                const href = key === 'email' ? `mailto:${value}` : value;
-                return (
-                  <li key={key}>
-                    <a href={href} target="_blank" rel="noreferrer noopener">{key}</a>
-                  </li>
-                );
-              })}
-            </ul>
+            {contactLinks.length > 0 ? (
+              <div className="member-profile__link-chips">
+                {contactLinks.map(([label, href]) => (
+                  <a key={label} href={href} target="_blank" rel="noreferrer noopener">{label}</a>
+                ))}
+              </div>
+            ) : (
+              <p className="member-profile__meta">No links shared yet.</p>
+            )}
           </div>
         </aside>
 

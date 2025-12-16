@@ -6,7 +6,7 @@
 
 .member-profile__top {
   display: grid;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .member-profile__back {
@@ -26,6 +26,46 @@
   color: var(--color-text-muted);
 }
 
+.member-profile__hero {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1.4rem;
+  box-shadow: var(--card-shadow-soft);
+}
+
+.member-profile__heading {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.member-profile__heading h1 {
+  margin: 0;
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+}
+
+.member-profile__tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.member-profile__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.38rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-subtle);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
 .member-profile__meta {
   margin: 0;
   color: var(--color-text-muted);
@@ -43,16 +83,17 @@
 }
 
 .member-profile__card {
-  background: var(--accent-gradient-secondary);
+  background: var(--color-surface);
   border: 1px solid var(--color-border-subtle);
   border-radius: 1.6rem;
   padding: clamp(1.5rem, 3vw, 2rem);
   display: grid;
   gap: 1rem;
+  box-shadow: var(--card-shadow-soft);
 }
 
 .member-profile__avatar {
-  width: clamp(96px, 20vw, 132px);
+  width: clamp(110px, 22vw, 150px);
   aspect-ratio: 1 / 1;
   border-radius: 1.6rem;
   background: var(--accent-gradient-primary);
@@ -77,13 +118,28 @@
   color: var(--color-text-secondary);
 }
 
+.member-profile__about {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.member-profile__facts {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+  color: var(--color-text-secondary);
+}
+
 .member-profile__links {
-  background: var(--accent-gradient-tertiary, rgba(31, 36, 54, 0.45));
+  background: var(--color-surface);
   border: 1px solid var(--color-border-subtle);
   border-radius: 1.6rem;
   padding: clamp(1.4rem, 3vw, 1.8rem);
   display: grid;
   gap: 1rem;
+  box-shadow: var(--card-shadow-soft);
 }
 
 .member-profile__links h2 {
@@ -91,22 +147,26 @@
   font-size: 1.1rem;
 }
 
-.member-profile__links ul {
-  display: grid;
-  gap: 0.5rem;
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.member-profile__link-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
 }
 
-.member-profile__links a {
-  color: var(--tab-active-color);
-  font-weight: 600;
+.member-profile__link-chips a {
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(112, 165, 255, 0.5);
+  color: #70a5ff;
+  font-weight: 700;
   text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: background 160ms ease, box-shadow 160ms ease;
 }
 
-.member-profile__links a:hover {
-  text-decoration: underline;
+.member-profile__link-chips a:hover {
+  background: rgba(112, 165, 255, 0.12);
+  box-shadow: 0 10px 24px rgba(112, 165, 255, 0.18);
 }
 
 .member-profile__chat {
@@ -115,6 +175,7 @@
   border-radius: 1.6rem;
   padding: clamp(1.5rem, 3vw, 2rem);
   display: grid;
+  box-shadow: var(--card-shadow-soft);
 }
 
 .chat-panel {
@@ -214,8 +275,8 @@
   padding: 0.5rem;
   height: clamp(280px, 40vh, 420px);
   border-radius: 1rem;
-  background: var(--accent-gradient-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-surface-muted, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--color-border-subtle);
 }
 
 .chat-thread--inactive {
@@ -252,8 +313,8 @@
   max-width: 70%;
   padding: 0.75rem 1rem;
   border-radius: 1.2rem;
-  background: rgba(38, 46, 68, 0.8);
-  color: #ffffff;
+  background: var(--color-surface-strong, rgba(0, 0, 0, 0.06));
+  color: var(--color-text-primary);
   display: grid;
   gap: 0.35rem;
   justify-self: flex-start;
@@ -343,5 +404,15 @@
 
   .chat-bubble {
     max-width: 85%;
+  }
+
+  .member-profile__hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+
+  .member-profile__tags {
+    justify-content: center;
   }
 }
