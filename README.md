@@ -1,4 +1,4 @@
-# CE Bootcamp Monorepo
+# IIIT Bbsr Network Monorepo
 
 A refreshed codebase for the CE Bootcamp portal. The project is now split into a React SPA front-end and an Express/MongoDB back-end. Both applications live side by side in this repository so you can develop, test, and deploy them independently.
 
