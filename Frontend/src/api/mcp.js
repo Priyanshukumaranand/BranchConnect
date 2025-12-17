@@ -87,14 +87,16 @@ export const deleteResume = ({ resumeId, signal }) =>
 export const addResumeFromPdf = ({ file, name, email, experience, role = '', skills = '', summary = '', signal }) => {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('name', name);
-  formData.append('email', email);
-  formData.append('experience', experience);
-  formData.append('role', role);
-  formData.append('skills', skills);
-  formData.append('summary', summary);
 
-  return mcpFetch('/add_resume_pdf', {
+  // The API only requires the file; extra fields are attached when provided for richer context.
+  if (name) formData.append('name', name);
+  if (email) formData.append('email', email);
+  if (experience) formData.append('experience', experience);
+  if (role) formData.append('role', role);
+  if (skills) formData.append('skills', skills);
+  if (summary) formData.append('summary', summary);
+
+  return mcpFetch('/ingest_pdf', {
     method: 'POST',
     body: formData,
     skipJson: true,
