@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const batchController = require('../controllers/batchController');
-const { requireAuth } = require('../middleware/auth');
-
-router.get('/', requireAuth, batchController.listBatches);
+// Public for now to avoid auth-related fetch loops on batch listing
+router.get('/', batchController.listBatches);
+router.get('/meta', batchController.listBatchesMeta);
 
 module.exports = router;

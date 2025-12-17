@@ -7,6 +7,11 @@ const state = {
   options: null
 };
 
+const recordError = (error) => {
+  state.status = 'error';
+  state.lastError = error ? error.message || String(error) : 'Unknown Redis error';
+};
+
 const toBool = (value) => {
   if (typeof value === 'string') {
     return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
@@ -69,8 +74,7 @@ const attachEventHandlers = (client) => {
   });
 
   client.on('error', (error) => {
-    state.status = 'error';
-    state.lastError = error ? error.message : 'Unknown Redis error';
+    recordError(error);
   });
 
   client.on('end', () => {
@@ -110,6 +114,26 @@ const ensureClient = () => {
   return client;
 };
 
+const ensureConnected = async () => {
+  const client = ensureClient();
+  if (!client) {
+    return null;
+  }
+
+  if (client.status === 'ready' || client.status === 'connecting') {
+    return client;
+  }
+
+  try {
+    await client.connect();
+    return client;
+  } catch (error) {
+    recordError(error);
+    console.warn('[redis] Unable to connect:', state.lastError);
+    return null;
+  }
+};
+
 async function initializeRedis() {
   const client = ensureClient();
 
@@ -120,8 +144,7 @@ async function initializeRedis() {
   try {
     await client.connect();
   } catch (error) {
-    state.status = 'error';
-    state.lastError = error ? error.message : 'Failed to connect to Redis';
+    recordError(error || 'Failed to connect to Redis');
     console.warn('[redis] Unable to connect:', state.lastError);
   }
 
@@ -130,6 +153,51 @@ async function initializeRedis() {
 
 function getRedisClient() {
   return state.client;
+}
+
+async function getJson(key) {
+  const client = await ensureConnected();
+  if (!client) return null;
+
+  try {
+    const raw = await client.get(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (error) {
+    recordError(error);
+    return null;
+  }
+}
+
+async function setJson(key, value, ttlSeconds = null) {
+  const client = await ensureConnected();
+  if (!client) return false;
+
+  try {
+    const payload = JSON.stringify(value);
+    if (ttlSeconds && Number.isFinite(ttlSeconds) && ttlSeconds > 0) {
+      await client.set(key, payload, 'EX', Math.floor(ttlSeconds));
+    } else {
+      await client.set(key, payload);
+    }
+    return true;
+  } catch (error) {
+    recordError(error);
+    return false;
+  }
+}
+
+async function deleteKey(key) {
+  const client = await ensureConnected();
+  if (!client) return false;
+
+  try {
+    await client.del(key);
+    return true;
+  } catch (error) {
+    recordError(error);
+    return false;
+  }
 }
 
 function getRedisHealth() {
@@ -159,6 +227,9 @@ async function disconnectRedis() {
 module.exports = {
   initializeRedis,
   getRedisClient,
+  getJson,
+  setJson,
+  deleteKey,
   getRedisHealth,
   disconnectRedis
 };

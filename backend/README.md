@@ -30,6 +30,8 @@ Edit `.env` with your secrets before running the server.
 | `MAIL_HOST`, `MAIL_USER`, `MAIL_PASS` | SMTP settings for OTP and password-reset emails. |
 | `CLIENT_ID`, `CLIENT_SECRET`, `CALLBACK_URL` | Google OAuth credentials (optional). |
 | `REDIS_URL` **or** (`REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD`, `REDIS_TLS`) | Redis connection used for realtime messaging and caching. Leave unset to disable Redis in local development. |
+| `BATCH_META_CACHE_TTL_SECONDS` | Optional TTL (in seconds) for cached batch metadata stored in Redis. Defaults to 600 (10 minutes). |
+| `BATCH_LIST_CACHE_TTL_SECONDS` | Optional TTL (in seconds) for cached batch list responses stored in Redis. Defaults to 180 (3 minutes). |
 
 ### Development server
 
@@ -46,6 +48,14 @@ npm start
 ```
 
 Runs the build with plain Node.js. Recommended for deployment behind a process manager such as PM2 or Docker.
+
+### Batch listing meta endpoint
+
+`GET /batches/meta` returns the total user count and cached batch metadata (years, branches, batches, updatedAt) without loading user records. Use this to pre-render placeholders or skeleton cards before fetching paginated user data from `GET /batches`.
+
+### API docs (Swagger UI)
+
+After starting the server, visit `/docs` to browse the OpenAPI docs and try requests from the Swagger UI.
 
 ## Project structure
 

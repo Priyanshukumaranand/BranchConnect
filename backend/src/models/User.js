@@ -85,4 +85,9 @@ userSchema.methods.comparePassword = function comparePassword(candidatePassword)
   return bcrypt.compare(candidatePassword, this.password);
 };
 
+// Accelerate batch lookups by branch/year (regex prefix on collegeId and equality on batchYear)
+userSchema.index({ collegeId: 1 });
+userSchema.index({ batchYear: 1 });
+userSchema.index({ collegeId: 1, batchYear: 1 });
+
 module.exports = mongoose.model('User', userSchema);

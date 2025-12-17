@@ -5,16 +5,9 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchBatchMembers } from '../api/batches';
 import { API_BASE_URL } from '../api/client';
 
-const DEFAULT_BATCH_YEARS = ['2024', '2023', '2022'];
+const DEFAULT_BATCH_YEARS = [];
 const DEFAULT_BRANCH_KEY = 'all';
-const BRANCH_OPTIONS = [
-  { key: 'all', label: 'All branches', shortLabel: 'All branches', alias: null },
-  { key: 'cse', label: 'Computer Science & Engineering', shortLabel: 'CSE', alias: 'cse' },
-  { key: 'ece', label: 'Electronics & Communication Engineering', shortLabel: 'ECE', alias: 'ece' },
-  { key: 'eee', label: 'Electrical & Electronics Engineering', shortLabel: 'EEE', alias: 'eee' },
-  { key: 'it', label: 'Information Technology', shortLabel: 'IT', alias: 'it' },
-  { key: 'ce', label: 'Civil Engineering', shortLabel: 'CE', alias: 'ce' }
-];
+const BASE_BRANCH_OPTION = { key: 'all', label: 'All branches', shortLabel: 'All branches', alias: null };
 const PAGE_SIZE = 12;
 
 const LINK_LABELS = {
@@ -40,6 +33,15 @@ const tokenise = (value) => {
     .filter(Boolean);
 };
 
+const deriveBatchYearFromId = (id) => {
+  if (!id || typeof id !== 'string') return null;
+  const match = id.toLowerCase().match(/^b\d(\d{2})/);
+  if (!match) return null;
+  const digits = Number.parseInt(match[1], 10);
+  if (Number.isNaN(digits)) return null;
+  return 2000 + digits;
+};
+
 const truncate = (value, limit = 180) => {
   if (!value) return '';
   const trimmed = value.trim();
@@ -55,11 +57,17 @@ const normaliseProfile = (user) => {
   const name = user.name || user.email?.split('@')[0] || 'Branch Connect Member';
   const roll = user.collegeId ? user.collegeId.toUpperCase() : user.email?.substring(0, 7)?.toUpperCase() || '—';
   const email = user.email || '';
-  const batchTag = user.batchYear ? `Batch ${user.batchYear}` : null;
-  const branchTag = user.branch?.short || user.branch?.label || null;
+  const batchYear = user.batchYear || deriveBatchYearFromId(user.collegeId || roll) || null;
+  const batchTag = batchYear ? `Batch ${batchYear}` : null;
+  const branchKey = user.branch?.key || user.branch?.code || user.branch?.short?.toLowerCase() || null;
+  const branchShort = user.branch?.short || user.branch?.label || branchKey || null;
+  const branchLabel = user.branch?.label || branchShort || null;
+  const branchDetails = branchKey || branchShort || branchLabel
+    ? { key: branchKey, short: branchShort, label: branchLabel }
+    : null;
   const focus = Array.from(new Set([
     batchTag,
-    branchTag,
+    branchShort,
     ...tokenise(user.place),
     ...tokenise(user.secret)
   ].filter(Boolean))).slice(0, 3);
@@ -97,7 +105,9 @@ const normaliseProfile = (user) => {
     focus: focus.length > 0 ? focus : ['Branch Connect Member'],
     links,
     image,
-    location: user.place || null
+    location: user.place || null,
+    batchYear,
+    branch: branchDetails
   };
 };
 
@@ -111,21 +121,19 @@ const Batches = () => {
     if (!initialBranchFromQuery) {
       return DEFAULT_BRANCH_KEY;
     }
-    const normalized = initialBranchFromQuery.toLowerCase();
-    const match = BRANCH_OPTIONS.find((option) => option.key === normalized);
-    return match ? match.key : DEFAULT_BRANCH_KEY;
+    return initialBranchFromQuery.toLowerCase();
   }, [initialBranchFromQuery]);
 
   const initialYears = useMemo(() => {
-    const base = [...DEFAULT_BATCH_YEARS];
+    const base = ['all', ...DEFAULT_BATCH_YEARS];
     if (initialYearFromQuery && !base.includes(initialYearFromQuery)) {
-      base.unshift(initialYearFromQuery);
+      return ['all', initialYearFromQuery, ...DEFAULT_BATCH_YEARS];
     }
     return base;
   }, [initialYearFromQuery]);
 
   const [availableYears, setAvailableYears] = useState(initialYears);
-  const [activeYear, setActiveYear] = useState(() => initialYearFromQuery || initialYears[0]);
+  const [activeYear, setActiveYear] = useState(() => initialYearFromQuery || 'all');
   const [activeBranch, setActiveBranch] = useState(initialBranchKey);
   useEffect(() => {
     setAvailableYears((prev) => (
@@ -151,12 +159,8 @@ const Batches = () => {
     }
   }, [initialBranchKey, activeBranch]);
 
-  const activeBranchOption = useMemo(
-    () => BRANCH_OPTIONS.find((option) => option.key === activeBranch) || BRANCH_OPTIONS[0],
-    [activeBranch]
-  );
-
-  const branchAlias = activeBranchOption.alias;
+  // Temporarily disable branch filtering
+  const branchAlias = null;
 
   const {
     data,
@@ -167,16 +171,18 @@ const Batches = () => {
     isFetching,
     isFetchingNextPage
   } = useInfiniteQuery({
-    queryKey: ['batches', branchAlias || 'all', activeYear],
+    queryKey: ['batches', 'all', activeYear],
     queryFn: ({ pageParam = 1, signal }) => fetchBatchMembers({
-      year: activeYear,
-      branch: branchAlias,
+      year: activeYear === 'all' ? undefined : activeYear,
+      branch: null,
       page: pageParam,
       limit: PAGE_SIZE,
       signal
     }),
     enabled: Boolean(activeYear),
     initialPageParam: 1,
+    staleTime: 120000,
+    refetchOnWindowFocus: false,
     getNextPageParam: (lastPage) => {
       if (!lastPage) return undefined;
       if (lastPage.hasMore) {
@@ -218,6 +224,37 @@ const Batches = () => {
     ));
   }, [data]);
 
+  const metaYears = useMemo(() => {
+    const fromYears = data?.pages?.map((page) => page?.meta?.years || []).flat() || [];
+    const fromBatches = data?.pages?.map((page) => page?.meta?.batches || []).flat() || [];
+    const batchYears = fromBatches
+      .map((entry) => entry?.year)
+      .filter(Boolean);
+
+    const normalized = [...fromYears, ...batchYears]
+      .filter(Boolean)
+      .map((year) => year.toString());
+
+    return Array.from(new Set(normalized)).sort((a, b) => Number(b) - Number(a));
+  }, [data]);
+
+  const metaBranches = useMemo(() => {
+    const fromMeta = data?.pages?.map((page) => page?.meta?.branches || []).flat() || [];
+    const byKey = new Map();
+    fromMeta.forEach((branch) => {
+      if (!branch?.key) return;
+      const key = branch.key.toString().toLowerCase();
+      if (!byKey.has(key)) {
+        byKey.set(key, {
+          key,
+          shortLabel: branch.short || branch.label || key,
+          label: branch.label || branch.short || key
+        });
+      }
+    });
+    return Array.from(byKey.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [data]);
+
   const filteredProfiles = useMemo(() => {
     const value = searchTerm.trim().toLowerCase();
     if (!value) {
@@ -241,6 +278,64 @@ const Batches = () => {
 
   const totalProfiles = data?.pages?.[0]?.total ?? 0;
 
+  const yearsFromProfiles = useMemo(() => {
+    const fromData = currentProfiles
+      .map((profile) => profile.batchYear || null)
+      .filter(Boolean)
+      .map((year) => year.toString());
+    const unique = Array.from(new Set(fromData));
+    return unique.sort((a, b) => Number(b) - Number(a));
+  }, [currentProfiles]);
+
+  const branchesFromProfiles = useMemo(() => {
+    const entries = currentProfiles
+      .map((profile) => profile.branch)
+      .filter(Boolean)
+      .map((branch) => ({
+        key: (branch.key || branch.short || branch.label || '').toString().toLowerCase(),
+        shortLabel: branch.short || branch.label || 'Branch',
+        label: branch.label || branch.short || 'Branch'
+      }))
+      .filter((branch) => branch.key);
+
+    const byKey = new Map();
+    entries.forEach((branch) => {
+      if (!byKey.has(branch.key)) {
+        byKey.set(branch.key, branch);
+      }
+    });
+
+    return Array.from(byKey.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [currentProfiles]);
+
+  useEffect(() => {
+    setAvailableYears((prev) => {
+      const merged = ['all', ...metaYears, ...yearsFromProfiles];
+      if (activeYear && !merged.includes(activeYear)) {
+        merged.splice(1, 0, activeYear);
+      }
+      return Array.from(new Set(merged));
+    });
+  }, [yearsFromProfiles, metaYears, activeYear]);
+
+  const branchOptions = useMemo(() => [BASE_BRANCH_OPTION], []);
+
+  useEffect(() => {
+    setActiveBranch(DEFAULT_BRANCH_KEY);
+  }, []);
+
+  useEffect(() => {
+    const branchExists = branchOptions.some((option) => option.key === activeBranch);
+    if (!branchExists) {
+      setActiveBranch(DEFAULT_BRANCH_KEY);
+    }
+  }, [branchOptions, activeBranch]);
+
+  const activeBranchOption = useMemo(
+    () => branchOptions.find((option) => option.key === activeBranch) || BASE_BRANCH_OPTION,
+    [branchOptions, activeBranch]
+  );
+
   const years = useMemo(
     () => Array.from(new Set(availableYears.filter(Boolean))),
     [availableYears]
@@ -254,7 +349,11 @@ const Batches = () => {
   const handleYearChange = (year) => {
     setActiveYear(year);
     const next = new URLSearchParams(searchParams);
-    next.set('year', year);
+    if (year === 'all') {
+      next.delete('year');
+    } else {
+      next.set('year', year);
+    }
     if (activeBranch === DEFAULT_BRANCH_KEY) {
       next.delete('branch');
     } else {
@@ -281,15 +380,15 @@ const Batches = () => {
   const isError = status === 'error';
   const isRefreshing = isFetching && !isFetchingNextPage;
 
-  const branchDescriptor = activeBranchOption.key === DEFAULT_BRANCH_KEY
-    ? 'all branches'
-    : `${activeBranchOption.shortLabel || activeBranchOption.label} branch`;
+  const branchDescriptor = 'all branches';
+
+  const yearDescriptor = activeYear === 'all' ? 'all years' : `Batch ${activeYear}`;
 
   const description = searchActive
     ? visibleCount
-      ? `${visibleCount} match${visibleCount === 1 ? '' : 'es'} for "${searchValue}" in the ${activeYear} ${branchDescriptor} community.`
-      : `No matches for "${searchValue}" in the ${activeYear} ${branchDescriptor} community yet.`
-    : `Core members and contributors from the ${activeYear} ${branchDescriptor} community${totalProfiles ? ` · Showing ${visibleCount} of ${totalProfiles}` : ''}.`;
+      ? `${visibleCount} match${visibleCount === 1 ? '' : 'es'} for "${searchValue}" in ${yearDescriptor} across ${branchDescriptor}.`
+      : `No matches for "${searchValue}" in ${yearDescriptor} across ${branchDescriptor} yet.`
+    : `Core members and contributors from ${yearDescriptor} in ${branchDescriptor}${totalProfiles ? ` · Showing ${visibleCount} of ${totalProfiles}` : ''}.`;
 
   return (
     <div className="batches-page">
@@ -305,7 +404,7 @@ const Batches = () => {
           <div className="batch-filter-group">
             <span className="batch-filter-label">Branch</span>
             <div className="batch-tabs" role="tablist" aria-label="Select branch">
-              {BRANCH_OPTIONS.map((option) => (
+              {branchOptions.map((option) => (
                 <button
                   key={option.key}
                   type="button"
@@ -318,6 +417,7 @@ const Batches = () => {
                 </button>
               ))}
             </div>
+                      {/* Branch filter hidden intentionally */}
           </div>
 
           <div className="batch-filter-group">
@@ -331,7 +431,7 @@ const Batches = () => {
                   className={activeYear === year ? 'active' : ''}
                   onClick={() => handleYearChange(year)}
                 >
-                  Batch {year}
+                  {year === 'all' ? 'All years' : `Batch ${year}`}
                 </button>
               ))}
             </div>

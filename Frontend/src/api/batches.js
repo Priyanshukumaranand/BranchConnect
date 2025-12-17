@@ -3,10 +3,6 @@ import { apiFetch } from './client';
 export const fetchBatchMembers = async ({ branch, year, page, limit, signal } = {}) => {
   const searchParams = new URLSearchParams();
 
-  if (branch) {
-    searchParams.set('branch', branch);
-  }
-
   if (year) {
     searchParams.set('year', year);
   }
@@ -22,5 +18,10 @@ export const fetchBatchMembers = async ({ branch, year, page, limit, signal } = 
   const query = searchParams.toString();
   const path = `/batches${query ? `?${query}` : ''}`;
 
-  return apiFetch(path, { method: 'GET', signal });
+  return apiFetch(path, {
+    method: 'GET',
+    signal,
+    withCredentials: false,
+    omitAuth: true
+  });
 };

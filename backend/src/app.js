@@ -14,6 +14,8 @@ const errorHandler = require('./middleware/errorHandler');
 const { attachUser } = require('./middleware/auth');
 const { getSocketServer } = require('./socket');
 const { getRedisHealth } = require('./config/redis');
+const swaggerUi = require('swagger-ui-express');
+const openapiSpec = require('./docs/openapi');
 
 configurePassport(passport);
 
@@ -71,7 +73,8 @@ app.use(cors({
     }
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
-  credentials: true
+  credentials: true,
+  maxAge: 86400 // cache preflight for a day to cut down OPTIONS noise
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -94,6 +97,10 @@ app.get('/socket/ping', (req, res) => {
 
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection(true));
+
+// Swagger UI (served at /docs)
+app.get('/docs.json', (req, res) => res.json(openapiSpec));
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, { explorer: true }));
 
 app.use(['/api', '/'], routes);
 

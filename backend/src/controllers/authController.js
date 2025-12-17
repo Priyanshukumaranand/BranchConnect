@@ -3,6 +3,7 @@ const User = require('../models/User');
 const OTP = require('../models/OTP');
 const { generateToken } = require('../utils/jwt');
 const { sanitizeUser } = require('../utils/sanitizeUser');
+const { updateBatchIndexForUser } = require('../services/batchIndexService');
 const {
   isCollegeId,
   isInstituteEmail,
@@ -113,6 +114,12 @@ exports.signup = async (req, res, next) => {
     });
 
     await OTP.deleteMany({ email: normalizedEmail, purpose: 'signup' });
+
+    try {
+      await updateBatchIndexForUser(user);
+    } catch (indexError) {
+      // Do not block signup if indexing fails; log for observability if logging is wired
+    }
 
     return res.status(201).json({
       message: 'Account created successfully. Please sign in.',
