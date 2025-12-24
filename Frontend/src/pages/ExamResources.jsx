@@ -1,5 +1,7 @@
 import React from 'react';
 import './ExamResources.css';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 const driveFolder = 'https://drive.google.com/drive/folders/1ueFADGyyHUiyRs7kyHbNadwv6lElRL9P';
 
@@ -106,8 +108,6 @@ const semesterCollections = [
   }
 ];
 
-
-
 const ExamResources = () => {
   return (
     <div className="exam-page">
@@ -119,9 +119,17 @@ const ExamResources = () => {
             Dive into curated notes, solved papers, lab notebooks, and revision checklists organised exactly like the shared Drive. Everything is compiled by seniors who have cleared the papers with distinction.
           </p>
           <div className="exam-hero__actions">
-            <a className="primary" href={driveFolder} target="_blank" rel="noopener noreferrer">
+            <Button
+              className="primary"
+              variant="gradient"
+              as="a"
+              href={driveFolder}
+              target="_blank"
+              rel="noopener noreferrer"
+              icon="external-link"
+            >
               Open exam drive
-            </a>
+            </Button>
           </div>
           <small className="exam-hero__hint">Bookmark the drive and keep an eye on the change-log for newly added notes.</small>
         </div>
@@ -134,7 +142,7 @@ const ExamResources = () => {
         </header>
         <div className="semester-grid">
           {semesterCollections.map((collection) => (
-            <article key={collection.id} className="semester-card" aria-labelledby={`semester-${collection.id}`}>
+            <Card key={collection.id} className="semester-card" aria-labelledby={`semester-${collection.id}`}>
               <header className="semester-card__header">
                 <span className="semester-card__tag">{collection.tag}</span>
                 <p>{collection.description}</p>
@@ -148,29 +156,38 @@ const ExamResources = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <span className="semester-resource__title">{resource.title}</span>
-                    <span className="semester-resource__meta">{resource.format}</span>
+                    <div className="semester-resource__main">
+                      <span className="semester-resource__title">{resource.title}</span>
+                      <span className="semester-resource__meta">{resource.format}</span>
+                    </div>
                     <p>{resource.summary}</p>
                     <span className="semester-resource__cta">View resource ↗</span>
                   </a>
                 ))}
               </div>
-            </article>
+            </Card>
           ))}
         </div>
       </section>
 
-      <section className="exam-cta" aria-label="Exam resource contribution CTA">
+      <Card className="exam-cta" variant="gradient" aria-label="Exam resource contribution CTA">
         <div className="exam-cta__copy">
           <h2>Share your toppers notes</h2>
           <p>
             Upload annotated PDFs, viva hints, or question bank updates to the drive so juniors can build on your work. Use clear file names and semester tags for quick discovery.
           </p>
         </div>
-        <a className="primary" href={driveFolder} target="_blank" rel="noopener noreferrer">
+        <Button
+          as="a"
+          href={driveFolder}
+          target="_blank"
+          rel="noopener noreferrer"
+          variant="ghost"
+          className="exam-cta__button"
+        >
           Contribute notes
-        </a>
-      </section>
+        </Button>
+      </Card>
     </div>
   );
 };

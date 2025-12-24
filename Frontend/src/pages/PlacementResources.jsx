@@ -8,16 +8,13 @@ import {
   listResumes
 } from '../api/mcp';
 import { useAuth } from '../context/AuthContext';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import placementHero3d from '../assets/placement-hero-3d.png';
 
 const driveFolder = 'https://drive.google.com/drive/folders/1UlIxN-hqY6FrOlk_9kOJfj3-TvWJL4ru';
 
 const CP_PROFILE_ORDER = ['leetcode', 'codeforces', 'codechef'];
-
-const CP_PROFILE_LABELS = {
-  leetcode: 'LeetCode',
-  codeforces: 'Codeforces',
-  codechef: 'CodeChef'
-};
 
 const PROVIDER_PROFILE_ORDER = {
   codeforces: ['codeforces', 'leetcode', 'codechef'],
@@ -113,8 +110,6 @@ const resourceCollections = [
     ]
   }
 ];
-
-
 
 const DEFAULT_RESUME_FORM = {
   email: '',
@@ -401,11 +396,6 @@ const PlacementResources = () => {
     [leaderboardData]
   );
 
-  const hasAnyLeaderboardEntries = useMemo(
-    () => leaderboardSections.some((section) => section.entries.length > 0),
-    [leaderboardSections]
-  );
-
   const leaderboardRefreshLabel = useMemo(() => {
     if (!leaderboardSummary?.generatedAt) {
       return null;
@@ -448,35 +438,53 @@ const PlacementResources = () => {
 
   return (
     <div className="placement-page">
-      <section className="placement-hero" aria-labelledby="placement-hero-title">
+      <section className="placement-hero animate-slide-up" aria-labelledby="placement-hero-title">
         <div className="placement-hero__intro">
           <p className="placement-hero__eyebrow">placements · readiness stack</p>
           <h1 id="placement-hero-title">Everything you need for campus placements, curated in one drive</h1>
           <p>
-            Explore templates, problem sets, mock interview scripts, and roadmaps contributed by IIIT Network mentors and alumni. The resources below mirror the organisation inside the Drive folder so you can jump straight to what you need.
+            Explore templates, problem sets, mock interview scripts, and roadmaps contributed by IIIT Network mentors and alumni.
           </p>
           <div className="placement-hero__actions">
-            <a className="primary" href={driveFolder} target="_blank" rel="noopener noreferrer">
+            <Button
+              as="a"
+              href={driveFolder}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="gradient"
+              className="primary hover-pulse"
+              icon="external-link"
+            >
               Open resource drive
-            </a>
-            <a className="ghost" href={`${driveFolder}#placement-checklist`} target="_blank" rel="noopener noreferrer">
+            </Button>
+            <Button
+              as="a"
+              href={`${driveFolder}#placement-checklist`}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="ghost"
+            >
               Download 8-week checklist
-            </a>
+            </Button>
           </div>
-          <small className="placement-hero__hint">Bookmark the Drive folder and follow the roadmap below for a steady prep cadence.</small>
         </div>
-        <div className="placement-hero__stats" role="list">
+
+        <div className="placement-hero__visual delay-200 animate-slide-up">
+          <img src={placementHero3d} alt="Abstract 3D glass shapes representing future pathways" className="hero-3d-asset" />
+        </div>
+
+        <div className="placement-hero__stats delay-400 animate-slide-up" role="list">
           {highlightStats.map((stat) => (
-            <article key={stat.label} role="listitem">
+            <Card key={stat.label} role="listitem" variant="glass" className="stat-card">
               <span className="placement-hero__value">{stat.value}</span>
               <span className="placement-hero__label">{stat.label}</span>
               <p>{stat.blurb}</p>
-            </article>
+            </Card>
           ))}
         </div>
       </section>
 
-      <section className="mcp-assistant" aria-labelledby="mcp-assistant-heading">
+      <section className="mcp-assistant delay-500 animate-slide-up" aria-labelledby="mcp-assistant-heading">
         <header className="mcp-assistant__header">
           <div>
             <p className="mcp-assistant__eyebrow">IIIT Network resume pool</p>
@@ -485,7 +493,7 @@ const PlacementResources = () => {
           </div>
         </header>
 
-        <article className="mcp-card mcp-card--wide resume-assistant">
+        <Card className="mcp-card mcp-card--wide resume-assistant" variant="default">
           <header className="mcp-card__header">
             <div>
               <p className="mcp-card__eyebrow">Resume assistant</p>
@@ -494,14 +502,15 @@ const PlacementResources = () => {
             </div>
             <div className="resume-assistant__badges">
               <span className="status-pill status-pill--muted">{`${resumes.length} resumes indexed`}</span>
-              <button
-                type="button"
-                className="ghost"
+              <Button
+                variant="ghost"
                 onClick={refreshResumes}
                 disabled={isResumeBusy}
+                loading={resumeStatus === 'loading'}
+                size="sm"
               >
-                {resumeStatus === 'loading' ? 'Refreshing…' : 'Refresh pool'}
-              </button>
+                Refresh pool
+              </Button>
             </div>
             {user && (
               <div className="resume-assistant__panel resume-assistant__panel--chat">
@@ -521,7 +530,7 @@ const PlacementResources = () => {
                     <button
                       key={prompt}
                       type="button"
-                      className="ghost"
+                      className="ghost-sample"
                       onClick={() => setAssistantQuestion(prompt)}
                     >
                       {prompt}
@@ -584,9 +593,9 @@ const PlacementResources = () => {
                           onChange={(event) => setAssistantTopK(event.target.value)}
                         />
                       </div>
-                      <button className="primary" type="submit" disabled={assistantStatus === 'loading'}>
-                        {assistantStatus === 'loading' ? 'Working…' : 'Ask the bot'}
-                      </button>
+                      <Button variant="primary" type="submit" loading={assistantStatus === 'loading'} disabled={assistantStatus === 'loading'}>
+                        Ask the bot
+                      </Button>
                     </div>
                   </form>
                 </div>
@@ -603,26 +612,30 @@ const PlacementResources = () => {
               </div>
 
               <form className="mcp-form mcp-form--grid resume-pool__form" onSubmit={handleResumeSubmit}>
-                <label htmlFor="resume-email">Email</label>
-                <input
-                  id="resume-email"
-                  type="email"
-                  value={resolvedEmail}
-                  onChange={user ? undefined : ((event) => setResumeForm({ ...resumeForm, email: event.target.value }))}
-                  readOnly={!!user}
-                  placeholder={user ? 'Using your account email' : 'name@example.com'}
-                />
-                <label htmlFor="resume-file">Upload PDF</label>
-                <input
-                  id="resume-file"
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(event) => setResumeFile(event.target.files?.[0] || null)}
-                />
+                <div className="form-group">
+                  <label htmlFor="resume-email">Email</label>
+                  <input
+                    id="resume-email"
+                    type="email"
+                    value={resolvedEmail}
+                    onChange={user ? undefined : ((event) => setResumeForm({ ...resumeForm, email: event.target.value }))}
+                    readOnly={!!user}
+                    placeholder={user ? 'Using your account email' : 'name@example.com'}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="resume-file">Upload PDF</label>
+                  <input
+                    id="resume-file"
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(event) => setResumeFile(event.target.files?.[0] || null)}
+                  />
+                </div>
                 <div className="mcp-actions">
-                  <button className="primary" type="submit" disabled={isResumeBusy}>
-                    {resumeStatus === 'submitting' ? 'Saving…' : 'Upload to pool'}
-                  </button>
+                  <Button variant="primary" type="submit" disabled={isResumeBusy} loading={resumeStatus === 'submitting'}>
+                    Upload to pool
+                  </Button>
                   {resumeError && <span className="mcp-error">{resumeError}</span>}
                   {resumeFileError && <span className="mcp-error">{resumeFileError}</span>}
                 </div>
@@ -644,14 +657,15 @@ const PlacementResources = () => {
                         </div>
                         <p className="mcp-resume-chip__summary">Email captured. Resume stored securely.</p>
                         <div className="mcp-resume-chip__actions">
-                          <button
-                            type="button"
-                            className="ghost"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-danger"
                             onClick={() => handleResumeDelete(resume.id)}
                             disabled={isResumeBusy}
                           >
                             Remove
-                          </button>
+                          </Button>
                         </div>
                       </article>
                     ))}
@@ -660,30 +674,31 @@ const PlacementResources = () => {
               </div>
             </div>
           </div>
-        </article>
+        </Card>
       </section>
 
-      <section className="resource-collections" aria-labelledby="resource-collections-heading">
+      <section className="resource-collections delay-500 animate-slide-up" aria-labelledby="resource-collections-heading">
         <header>
           <h2 id="resource-collections-heading">Resource collections</h2>
           <p>Jump into the collections that map directly to the Drive sub-folders. Each card highlights what you will find and suggests how to use it.</p>
         </header>
         {resourceCollections.map((collection) => (
-          <article key={collection.id} className="resource-collection" aria-labelledby={`collection-${collection.id}`}>
+          <Card key={collection.id} className="resource-collection hover-pulse" aria-labelledby={`collection-${collection.id}`}>
             <div className="resource-collection__intro">
               <span className="resource-collection__icon" aria-hidden>{collection.icon}</span>
               <div>
                 <h3 id={`collection-${collection.id}`}>{collection.title}</h3>
                 <p>{collection.description}</p>
               </div>
-              <a
-                className="ghost"
+              <Button
+                as="a"
+                variant="ghost"
                 href={collection.resources[0]?.link || driveFolder}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 {collection.ctaLabel}
-              </a>
+              </Button>
             </div>
             {collection.id === 'dsa' && (
               <div className="dsa-leaderboard" role="region" aria-live="polite">
@@ -711,13 +726,12 @@ const PlacementResources = () => {
                 {leaderboardStatus === 'success' && (
                   <div className="dsa-leaderboard__lists">
                     {leaderboardSections.map((section) => {
-                      const profileOrder = PROVIDER_PROFILE_ORDER[section.provider] || CP_PROFILE_ORDER;
                       const emptyMessage = section.provider === 'codeforces'
                         ? 'Link your Codeforces handle in your IIIT Network profile to appear on this board.'
                         : 'Link your LeetCode username in your IIIT Network profile to appear on this board.';
 
                       return (
-                        <section
+                        <div
                           key={section.provider}
                           className="leaderboard-section"
                           aria-labelledby={`leaderboard-${section.provider}`}
@@ -800,96 +814,29 @@ const PlacementResources = () => {
                                           if (rawValue === undefined || rawValue === null || rawValue === '') {
                                             return null;
                                           }
-                                          const numericValue = typeof rawValue === 'number' ? rawValue : Number(rawValue);
-                                          const isNumeric = Number.isFinite(numericValue);
-                                          const valueText = isNumeric
-                                            ? stat.label.includes('%')
-                                              ? `${numericValue}%`
-                                              : numericValue.toLocaleString()
-                                            : String(rawValue);
-
                                           return (
-                                            <span
-                                              key={`${stat.label}-${valueText}`}
-                                              className="leaderboard-item__score-sub"
-                                            >
-                                              {`${stat.label}: ${valueText}`}
+                                            <span key={stat.label} className="leaderboard-item__score-sub">
+                                              {stat.label}: {rawValue}
                                             </span>
                                           );
                                         })}
                                       </div>
-                                    </div>
-                                    {entry.highlight && (
-                                      <p className="leaderboard-item__highlight">{entry.highlight}</p>
-                                    )}
-                                    <div
-                                      className="leaderboard-item__links"
-                                      aria-label={`Competitive programming profiles for ${entry.name}`}
-                                    >
-                                      {profileOrder.map((key) => {
-                                        const href = entry.profiles?.[key];
-                                        if (!href) {
-                                          return null;
-                                        }
-                                        return (
-                                          <a key={key} href={href} target="_blank" rel="noopener noreferrer">
-                                            {CP_PROFILE_LABELS[key]} ↗
-                                          </a>
-                                        );
-                                      })}
-                                      {(!entry.profiles || profileOrder.every((key) => !entry.profiles?.[key])) && (
-                                        <span className="leaderboard-item__links--placeholder">
-                                          Add your CP profiles from the IIIT Network profile page
-                                        </span>
-                                      )}
                                     </div>
                                   </li>
                                 );
                               })}
                             </ol>
                           )}
-                        </section>
+                        </div>
                       );
                     })}
                   </div>
                 )}
-
-                {leaderboardStatus === 'success' && !hasAnyLeaderboardEntries && (
-                  <p className="dsa-leaderboard__status">
-                    Leaderboard updates will appear once members link their CP profiles.
-                  </p>
-                )}
               </div>
             )}
-            <div className="resource-collection__grid">
-              {collection.resources.map((resource) => (
-                <article key={resource.title} className="resource-card">
-                  <div className="resource-card__meta">
-                    <span className="resource-card__type">{resource.type}</span>
-                    <div className="resource-card__tags" aria-label="Resource tags">
-                      {resource.tags.map((tag) => (
-                        <span key={tag}>{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <h4>{resource.title}</h4>
-                  <p>{resource.summary}</p>
-                  <a
-                    className="resource-card__link"
-                    href={resource.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View resource ↗
-                  </a>
-                </article>
-              ))}
-            </div>
-          </article>
+          </Card>
         ))}
       </section>
-
-
     </div>
   );
 };

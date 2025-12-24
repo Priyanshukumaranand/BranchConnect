@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import logoIcon from '../../assets/logo-icon.svg';
 
 const baseLinks = [
   { to: '/', label: 'Home', end: true },
@@ -107,16 +108,12 @@ const Navbar = () => {
   return (
     <header className="site-header" data-open={isMenuOpen}>
       <div className="site-header__inner">
-        <NavLink to="/" className="brand" aria-label="IIIT Network home" onClick={closeMenu}>
-          <span className="brand__logo" aria-hidden>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
+        <Link to="/" className="brand">
+          <div className="brand__logo">
+            <img src={logoIcon} alt="IIIT Network Logo" />
+          </div>
           <span className="brand__text">IIIT Network</span>
-        </NavLink>
+        </Link>
         <button
           className="menu-toggle"
           onClick={() => setIsMenuOpen((prev) => !prev)}

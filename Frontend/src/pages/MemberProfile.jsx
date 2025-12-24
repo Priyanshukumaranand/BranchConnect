@@ -11,8 +11,10 @@ import {
   blockUser,
   unblockUser
 } from '../api/chat';
-import { API_BASE_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import Card from '../components/ui/Card';
+import Avatar from '../components/ui/Avatar';
+import Button from '../components/ui/Button';
 
 const MESSAGE_PAGE_SIZE = 20;
 
@@ -22,23 +24,6 @@ const deriveBatchYear = (collegeId = '') => {
   const value = Number.parseInt(match[1], 10);
   if (Number.isNaN(value)) return null;
   return 1500 + value;
-};
-
-const buildAvatarUrl = (member) => {
-  if (!member) return null;
-  if (member.image) {
-    return member.image;
-  }
-
-  if (member.avatarPath) {
-    try {
-      return new URL(member.avatarPath, API_BASE_URL).toString();
-    } catch (error) {
-      return `${API_BASE_URL}${member.avatarPath}`;
-    }
-  }
-
-  return null;
 };
 
 const formatRelativeTime = (value) => {
@@ -128,6 +113,7 @@ const MemberProfile = () => {
     refetchOnReconnect: true
   });
 
+  // Helpers to update cache optimistically
   const applyConversationMeta = (updates) => {
     if (!updates) return;
     queryClient.setQueryData(conversationQueryKey, (previous) => {
@@ -137,10 +123,7 @@ const MemberProfile = () => {
         pages: previous.pages.map((page) => ({
           ...page,
           conversation: page.conversation
-            ? {
-              ...page.conversation,
-              ...updates
-            }
+            ? { ...page.conversation, ...updates }
             : page.conversation
         }))
       };
@@ -177,9 +160,8 @@ const MemberProfile = () => {
     if (isBlockingCurrentUser) {
       return 'This member has blocked you. You can still read past messages.';
     }
-    const firstName = memberQuery.data?.name?.split(' ')?.[0] || memberQuery.data?.name;
-    return `Message ${firstName || memberQuery.data?.email || 'this member'}…`;
-  }, [isBlockedByCurrentUser, isBlockingCurrentUser, memberQuery.data]);
+    return 'Type a message...';
+  }, [isBlockedByCurrentUser, isBlockingCurrentUser]);
 
   const messages = useMemo(() => {
     const pages = conversationQuery.data?.pages || [];
@@ -192,11 +174,9 @@ const MemberProfile = () => {
     if (!thread || messages.length === 0) {
       return;
     }
-
     if (conversationQuery.isFetchingNextPage) {
       return;
     }
-
     const lastMessage = messages[messages.length - 1];
     const lastTimestamp = lastMessage?.createdAt;
 
@@ -213,23 +193,14 @@ const MemberProfile = () => {
       queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
     },
     onError: (error) => {
-      setComposerError(error?.message || 'Unable to send message right now.');
+      setComposerError(error?.message || 'Unable to update read status right now.');
     }
   });
 
   useEffect(() => {
-    if (!conversationId || !conversation) {
-      return;
-    }
-
-    if (conversation.unreadCount === 0) {
-      return;
-    }
-
-    if (markReadMutation.isPending) {
-      return;
-    }
-
+    if (!conversationId || !conversation) return;
+    if (conversation.unreadCount === 0) return;
+    if (markReadMutation.isPending) return;
     markReadMutation.mutate({ conversationId });
   }, [conversationId, conversation, markReadMutation]);
 
@@ -251,7 +222,6 @@ const MemberProfile = () => {
             }]
           };
         }
-
         const nextPages = previous.pages.map((page, index, arr) => {
           const mergedConversation = response.conversation || page.conversation;
           if (index === arr.length - 1) {
@@ -261,17 +231,9 @@ const MemberProfile = () => {
               messages: [...(page.messages || []), response.message]
             };
           }
-
-          return {
-            ...page,
-            conversation: mergedConversation
-          };
+          return { ...page, conversation: mergedConversation };
         });
-
-        return {
-          ...previous,
-          pages: nextPages
-        };
+        return { ...previous, pages: nextPages };
       });
       queryClient.invalidateQueries({ queryKey: conversationListQueryKey });
     },
@@ -292,44 +254,38 @@ const MemberProfile = () => {
       queryClient.invalidateQueries({ queryKey: conversationListQueryKey });
     },
     onError: (error) => {
-      setPanelStatus({ type: 'error', message: error?.message || 'Unable to delete this conversation right now.' });
+      setPanelStatus({ type: 'error', message: error?.message || 'Unable to delete conversation.' });
     }
   });
 
   const blockConversationMutation = useMutation({
     mutationFn: ({ reason }) => blockUser({ userId, reason }),
     onSuccess: (_, variables) => {
-      const updates = {
-        isBlockedByCurrentUser: true,
-        blockReason: variables?.reason || null
-      };
+      const updates = { isBlockedByCurrentUser: true, blockReason: variables?.reason || null };
       applyConversationMeta(updates);
       const targetId = variables?.conversationId || conversationId;
       updateConversationListMeta(targetId, updates);
-      setPanelStatus({ type: 'success', message: 'Member blocked. They can no longer message you.' });
+      setPanelStatus({ type: 'success', message: 'Member blocked.' });
       setComposerError(null);
       queryClient.invalidateQueries({ queryKey: conversationListQueryKey });
     },
     onError: (error) => {
-      setPanelStatus({ type: 'error', message: error?.message || 'Unable to block this member right now.' });
+      setPanelStatus({ type: 'error', message: error?.message || 'Unable to block member.' });
     }
   });
 
   const unblockConversationMutation = useMutation({
     mutationFn: () => unblockUser({ userId }),
     onSuccess: (_, variables) => {
-      const updates = {
-        isBlockedByCurrentUser: false,
-        blockReason: null
-      };
+      const updates = { isBlockedByCurrentUser: false, blockReason: null };
       applyConversationMeta(updates);
       const targetId = variables?.conversationId || conversationId;
       updateConversationListMeta(targetId, updates);
-      setPanelStatus({ type: 'success', message: 'Member unblocked. You can chat again.' });
+      setPanelStatus({ type: 'success', message: 'Member unblocked.' });
       queryClient.invalidateQueries({ queryKey: conversationListQueryKey });
     },
     onError: (error) => {
-      setPanelStatus({ type: 'error', message: error?.message || 'Unable to unblock this member right now.' });
+      setPanelStatus({ type: 'error', message: error?.message || 'Unable to unblock member.' });
     }
   });
 
@@ -339,18 +295,13 @@ const MemberProfile = () => {
       setPanelStatus({
         type: 'error',
         message: isBlockedByCurrentUser
-          ? 'You’ve blocked this member. Unblock them to send a message.'
-          : 'This member has blocked you. You can’t send messages right now.'
+          ? 'You blocked this member. Unblock to message.'
+          : 'This member has blocked you.'
       });
       return;
     }
     const trimmed = draft.trim();
-    if (!trimmed) {
-      return;
-    }
-    if (sendMessageMutation.isPending) {
-      return;
-    }
+    if (!trimmed || sendMessageMutation.isPending) return;
     await sendMessageMutation.mutateAsync(trimmed);
   };
 
@@ -359,7 +310,6 @@ const MemberProfile = () => {
       setShouldLoadConversation(true);
       return;
     }
-
     if (conversationQueryEnabled && conversationQuery.hasNextPage && !conversationQuery.isFetchingNextPage) {
       conversationQuery.fetchNextPage();
     }
@@ -367,7 +317,6 @@ const MemberProfile = () => {
 
   const member = memberQuery.data || null;
   const batchYear = useMemo(() => deriveBatchYear(member?.collegeId || ''), [member?.collegeId]);
-  const avatarUrl = buildAvatarUrl(member);
   const loadingMember = memberQuery.isLoading;
   const memberError = memberQuery.isError;
   const conversationError = conversationQuery.isError;
@@ -383,236 +332,150 @@ const MemberProfile = () => {
       ['Portfolio', socials.portfolio || member.portfolio],
       ['Website', socials.website || member.website]
     ];
-
     return entries.filter(([, value]) => Boolean(value));
   }, [member]);
 
   if (memberError) {
     return (
       <section className="member-profile">
-        <div className="member-profile__feedback">
-          <button type="button" onClick={() => navigate(-1)} className="member-profile__back">← Back</button>
-          <h1>Profile unavailable</h1>
-          <p>We couldn’t load this member’s profile right now. Please try again or reach out to the IIIT Network team.</p>
-        </div>
+        <header className="member-profile__header">
+          <Button variant="ghost" onClick={() => navigate(-1)} icon="arrow-left">Back</Button>
+          <h1>Profile Unavailable</h1>
+        </header>
+        <Card>
+          <p>We couldn’t load this member’s profile.</p>
+        </Card>
       </section>
     );
   }
 
   return (
     <section className="member-profile">
-      <header className="member-profile__top">
-        <button type="button" onClick={() => navigate(-1)} className="member-profile__back">← Back</button>
-        <div className="member-profile__hero">
-          <div className={`member-profile__avatar${avatarUrl ? ' has-image' : ''}`}>
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={`${member?.name || 'Member'} avatar`} />
-            ) : (
-              <span>{(member?.name || member?.email || '?').slice(0, 2).toUpperCase()}</span>
-            )}
-          </div>
-          <div className="member-profile__heading">
-            <span className="member-profile__eyebrow">Community member</span>
-            <h1>{member?.name || member?.email || 'IIIT Network Member'}</h1>
-            <div className="member-profile__tags">
-              {member?.collegeId && (
-                <span className="member-profile__tag">Roll · {member.collegeId.toUpperCase()}</span>
-              )}
-              {batchYear && (
-                <span className="member-profile__tag">Batch {batchYear}</span>
-              )}
-              {member?.place && (
-                <span className="member-profile__tag">{member.place}</span>
-              )}
-            </div>
-          </div>
-        </div>
+      <header className="member-profile__header">
+        <Button variant="ghost" onClick={() => navigate(-1)} icon="arrow-left">Back</Button>
       </header>
 
-      <div className="member-profile__body">
-        <aside className="member-profile__sidebar">
-          <div className="member-profile__card">
-            <h2>About</h2>
-            <div className="member-profile__info">
-              <p className="member-profile__about">{member?.about || 'This member hasn’t added an introduction yet.'}</p>
-              <ul className="member-profile__facts">
-                <li>{member?.place || 'Location not shared yet.'}</li>
-                {member?.collegeId && <li>Roll • {member.collegeId.toUpperCase()}</li>}
-                {batchYear && <li>Batch {batchYear}</li>}
-              </ul>
-            </div>
-          </div>
+      <div className="member-profile__grid">
 
-          <div className="member-profile__links">
-            <h2>Connect</h2>
+        {/* Left Sidebar: Profile Info */}
+        <aside className="member-profile__sidebar">
+          <Card className="member-card member-card--hero" variant="glass">
+            <Avatar
+              src={member?.image || member?.avatarPath}
+              name={member?.name || member?.email}
+              size="xl"
+            />
+            <div className="member-hero__text">
+              <h1>{member?.name || member?.email || 'Member'}</h1>
+              {member?.collegeId && <p className="member-college-id">{member.collegeId.toUpperCase()}</p>}
+            </div>
+
+            <div className="member-tags">
+              {batchYear && <span className="tag">Batch {batchYear}</span>}
+              {member?.branch && <span className="tag">{member.branch}</span>}
+              {member?.role && <span className="tag tag--role">{member.role}</span>}
+            </div>
+          </Card>
+
+          <Card className="member-card">
+            <h3>About</h3>
+            <p className="member-about">{member?.about || member?.bio || 'No bio available.'}</p>
+            <div className="member-details">
+              {member?.place && <div className="detail-row"><span>📍</span> {member.place}</div>}
+            </div>
+          </Card>
+
+          <Card className="member-card">
+            <h3>Connect</h3>
             {contactLinks.length > 0 ? (
-              <div className="member-profile__link-chips">
+              <div className="member-links">
                 {contactLinks.map(([label, href]) => (
-                  <a key={label} href={href} target="_blank" rel="noreferrer noopener">{label}</a>
+                  <a key={label} href={href} className="link-chip" target="_blank" rel="noreferrer noopener">
+                    {label}
+                  </a>
                 ))}
               </div>
             ) : (
-              <p className="member-profile__meta">No links shared yet.</p>
+              <p className="text-muted">No public links.</p>
             )}
-          </div>
+          </Card>
         </aside>
 
-        <div className="member-profile__chat">
-          <div className="chat-panel">
+        {/* Right Content: Chat */}
+        <div className="member-profile__content">
+          <Card className="chat-panel" variant="default" noPadding>
             <header className="chat-panel__header">
               <div className="chat-panel__title">
-                <h2>Chat with {member?.name?.split(' ')?.[0] || member?.name || 'this member'}</h2>
-                {panelStatus && (
-                  <p className={`chat-panel__status chat-panel__status--${panelStatus.type}`} role="status">
-                    {panelStatus.message}
-                  </p>
+                <h2>Chat</h2>
+                {conversationId && (
+                  <div className="chat-panel__actions">
+                    {isBlockedByCurrentUser ? (
+                      <Button size="sm" variant="secondary" onClick={() => unblockConversationMutation.mutate({ userId })}>Unblock</Button>
+                    ) : (
+                      <Button size="sm" variant="ghost" className="text-danger" onClick={() => {
+                        const r = prompt('Reason for blocking?');
+                        blockConversationMutation.mutate({ reason: r });
+                      }}>Block</Button>
+                    )}
+                  </div>
                 )}
               </div>
-              {conversationError && (
-                <p className="chat-panel__error">We couldn’t load previous messages. You can still send a new one.</p>
-              )}
-              <div className="chat-panel__actions">
-                {isBlockedByCurrentUser ? (
-                  <button
-                    type="button"
-                    className="chat-panel__action-btn"
-                    onClick={() => {
-                      setPanelStatus(null);
-                      unblockConversationMutation.mutate({ conversationId });
-                    }}
-                    disabled={unblockConversationMutation.isPending}
-                  >
-                    {unblockConversationMutation.isPending ? 'Unblocking…' : 'Unblock'}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="chat-panel__action-btn"
-                    onClick={() => {
-                      const reason = window.prompt('Add a short note about why you’re blocking this member (optional).');
-                      setPanelStatus(null);
-                      blockConversationMutation.mutate({
-                        conversationId,
-                        reason: reason?.trim() || undefined
-                      });
-                    }}
-                    disabled={blockConversationMutation.isPending}
-                  >
-                    {blockConversationMutation.isPending ? 'Blocking…' : 'Block'}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="chat-panel__action-btn chat-panel__action-btn--danger"
-                  onClick={() => {
-                    if (!conversationId) {
-                      return;
-                    }
-                    setPanelStatus(null);
-                    deleteConversationMutation.mutate({ conversationId });
-                  }}
-                  disabled={!conversationId || deleteConversationMutation.isPending}
-                >
-                  {deleteConversationMutation.isPending ? 'Deleting…' : 'Delete chat'}
-                </button>
-              </div>
-              {blockReason && (
-                <p className="chat-panel__notice chat-panel__notice--muted">
-                  Block note: {blockReason}
-                </p>
-              )}
-              {isBlockingCurrentUser && (
-                <p className="chat-panel__notice chat-panel__notice--danger" role="alert">
-                  This member has blocked you. You can read past messages but can’t reply.
-                </p>
-              )}
-              {isBlockedByCurrentUser && !isBlockingCurrentUser && (
-                <p className="chat-panel__notice" role="note">
-                  You blocked this member. Unblock to resume the conversation.
-                </p>
+              {panelStatus && (
+                <div className={`panel-status panel-status--${panelStatus.type}`}>
+                  {panelStatus.message}
+                  <button onClick={() => setPanelStatus(null)}>×</button>
+                </div>
               )}
             </header>
 
-            {shouldLoadConversation ? (
-              <div className="chat-thread" ref={threadRef}>
-                {conversationQueryEnabled && conversationQuery.isPending && (
-                  <p className="chat-thread__hint">Loading conversation…</p>
-                )}
+            <div className="chat-panel__messages" ref={threadRef}>
+              {shouldLoadConversation ? (
+                <>
+                  {conversationQuery.hasNextPage && (
+                    <div className="load-more-container">
+                      <Button variant="ghost" size="sm" onClick={handleLoadOlder} loading={conversationQuery.isFetchingNextPage}>
+                        Load Older
+                      </Button>
+                    </div>
+                  )}
+                  {messages.map(msg => (
+                    <div key={msg.id} className={`chat-bubble ${msg.isOwn ? 'own' : 'other'}`}>
+                      <p>{msg.body}</p>
+                      <time>{formatRelativeTime(msg.createdAt)}</time>
+                    </div>
+                  ))}
+                  {messages.length === 0 && !conversationQuery.isLoading && (
+                    <p className="empty-chat">No messages yet.</p>
+                  )}
+                </>
+              ) : (
+                <div className="chat-placeholder">
+                  <p>Start a conversation with {member?.name?.split(' ')[0] || 'Member'}.</p>
+                  <Button variant="secondary" onClick={() => setShouldLoadConversation(true)}>Show Messages</Button>
+                </div>
+              )}
+            </div>
 
-                {conversationQueryEnabled && !conversationQuery.isPending && conversationQuery.hasNextPage && (
-                  <button
-                    type="button"
-                    className="chat-thread__load-more"
-                    onClick={handleLoadOlder}
-                    disabled={conversationQuery.isFetchingNextPage}
-                  >
-                    {conversationQuery.isFetchingNextPage ? 'Loading…' : 'Load earlier messages'}
-                  </button>
-                )}
-
-                {conversationQueryEnabled && conversationQuery.isFetchingNextPage && (
-                  <p className="chat-thread__hint">Loading earlier messages…</p>
-                )}
-
-                {messages.length === 0 && (!conversationQueryEnabled || !conversationQuery.isPending) && (
-                  <p className="chat-thread__hint">Say hi and start the conversation.</p>
-                )}
-
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`chat-bubble${message.isOwn ? ' chat-bubble--own' : ''}`}
-                  >
-                    <p>{message.body}</p>
-                    <span>{formatRelativeTime(message.createdAt)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="chat-thread chat-thread--inactive">
-                <p className="chat-thread__hint">
-                  Send a message to start the conversation. If you already have a chat history, load it to catch up.
-                </p>
-                <button
-                  type="button"
-                  className="chat-thread__load-more"
-                  onClick={() => {
-                    setPanelStatus(null);
-                    setShouldLoadConversation(true);
-                  }}
-                >
-                  Show previous messages
-                </button>
-              </div>
-            )}
-
-            <form className="chat-composer" onSubmit={handleSubmit}>
-              <textarea
+            <form className="chat-panel__composer" onSubmit={handleSubmit}>
+              <input
+                className="composer-input"
                 value={draft}
-                onChange={(event) => {
-                  setDraft(event.target.value);
-                  setComposerError(null);
-                }}
-                placeholder={composerPlaceholder}
-                rows={2}
+                onChange={e => setDraft(e.target.value)}
+                placeholder="Type a message..."
                 disabled={composerDisabled}
               />
-              {composerError && (
-                <p className="chat-composer__error" role="alert">{composerError}</p>
-              )}
-              <div className="chat-composer__actions">
-                <button type="submit" disabled={!draft.trim() || sendMessageMutation.isPending || composerDisabled}>
-                  {sendMessageMutation.isPending ? 'Sending…' : 'Send'}
-                </button>
-              </div>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={!draft.trim() || sendMessageMutation.isPending || composerDisabled}
+                loading={sendMessageMutation.isPending}
+                icon="paper-plane"
+              />
             </form>
-          </div>
+          </Card>
         </div>
-      </div>
 
-      {loadingMember && (
-        <div className="member-profile__loading" aria-live="polite">Loading member details…</div>
-      )}
+      </div>
     </section>
   );
 };

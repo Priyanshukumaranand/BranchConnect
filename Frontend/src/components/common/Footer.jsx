@@ -1,12 +1,16 @@
 import React from 'react';
 import './Footer.css';
 
+import logoIcon from '../../assets/logo-icon.svg';
+
 const Footer = () => {
   return (
     <footer className="site-footer">
       <div className="site-footer__inner">
         <div className="site-footer__brand">
-          <span className="brand-mark">IIIT</span>
+          <div className="footer-logo">
+            <img src={logoIcon} alt="IIIT Network Logo" />
+          </div>
           <div>
             <h3>IIIT Network</h3>
             <p>Discover every branch across campus. Portfolios, passion projects, and college communities in one place.</p>

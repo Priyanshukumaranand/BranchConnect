@@ -12,33 +12,12 @@ import {
   blockUser,
   unblockUser
 } from '../api/chat';
-import { API_BASE_URL } from '../api/client';
 import { connectSocket, onSocketEvent, getSocketStatus } from '../api/socket';
+import Button from '../components/ui/Button';
+import Avatar from '../components/ui/Avatar';
+import Card from '../components/ui/Card';
 
 const MESSAGE_PAGE_SIZE = 20;
-
-const buildAvatarUrl = (member) => {
-  if (!member) return null;
-  if (member.image) {
-    return member.image;
-  }
-
-  if (member.avatarPath) {
-    try {
-      // eslint-disable-next-line no-new
-      new URL(member.avatarPath);
-      return member.avatarPath;
-    } catch (error) {
-      try {
-        return new URL(member.avatarPath, API_BASE_URL).toString();
-      } catch (fallbackError) {
-        return `${API_BASE_URL}${member.avatarPath}`;
-      }
-    }
-  }
-
-  return null;
-};
 
 const formatRelativeTime = (value) => {
   if (!value) return '';
@@ -217,27 +196,6 @@ const ChatThread = () => {
   const isBlockingCurrentUser = Boolean(conversation?.isBlockingCurrentUser);
   const blockReason = conversation?.blockReason || null;
   const composerDisabled = isBlockedByCurrentUser || isBlockingCurrentUser;
-  const socketStatusLabel = useMemo(() => {
-    switch (socketStatus) {
-      case 'connected':
-        return 'Live updates enabled';
-      case 'reconnecting':
-        return 'Reconnecting to live updates…';
-      case 'connecting':
-        return 'Connecting to live updates…';
-      case 'error':
-        return socketError || 'Realtime offline — falling back to polling';
-      default:
-        return 'Offline — refreshing every few seconds';
-    }
-  }, [socketError, socketStatus]);
-
-  const socketStatusVariant = useMemo(() => {
-    if (socketStatus === 'connected') return 'online';
-    if (socketStatus === 'error') return 'error';
-    if (socketStatus === 'reconnecting') return 'warning';
-    return 'idle';
-  }, [socketStatus]);
 
   const composerPlaceholder = useMemo(() => {
     if (isBlockedByCurrentUser) {
@@ -278,24 +236,6 @@ const ChatThread = () => {
     const merged = Array.from(byId.values());
     return merged.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [conversationQuery.data]);
-
-  const formatMessageMeta = useCallback((message) => {
-    if (!message) {
-      return '';
-    }
-
-    const sentLabel = formatRelativeTime(message.createdAt);
-
-    if (!message.isOwn) {
-      return sentLabel;
-    }
-
-    if (message.readAt) {
-      return `Seen • ${formatRelativeTime(message.readAt)}`;
-    }
-
-    return `Sent • ${sentLabel}`;
-  }, []);
 
   useEffect(() => {
     if (!currentUser?.id) {
@@ -732,10 +672,9 @@ const ChatThread = () => {
 
     return () => clearInterval(interval);
   }, [messages.length, presence.isOnline, presence.lastSeenAt, forceRelativeRefresh]);
-  const avatarUrl = buildAvatarUrl(member);
+
   const loadingMember = memberQuery.isLoading;
   const memberError = memberQuery.isError;
-  const conversationError = conversationQuery.isError;
   const conversationTitle = member?.name || member?.email || 'IIIT Network member';
   const memberEmail = member?.email || null;
   const lastInteraction = conversation?.lastMessage?.sentAt || conversation?.updatedAt || null;
@@ -745,9 +684,9 @@ const ChatThread = () => {
     return (
       <section className="chat-thread-page">
         <header className="chat-thread-page__header">
-          <button type="button" className="chat-thread-page__back" onClick={() => navigate('/chats')}>
+          <Button variant="ghost" onClick={() => navigate('/chats')}>
             ← Recent chats
-          </button>
+          </Button>
           <h1>Chat unavailable</h1>
           <p>We couldn’t load this member’s details right now. Please try again later.</p>
         </header>
@@ -758,22 +697,22 @@ const ChatThread = () => {
   return (
     <section className="chat-thread-page">
       <header className="chat-thread-page__header">
-        <button type="button" className="chat-thread-page__back" onClick={() => navigate('/chats')}>
-          ← Recent chats
-        </button>
-        <span className="chat-thread-page__eyebrow">direct chat</span>
-        <h1>{member?.name || member?.email || 'IIIT Network member'}</h1>
+        <div className="header-actions">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/chats')} icon="arrow-left">
+            Back
+          </Button>
+          <span className="chat-thread-page__eyebrow">direct chat</span>
+        </div>
       </header>
 
-      <div className="chat-thread-shell">
+      <Card className="chat-thread-shell" variant="glass" noPadding>
         <header className="chat-thread__participant">
-          <span className={`chat-thread__avatar${avatarUrl ? ' has-image' : ''}`} aria-hidden>
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" />
-            ) : (
-              <span>{conversationTitle.slice(0, 2).toUpperCase()}</span>
-            )}
-          </span>
+          <Avatar
+            src={member?.image || member?.avatarPath}
+            name={conversationTitle}
+            size="md"
+            status={presence.isOnline ? 'online' : null}
+          />
           <div className="chat-thread__details">
             <div className="chat-thread__title-row">
               <h2>{conversationTitle}</h2>
@@ -798,146 +737,131 @@ const ChatThread = () => {
                 <span className="chat-thread__badge">Blocked</span>
               )}
             </div>
-            <div
-              className={`chat-thread__connection chat-thread__connection--${socketStatusVariant}`}
-              role="status"
-            >
-              <span className="chat-thread__connection-indicator" aria-hidden />
-              <span>{socketStatusLabel}</span>
-            </div>
           </div>
-          <div className="chat-thread__actions" aria-label="Conversation actions">
-            {isBlockedByCurrentUser ? (
-              <button
-                type="button"
-                className="chat-thread__action"
-                onClick={() => {
-                  setPanelStatus(null);
-                  unblockConversationMutation.mutate({ conversationId });
-                }}
-                disabled={unblockConversationMutation.isPending}
-              >
-                {unblockConversationMutation.isPending ? 'Unblocking…' : 'Unblock'}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="chat-thread__action"
-                onClick={() => {
-                  const reason = window.prompt('Add a short note about why you’re blocking this member (optional).');
-                  setPanelStatus(null);
-                  blockConversationMutation.mutate({
-                    conversationId,
-                    reason: reason?.trim() || undefined
-                  });
-                }}
-                disabled={blockConversationMutation.isPending}
-              >
-                {blockConversationMutation.isPending ? 'Blocking…' : 'Block member'}
-              </button>
-            )}
-            <button
-              type="button"
-              className="chat-thread__action chat-thread__action--danger"
-              onClick={() => {
-                if (!conversationId) {
-                  return;
-                }
-                setPanelStatus(null);
-                deleteConversationMutation.mutate({ conversationId });
-              }}
-              disabled={!conversationId || deleteConversationMutation.isPending}
-            >
-              {deleteConversationMutation.isPending ? 'Deleting…' : 'Delete chat'}
-            </button>
+
+          <div className="chat-thread__header-actions">
+            {/* Only show delete option for now in header to keep it clean, maybe kebab menu later? */}
+            {/* For now, actions are better placed maybe in a settings menu or kept simple. 
+                     The design implies specific actions. Let's add basic ones. */}
           </div>
         </header>
 
-        {blockReason && (
-          <p className="chat-thread__note" role="note">Block note: {blockReason}</p>
-        )}
-
         {panelStatus && (
-          <p className={`chat-thread__status chat-thread__status--${panelStatus.type}`} role="status">
+          <div className={`chat-thread__notice chat-thread__notice--${panelStatus.type}`} role="alert">
             {panelStatus.message}
-          </p>
-        )}
-
-        {conversationError && (
-          <p className="chat-thread__status chat-thread__status--warning">
-            We couldn’t load previous messages. You can still send a new one.
-          </p>
-        )}
-
-        <div className="chat-thread__messages">
-          {!conversationQuery.isPending && conversationQuery.hasNextPage && (
-            <button
-              type="button"
-              className="chat-thread__load-more"
-              onClick={handleLoadOlder}
-              disabled={conversationQuery.isFetchingNextPage}
-            >
-              {conversationQuery.isFetchingNextPage ? 'Loading…' : 'Load earlier messages'}
-            </button>
-          )}
-
-          {conversationQuery.isFetchingNextPage && (
-            <p className="chat-thread__hint">Loading earlier messages…</p>
-          )}
-
-          <div className="chat-thread__scroll" ref={threadRef}>
-            {conversationQuery.isPending ? (
-              <p className="chat-thread__hint">Loading conversation…</p>
-            ) : messages.length === 0 ? (
-              <p className="chat-thread__hint">Say hi and start the conversation.</p>
-            ) : (
-              messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`chat-message${message.isOwn ? ' chat-message--own' : ''}`}
-                >
-                  <p className="chat-message__body">{message.body}</p>
-                  <span
-                    className={`chat-message__meta${message.isOwn && message.readAt ? ' chat-message__meta--seen' : ''}`}
-                  >
-                    {formatMessageMeta(message)}
-                  </span>
-                </div>
-              ))
-            )}
+            <button type="button" onClick={() => setPanelStatus(null)}>×</button>
           </div>
+        )}
+
+        {isBlockingCurrentUser && (
+          <div className="chat-thread__notice chat-thread__notice--error">
+            This member has blocked you. You can read past messages but cannot reply.
+          </div>
+        )}
+
+        <div className="chat-thread__messages" ref={threadRef}>
+          {conversationQuery.hasNextPage && (
+            <div className="chat-thread__loader">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLoadOlder}
+                disabled={conversationQuery.isFetchingNextPage}
+                loading={conversationQuery.isFetchingNextPage}
+              >
+                Load older messages
+              </Button>
+            </div>
+          )}
+
+          {messages.length === 0 && !conversationQuery.isLoading && (
+            <div className="chat-thread__empty">
+              <p>No messages yet. Say hello!</p>
+            </div>
+          )}
+
+          {messages.map((message, index) => {
+            const isOwn = message.isOwn;
+            const showAvatar = !isOwn && (index === 0 || messages[index - 1].isOwn || messages[index - 1].senderId !== message.senderId);
+
+            return (
+              <div
+                key={message.id}
+                className={`chat-bubble${isOwn ? ' chat-bubble--own' : ' chat-bubble--other'}`}
+              >
+                {!isOwn && (
+                  <div className="chat-bubble__avatar">
+                    {showAvatar ? (
+                      <Avatar
+                        src={member?.image || member?.avatarPath}
+                        name={conversationTitle}
+                        size="sm"
+                      />
+                    ) : <div className="avatar-spacer" />}
+                  </div>
+                )}
+                <div className="chat-bubble__content">
+                  <p>{message.body}</p>
+                  <time title={new Date(message.createdAt).toLocaleString()}>
+                    {formatRelativeTime(message.createdAt)}
+                  </time>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        <form className="chat-thread__composer" onSubmit={handleSubmit}>
-          <textarea
-            className="chat-thread__textarea"
-            value={draft}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              setComposerError(null);
-            }}
-            placeholder={composerPlaceholder}
-            rows={3}
-            disabled={composerDisabled}
-          />
-          {composerError && (
-            <p className="chat-thread__composer-error" role="alert">{composerError}</p>
-          )}
-          <div className="chat-thread__composer-actions">
-            <button
-              type="submit"
-              className="chat-thread__send"
+        <footer className="chat-thread__footer">
+          <form className="chat-composer" onSubmit={handleSubmit}>
+            <textarea
+              value={draft}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                setComposerError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              placeholder={composerPlaceholder}
+              rows={1}
+              disabled={composerDisabled}
+            />
+            <Button
+              type="button" // Change to submit via logic 
+              variant="primary"
+              icon="paper-plane"
+              onClick={handleSubmit}
               disabled={!draft.trim() || sendMessageMutation.isPending || composerDisabled}
-            >
-              {sendMessageMutation.isPending ? 'Sending…' : 'Send message'}
-            </button>
-          </div>
-        </form>
+              loading={sendMessageMutation.isPending}
+              className="chat-composer__send"
+            />
+          </form>
+          {composerError && (
+            <p className="chat-composer__error">{composerError}</p>
+          )}
+        </footer>
+      </Card>
+
+      <div className="chat-thread-page__actions">
+        {isBlockedByCurrentUser ? (
+          <Button variant="secondary" onClick={() => unblockConversationMutation.mutate({ conversationId })}>Unblock Member</Button>
+        ) : (
+          <Button variant="ghost" className="text-danger" onClick={() => {
+            if (window.confirm('Are you sure you want to block this user?')) {
+              blockConversationMutation.mutate({ conversationId });
+            }
+          }}>Block Member</Button>
+        )}
+        <Button variant="ghost" className="text-danger" onClick={() => {
+          if (window.confirm('Delete this conversation mostly? This cannot be undone.')) {
+            deleteConversationMutation.mutate({ conversationId });
+          }
+        }}>Delete Conversation</Button>
       </div>
 
-      {loadingMember && (
-        <p role="status">Loading member details…</p>
-      )}
     </section>
   );
 };

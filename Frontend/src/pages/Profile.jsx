@@ -1,497 +1,390 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import './Profile.css';
+import React, { useEffect, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import { fetchAvatarByEmail } from '../api/users';
+import { updateProfile, updatePassword } from '../api/users';
+import './Profile.css';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Avatar from '../components/ui/Avatar';
 
-const emptyForm = {
-  name: '',
-  collegeId: '',
-  place: '',
-  about: '',
-  instagram: '',
-  linkedin: '',
-  github: '',
-  leetcode: '',
-  codeforces: '',
-  codechef: ''
-};
-
-const PROFILE_COMPLETION_FIELDS = ['name', 'collegeId', 'place', 'about', 'instagram', 'linkedin', 'github'];
-
-const SOCIAL_FIELDS = [
-  { key: 'instagram', label: 'Instagram', icon: '📸', placeholder: 'Add your Instagram profile link' },
-  { key: 'linkedin', label: 'LinkedIn', icon: '💼', placeholder: 'Link your LinkedIn profile' },
-  { key: 'github', label: 'GitHub', icon: '💻', placeholder: 'Share your GitHub username or repository' }
+// Social platform configuration
+const SOCIAL_PLATFORMS = [
+  { id: 'github', label: 'GitHub', placeholder: 'https://github.com/username' },
+  { id: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/username' },
+  { id: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/username' },
+  { id: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/username' },
+  { id: 'website', label: 'Personal Website', placeholder: 'https://your-portfolio.com' }
 ];
 
-const CP_FIELDS = [
-  { key: 'leetcode', label: 'LeetCode', icon: '🧠', placeholder: 'Share your LeetCode profile link' },
-  { key: 'codeforces', label: 'Codeforces', icon: '⚡', placeholder: 'Add your Codeforces profile link' },
-  { key: 'codechef', label: 'CodeChef', icon: '🏆', placeholder: 'Add your CodeChef profile link' }
+const CP_PLATFORMS = [
+  { id: 'leetcode', label: 'LeetCode', placeholder: 'https://leetcode.com/username' },
+  { id: 'codeforces', label: 'Codeforces', placeholder: 'https://codeforces.com/profile/username' },
+  { id: 'codechef', label: 'CodeChef', placeholder: 'https://www.codechef.com/users/username' },
+  { id: 'hackerrank', label: 'HackerRank', placeholder: 'https://hackerrank.com/username' }
 ];
-
-const PROFILE_TIPS = [
-  'Highlight recent projects or societies you contribute to.',
-  'Share how peers can collaborate with you or the tech you love.',
-  'Keep your links updated for upcoming recruitment season.',
-  'Drop your CP profiles so teammates can invite you to contests and practice rooms.'
-];
-
-const deriveBatchYear = (collegeId = '') => {
-  const match = collegeId.trim().toLowerCase().match(/^b(\d{3})/);
-  if (!match) return null;
-  const value = Number.parseInt(match[1], 10);
-  if (Number.isNaN(value)) return null;
-  return 1500 + value;
-};
 
 const Profile = () => {
-  const { user, updateProfile } = useAuth();
-  const [form, setForm] = useState(emptyForm);
-  const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(() => user?.avatarUrl || null);
-  const [status, setStatus] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const rollLocked = Boolean(user?.collegeId);
+  const { user, refetchUser } = useAuth();
+  const queryClient = useQueryClient();
 
-  const initials = useMemo(() => {
-    if (!user?.name) {
-      return user?.email?.[0]?.toUpperCase() || '?';
-    }
-    return user.name
-      .split(' ')
-      .map((part) => part[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-  }, [user]);
+  const [formData, setFormData] = useState({
+    name: '',
+    bio: '',
+    batch: '',
+    branch: '',
+    skills: '', // stored as comma-separated string for editing
+    github: '',
+    linkedin: '',
+    twitter: '',
+    instagram: '',
+    website: '',
+    leetcode: '',
+    codeforces: '',
+    codechef: '',
+    hackerrank: ''
+  });
 
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  const [feedback, setFeedback] = useState(null);
+  const [passwordFeedback, setPasswordFeedback] = useState(null);
+
+  // Initialize form with user data
   useEffect(() => {
-    if (!user) return;
-
-    setForm({
-      name: user.name || '',
-      collegeId: user.collegeId || '',
-      place: user.place || '',
-      about: user.about || '',
-      instagram: user.instagram || '',
-      linkedin: user.linkedin || '',
-      github: user.github || '',
-      leetcode: user.leetcode || '',
-      codeforces: user.codeforces || '',
-      codechef: user.codechef || ''
-    });
-  }, [user]);
-
-  useEffect(() => () => {
-    if (avatarPreview && avatarPreview.startsWith('blob:')) {
-      URL.revokeObjectURL(avatarPreview);
-    }
-  }, [avatarPreview]);
-
-  useEffect(() => {
-    if (!user || avatarFile) {
-      return;
-    }
-
-    if (user.avatarUrl) {
-      setAvatarPreview(user.avatarUrl);
-    } else {
-      setAvatarPreview(null);
-    }
-  }, [user, avatarFile]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const hasDataUrl = (value) => typeof value === 'string' && value.startsWith('data:');
-
-    if (!user?.email || avatarFile) {
-      return () => {
-        isMounted = false;
-      };
-    }
-
-    if (avatarPreview || hasDataUrl(user?.avatarUrl)) {
-      return () => {
-        isMounted = false;
-      };
-    }
-
-    (async () => {
-      try {
-        const blob = await fetchAvatarByEmail(user.email);
-        if (!isMounted) return;
-        const objectUrl = URL.createObjectURL(blob);
-        setAvatarPreview(objectUrl);
-      } catch (error) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('Unable to fetch avatar by email', error);
-        }
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.email, avatarFile, avatarPreview, user?.avatarUrl]);
-
-  const completion = useMemo(() => {
-    const total = PROFILE_COMPLETION_FIELDS.length;
-    const filled = PROFILE_COMPLETION_FIELDS.reduce((count, field) => {
-      const value = form[field];
-      return count + (value && value.toString().trim() ? 1 : 0);
-    }, 0);
-    const percent = total === 0 ? 100 : Math.round((filled / total) * 100);
-    return {
-      percent,
-      filled,
-      missing: Math.max(total - filled, 0),
-      total
-    };
-  }, [form]);
-
-  const highlightChips = useMemo(() => {
-    const chips = [];
-    const roll = form.collegeId?.trim();
-    if (roll) {
-      chips.push(`Roll • ${roll.toUpperCase()}`);
-    }
-
-    const batchYear = deriveBatchYear(roll || user?.collegeId);
-    if (batchYear) {
-      chips.push(`Batch ${batchYear}`);
-    }
-
-    if (form.place?.trim()) {
-      chips.push(`Based in ${form.place.trim()}`);
-    }
-
-    return chips.slice(0, 3);
-  }, [form.collegeId, form.place, user?.collegeId]);
-
-  const socialList = useMemo(
-    () => SOCIAL_FIELDS.map((item) => ({
-      ...item,
-      value: form[item.key]?.trim() || ''
-    })),
-    [form]
-  );
-
-  const cpList = useMemo(
-    () => CP_FIELDS.map((item) => ({
-      ...item,
-      value: form[item.key]?.trim() || ''
-    })),
-    [form]
-  );
-
-  const aboutPreview = form.about?.trim() || 'Add a quick introduction so peers know what you are excited about.';
-  const firstName = form.name?.trim()?.split(' ')[0];
-  const heroHeading = firstName ? `Hey ${firstName}, let’s polish your story.` : 'Let’s get your story ready.';
-  const progressHint = completion.missing === 0
-    ? 'Your profile looks complete! 🎉'
-    : `Add ${completion.missing} more ${completion.missing === 1 ? 'detail' : 'details'} to reach 100%.`;
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    setStatus(null);
-  };
-
-  const handleAvatar = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      setAvatarFile(null);
-      setAvatarPreview(null);
-      return;
-    }
-
-    setAvatarFile(file);
-    setAvatarPreview((prev) => {
-      if (prev) {
-        URL.revokeObjectURL(prev);
-      }
-      return URL.createObjectURL(file);
-    });
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (!user) return;
-
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      formData.append(key, value ?? '');
-    });
-
-    if (avatarFile) {
-      formData.append('profilePicture', avatarFile);
-    }
-
-    try {
-      setSubmitting(true);
-      setStatus({ type: 'pending', message: 'Updating your profile…' });
-      const response = await updateProfile(formData);
-      setStatus({ type: 'success', message: response?.message || 'Profile updated successfully.' });
-      if (avatarFile) {
-        setAvatarFile(null);
-      }
-    } catch (error) {
-      setStatus({
-        type: 'error',
-        message: error.payload?.error || error.message || 'Unable to update your profile right now.'
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        bio: user.bio || '',
+        batch: user.batch || '',
+        branch: user.branch || '',
+        skills: Array.isArray(user.skills) ? user.skills.join(', ') : (user.skills || ''),
+        github: user.socialLinks?.github || '',
+        linkedin: user.socialLinks?.linkedin || '',
+        twitter: user.socialLinks?.twitter || '',
+        instagram: user.socialLinks?.instagram || '',
+        website: user.socialLinks?.website || '',
+        leetcode: user.cpProfiles?.leetcode || '',
+        codeforces: user.cpProfiles?.codeforces || '',
+        codechef: user.cpProfiles?.codechef || '',
+        hackerrank: user.cpProfiles?.hackerrank || ''
       });
-    } finally {
-      setSubmitting(false);
     }
+  }, [user]);
+
+  const profileMutation = useMutation({
+    mutationFn: (data) => updateProfile(data),
+    onSuccess: (updatedUser) => {
+      setFeedback({ type: 'success', message: 'Profile updated successfully.' });
+      refetchUser(); // Update auth context
+      queryClient.setQueryData(['user', user.id], updatedUser);
+      setTimeout(() => setFeedback(null), 3000);
+    },
+    onError: (error) => {
+      setFeedback({ type: 'error', message: error?.message || 'Failed to update profile.' });
+    }
+  });
+
+  const passwordMutation = useMutation({
+    mutationFn: (data) => updatePassword(data),
+    onSuccess: () => {
+      setPasswordFeedback({ type: 'success', message: 'Password changed successfully.' });
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setPasswordFeedback(null), 3000);
+    },
+    onError: (error) => {
+      setPasswordFeedback({ type: 'error', message: error?.message || 'Failed to update password.' });
+    }
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  if (!user) {
-    return null;
-  }
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [name]: value }));
+  };
 
-  const displayedAvatar = avatarPreview || user.avatarUrl || null;
+  const handleProfileSubmit = (e) => {
+    e.preventDefault();
+    setFeedback(null);
+
+    // Prepare payload
+    const payload = {
+      name: formData.name,
+      bio: formData.bio,
+      batch: formData.batch,
+      branch: formData.branch,
+      skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
+      socialLinks: {
+        github: formData.github,
+        linkedin: formData.linkedin,
+        twitter: formData.twitter,
+        instagram: formData.instagram,
+        website: formData.website
+      },
+      cpProfiles: {
+        leetcode: formData.leetcode,
+        codeforces: formData.codeforces,
+        codechef: formData.codechef,
+        hackerrank: formData.hackerrank
+      }
+    };
+
+    profileMutation.mutate(payload);
+  };
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    setPasswordFeedback(null);
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordFeedback({ type: 'error', message: 'New passwords do not match.' });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordFeedback({ type: 'error', message: 'Password must be at least 6 characters.' });
+      return;
+    }
+
+    passwordMutation.mutate({
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword
+    });
+  };
+
+  // Helper to calculate profile completion (rough estimate)
+  const completionPercentage = (() => {
+    if (!user) return 0;
+    const fields = ['name', 'bio', 'batch', 'branch', 'skills', 'image'];
+    const filled = fields.filter(f => user[f] && user[f].length > 0).length;
+    const socialFilled = Object.values(user.socialLinks || {}).filter(Boolean).length > 0 ? 1 : 0;
+    return Math.round(((filled + socialFilled) / (fields.length + 1)) * 100);
+  })();
 
   return (
-    <section className="profile-page" aria-labelledby="profile-heading">
-      <div className="profile-hero">
-        <div className="profile-hero__media">
-          <div className="profile-avatar" aria-hidden>
-            {displayedAvatar ? (
-              <img src={displayedAvatar} alt="Profile avatar preview" />
-            ) : (
-              <span>{initials}</span>
-            )}
-          </div>
-          <label className="profile-upload">
-            <span>Upload a new photo</span>
-            <input type="file" accept="image/*" onChange={handleAvatar} />
-          </label>
-          <p className="profile-hero__signed">
-            Signed in as <strong>{user.email}</strong>
-          </p>
-        </div>
-        <div className="profile-hero__body">
-          <span className="profile-hero__eyebrow">IIIT Network profile</span>
-          <h1 id="profile-heading">{heroHeading}</h1>
-          <p className="profile-hero__intro">{aboutPreview}</p>
-          <dl className="profile-hero__meta">
-            <div>
-              <dt>Email</dt>
-              <dd>{user.email}</dd>
-            </div>
-            <div>
-              <dt>Roll ID</dt>
-              <dd>{form.collegeId?.trim() ? form.collegeId.trim().toUpperCase() : 'Add your roll ID'}</dd>
-            </div>
-            <div>
-              <dt>Profile status</dt>
-              <dd>{completion.percent}% complete</dd>
-            </div>
-          </dl>
-          {highlightChips.length > 0 && (
-            <div className="profile-hero__chips">
-              {highlightChips.map((chip) => (
-                <span key={chip} className="profile-chip">{chip}</span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+    <div className="profile-page">
+      <header className="profile-page__header">
+        <h1>Your Profile</h1>
+        <p>Manage your public presence and account settings.</p>
+      </header>
 
-      <div className="profile-content">
-        <aside className="profile-sidebar">
-          <section className="profile-card profile-card--progress">
-            <header>
-              <h2>Profile completion</h2>
-              <span>{completion.percent}%</span>
+      <div className="profile-grid">
+
+        {/* Left Column: Avatar & Basic Info */}
+        <div className="profile-col-left">
+          <Card className="profile-card profile-card--hero" variant="glass">
+            <div className="profile-card__avatar-section">
+              <Avatar
+                src={user?.image || user?.avatarPath}
+                name={user?.name || user?.email}
+                size="xl"
+                className="profile-avatar-xl"
+              />
+              {/* Image upload logic would go here, maybe a small button overlay */}
+              <div className="profile-completion">
+                <span>Profile Completion</span>
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${completionPercentage}%` }}></div>
+                </div>
+                <span className="progress-text">{completionPercentage}%</span>
+              </div>
+            </div>
+
+            <div className="profile-card__summary">
+              <h3>{user?.name}</h3>
+              <p>{user?.email}</p>
+              {user?.role && <span className="role-badge">{user.role}</span>}
+            </div>
+          </Card>
+
+          <Card className="profile-card" variant="default">
+            <h3>Change Password</h3>
+            <form onSubmit={handlePasswordSubmit} className="profile-form">
+              <div className="form-group">
+                <label>Current Password</label>
+                <input
+                  type="password"
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>New Password</label>
+                <input
+                  type="password"
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirm New Password</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  required
+                />
+              </div>
+
+              {passwordFeedback && (
+                <div className={`form-feedback form-feedback--${passwordFeedback.type}`}>
+                  {passwordFeedback.message}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                variant="secondary"
+                loading={passwordMutation.isPending}
+                fullWidth
+              >
+                Update Password
+              </Button>
+            </form>
+          </Card>
+        </div>
+
+        {/* Right Column: Edit Details */}
+        <div className="profile-col-right">
+          <Card className="profile-card" variant="default">
+            <header className="card-header">
+              <div>
+                <h2>Public Details</h2>
+                <p>This information will be displayed on your public profile.</p>
+              </div>
             </header>
-            <div className="profile-progress">
-              <div className="profile-progress__bar" aria-hidden>
-                <span style={{ width: `${completion.percent}%` }} />
-              </div>
-              <p className="profile-progress__hint">{progressHint}</p>
-            </div>
-          </section>
 
-          <section className="profile-card profile-card--socials">
-            <h2>Reach out</h2>
-            <ul className="profile-social-list">
-              {socialList.map((social) => (
-                <li key={social.key} className={social.value ? 'is-active' : ''}>
-                  <span className="profile-social-list__icon" aria-hidden>{social.icon}</span>
-                  <div className="profile-social-list__content">
-                    <p className="profile-social-list__label">{social.label}</p>
-                    <p className="profile-social-list__value">{social.value || social.placeholder}</p>
+            <form onSubmit={handleProfileSubmit} className="profile-form">
+              {/* Basic Info */}
+              <fieldset className="form-section">
+                <legend>Basic Information</legend>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Full Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Aditi Sharma"
+                    />
                   </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="profile-card profile-card--cp">
-            <h2>Competitive programming</h2>
-            <ul className="profile-cp-list">
-              {cpList.map((cp) => (
-                <li key={cp.key} className={cp.value ? 'is-active' : ''}>
-                  <span className="profile-cp-list__icon" aria-hidden>{cp.icon}</span>
-                  <div className="profile-cp-list__content">
-                    <p className="profile-cp-list__label">{cp.label}</p>
-                    <p className="profile-cp-list__value">{cp.value || cp.placeholder}</p>
+                  <div className="form-group">
+                    <label>Batch</label>
+                    <input
+                      type="text"
+                      name="batch"
+                      value={formData.batch}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 2k21"
+                    />
                   </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="profile-card profile-card--tips">
-            <h2>Make it stand out</h2>
-            <ul>
-              {PROFILE_TIPS.map((tip) => (
-                <li key={tip}>{tip}</li>
-              ))}
-            </ul>
-          </section>
-        </aside>
-
-        <div className="profile-main">
-          <form className="profile-form" onSubmit={handleSubmit} noValidate>
-            <div className="form-section">
-              <div className="form-section__header">
-                <h2>Basics</h2>
-                <p>Update the essentials that appear on the batches directory.</p>
-              </div>
-              <div className="form-grid form-grid--two">
-                <div className="form-field">
-                  <label htmlFor="name">Full name</label>
-                  <input id="name" name="name" value={form.name} onChange={handleChange} autoComplete="name" />
-                  <p className="field-hint">Use your preferred name for collaborations and the batches page.</p>
                 </div>
-
-                <div className="form-field">
-                  <label htmlFor="collegeId">Roll ID</label>
-                  <input
-                    id="collegeId"
-                    name="collegeId"
-                    value={form.collegeId}
-                    onChange={handleChange}
-                    autoComplete="off"
-                    disabled={rollLocked}
-                  />
-                  <p className="field-hint">
-                    {rollLocked
-                      ? 'Roll ID is locked. Contact the IIIT Network team if it needs to be corrected.'
-                      : 'Example: b520123. This links you to the right branch directory.'}
-                  </p>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Branch</label>
+                    <select name="branch" value={formData.branch} onChange={handleInputChange}>
+                      <option value="">Select Branch</option>
+                      <option value="CSE">CSE</option>
+                      <option value="ECE">ECE</option>
+                      <option value="IT">IT</option>
+                    </select>
+                  </div>
                 </div>
-
-                <div className="form-field">
-                  <label htmlFor="place">Location</label>
-                  <input id="place" name="place" value={form.place} onChange={handleChange} placeholder="Where are you currently based?" />
-                </div>
-
-                <div className="form-field form-field--full">
-                  <label htmlFor="about">About you</label>
+                <div className="form-group">
+                  <label>Bio</label>
                   <textarea
-                    id="about"
-                    name="about"
-                    value={form.about}
-                    onChange={handleChange}
-                    rows={5}
-                    placeholder="Tell the community what you are excited about."
+                    name="bio"
+                    value={formData.bio}
+                    onChange={handleInputChange}
+                    placeholder="Tell us a bit about yourself..."
+                    rows={3}
                   />
                 </div>
-              </div>
-            </div>
-
-            <div className="form-section">
-              <div className="form-section__header">
-                <h2>Online presence</h2>
-                <p>Connect your socials so people can follow your work.</p>
-              </div>
-              <div className="form-grid form-grid--two">
-                <div className="form-field">
-                  <label htmlFor="instagram">Instagram</label>
-                  <input id="instagram" name="instagram" value={form.instagram} onChange={handleChange} placeholder="https://instagram.com/username" />
-                </div>
-
-                <div className="form-field">
-                  <label htmlFor="linkedin">LinkedIn</label>
-                  <input id="linkedin" name="linkedin" value={form.linkedin} onChange={handleChange} placeholder="https://linkedin.com/in/username" />
-                </div>
-
-                <div className="form-field">
-                  <label htmlFor="github">GitHub</label>
-                  <input id="github" name="github" value={form.github} onChange={handleChange} placeholder="https://github.com/username" />
-                </div>
-              </div>
-            </div>
-
-            <div className="form-section">
-              <div className="form-section__header">
-                <h2>Competitive programming</h2>
-                <p>Drop your CP handles so we can track leaderboard stats and study group invites.</p>
-              </div>
-              <div className="form-grid form-grid--two">
-                <div className="form-field">
-                  <label htmlFor="leetcode">LeetCode</label>
+                <div className="form-group">
+                  <label>Skills <small>(comma separated)</small></label>
                   <input
-                    id="leetcode"
-                    name="leetcode"
-                    value={form.leetcode}
-                    onChange={handleChange}
-                    placeholder="https://leetcode.com/username"
+                    type="text"
+                    name="skills"
+                    value={formData.skills}
+                    onChange={handleInputChange}
+                    placeholder="React, Python, Machine Learning..."
                   />
-                  <p className="field-hint">Used to feature you on the IIIT Network DSA leaderboard.</p>
                 </div>
+              </fieldset>
 
-                <div className="form-field">
-                  <label htmlFor="codeforces">Codeforces</label>
-                  <input
-                    id="codeforces"
-                    name="codeforces"
-                    value={form.codeforces}
-                    onChange={handleChange}
-                    placeholder="https://codeforces.com/profile/username"
-                  />
-                  <p className="field-hint">Helps peers sync up for virtual contests and ladders.</p>
+              {/* Social Links */}
+              <fieldset className="form-section">
+                <legend>Social Profiles</legend>
+                <div className="form-grid">
+                  {SOCIAL_PLATFORMS.map(platform => (
+                    <div className="form-group" key={platform.id}>
+                      <label>{platform.label}</label>
+                      <input
+                        type="url"
+                        name={platform.id}
+                        value={formData[platform.id]}
+                        onChange={handleInputChange}
+                        placeholder={platform.placeholder}
+                      />
+                    </div>
+                  ))}
                 </div>
+              </fieldset>
 
-                <div className="form-field">
-                  <label htmlFor="codechef">CodeChef</label>
-                  <input
-                    id="codechef"
-                    name="codechef"
-                    value={form.codechef}
-                    onChange={handleChange}
-                    placeholder="https://www.codechef.com/users/username"
-                  />
-                  <p className="field-hint">Optional but great for sharing your long challenge streak.</p>
+              {/* CP Profiles */}
+              <fieldset className="form-section">
+                <legend>Competitive Programming</legend>
+                <div className="form-grid">
+                  {CP_PLATFORMS.map(platform => (
+                    <div className="form-group" key={platform.id}>
+                      <label>{platform.label}</label>
+                      <input
+                        type="url"
+                        name={platform.id}
+                        value={formData[platform.id]}
+                        onChange={handleInputChange}
+                        placeholder={platform.placeholder}
+                      />
+                    </div>
+                  ))}
                 </div>
+              </fieldset>
+
+              {feedback && (
+                <div className={`form-feedback form-feedback--${feedback.type}`}>
+                  {feedback.message}
+                </div>
+              )}
+
+              <div className="form-actions">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  loading={profileMutation.isPending}
+                >
+                  Save Changes
+                </Button>
               </div>
-            </div>
-
-            {status && (
-              <div className={`profile-status profile-status--${status.type}`} role="status">
-                <strong>
-                  {status.type === 'success'
-                    ? 'All set!'
-                    : status.type === 'pending'
-                      ? 'Working on it'
-                      : 'Let’s try that again'}
-                </strong>
-                <span>{status.message}</span>
-              </div>
-            )}
-
-            <div className="profile-actions">
-              <button type="submit" disabled={submitting}>{submitting ? 'Saving…' : 'Save changes'}</button>
-            </div>
-          </form>
+            </form>
+          </Card>
         </div>
+
       </div>
-    </section>
+    </div>
   );
 };
 

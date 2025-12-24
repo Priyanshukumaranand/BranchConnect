@@ -1,18 +1,38 @@
 .exam-page {
   display: grid;
   gap: clamp(3rem, 6vw, 4.5rem);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 5vw, 2rem);
 }
 
 .exam-hero {
   border-radius: 2rem;
   border: 1px solid var(--color-border-subtle);
-  background: var(--accent-gradient-secondary);
+  background: var(--color-bg-shell);
   padding: clamp(1.75rem, 3vw, 2.75rem);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.exam-hero::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: var(--hero-glow);
+  filter: blur(80px);
+  z-index: 0;
 }
 
 .exam-hero__intro {
   display: grid;
   gap: clamp(1rem, 2vw, 1.5rem);
+  position: relative;
+  z-index: 1;
 }
 
 .exam-hero__eyebrow {
@@ -20,71 +40,35 @@
   letter-spacing: 0.32em;
   font-size: 0.76rem;
   color: var(--color-text-muted);
+  font-weight: 600;
 }
 
 .exam-hero__actions {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0.85rem;
-}
-
-.exam-hero__actions .primary,
-.exam-hero__actions .ghost {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.75rem 1.6rem;
-  border-radius: 999px;
-  font-weight: 600;
-  border: 1px solid transparent;
-  transition: transform 180ms ease, box-shadow 180ms ease;
-}
-
-.exam-hero__actions .primary {
-  background: var(--accent-gradient-primary);
-  color: var(--color-text-contrast);
-  box-shadow: var(--shadow-elevated);
-}
-
-.exam-hero__actions .ghost {
-  background: transparent;
-  border-color: var(--ghost-btn-border);
-  color: var(--ghost-btn-color);
-}
-
-.exam-hero__actions .ghost:hover {
-  border-color: var(--ghost-btn-hover-border);
-  color: var(--accent-color-soft);
-}
-
-.exam-hero__actions a:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(255, 140, 80, 0.25);
+  margin-top: 0.5rem;
 }
 
 .exam-hero__hint {
   color: var(--color-text-muted);
   font-size: 0.85rem;
+  margin-top: 0.5rem;
 }
 
-.semester-section header,
-.study-playlists header,
-.exam-tips header,
-.exam-faq header {
+.semester-section header {
   display: grid;
   gap: 0.5rem;
+  margin-bottom: 2rem;
 }
 
 .semester-grid {
   display: grid;
   gap: clamp(1.5rem, 3vw, 2rem);
+  grid-template-columns: repeat(auto-fit, minmax(Min(100%, 500px), 1fr));
 }
 
 .semester-card {
-  border-radius: 1.8rem;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-surface-translucent);
-  padding: clamp(1.5rem, 3vw, 2.25rem);
   display: grid;
   gap: clamp(1rem, 2vw, 1.5rem);
 }
@@ -106,7 +90,8 @@
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ghost-btn-color);
+  color: var(--color-text-secondary);
+  font-weight: 600;
 }
 
 .semester-card__resources {
@@ -115,95 +100,59 @@
 }
 
 .semester-resource {
-  border-radius: 1.2rem;
+  border-radius: 1rem;
   border: 1px solid var(--color-border-subtle);
-  background: var(--color-surface-base);
-  padding: clamp(1.1rem, 2vw, 1.5rem);
+  background: var(--color-surface);
+  padding: clamp(1rem, 2vw, 1.25rem);
   display: grid;
-  gap: 0.35rem;
-  transition: transform 180ms ease, border 180ms ease;
+  gap: 0.5rem;
+  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  text-decoration: none;
 }
 
 .semester-resource:hover {
-  transform: translateY(-4px);
-  border-color: var(--ghost-btn-hover-border);
+  transform: translateY(-3px);
+  border-color: var(--color-brand-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.semester-resource__main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .semester-resource__title {
   font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 1.05rem;
 }
 
 .semester-resource__meta {
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
+  background: var(--chip-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 .semester-resource p {
   color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .semester-resource__cta {
-  margin-top: 0.3rem;
+  margin-top: 0.5rem;
   font-weight: 600;
-  color: var(--accent-color-soft);
-}
-
-.playlist-grid {
-  display: grid;
-  gap: clamp(1rem, 2vw, 1.5rem);
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.playlist-card {
-  border-radius: 1.4rem;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-surface-base);
-  padding: clamp(1.25rem, 2vw, 1.75rem);
-  display: grid;
-  gap: 0.6rem;
-  font-weight: 500;
-  color: var(--color-text-primary);
-}
-
-.playlist-card span {
-  font-weight: 600;
-  color: var(--accent-color-soft);
-}
-
-.tips-grid {
-  display: grid;
-  gap: clamp(1rem, 2vw, 1.5rem);
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.tip-card {
-  border-radius: 1.4rem;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-surface-base);
-  padding: clamp(1.25rem, 2vw, 1.75rem);
-  display: grid;
-  gap: 0.5rem;
-}
-
-.exam-faq .faq-list {
-  display: grid;
-  gap: clamp(1rem, 2vw, 1.5rem);
-}
-
-.exam-faq .faq-item {
-  border-radius: 1.4rem;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-surface-base);
-  padding: clamp(1.25rem, 2vw, 1.75rem);
-  display: grid;
-  gap: 0.65rem;
+  font-size: 0.85rem;
+  color: var(--color-brand-primary);
 }
 
 .exam-cta {
-  border-radius: 1.8rem;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--accent-gradient-secondary);
-  padding: clamp(1.5rem, 3vw, 2.5rem);
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
@@ -217,10 +166,14 @@
   gap: 0.6rem;
 }
 
-.exam-cta .primary {
-  padding: 0.75rem 1.6rem;
-  border-radius: 999px;
-  background: var(--accent-gradient-primary);
-  color: var(--color-text-contrast);
-  font-weight: 600;
+.exam-cta__button {
+  background: var(--color-surface-glass) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border-strong) !important;
+  backdrop-filter: blur(8px);
+}
+
+.exam-cta__button:hover {
+  background: var(--color-surface-translucent) !important;
+  border-color: var(--color-brand-primary) !important;
 }

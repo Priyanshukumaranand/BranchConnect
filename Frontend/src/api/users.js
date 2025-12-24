@@ -21,6 +21,13 @@ export const updateProfile = (payload) => {
   });
 };
 
+export const updatePassword = (payload) => {
+  return apiFetch('/users/me/password', {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+};
+
 export const fetchUserByEmail = (email) => {
   if (!email) {
     return Promise.reject(new Error('Email is required to fetch user.'));

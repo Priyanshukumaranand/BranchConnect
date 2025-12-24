@@ -8,31 +8,10 @@ import {
   blockUser,
   unblockUser
 } from '../api/chat';
-import { API_BASE_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-
-const buildAvatarUrl = (participant) => {
-  if (!participant) return null;
-  if (participant.image) {
-    return participant.image;
-  }
-
-  if (participant.avatarPath) {
-    try {
-      // eslint-disable-next-line no-new
-      new URL(participant.avatarPath);
-      return participant.avatarPath;
-    } catch (error) {
-      try {
-        return new URL(participant.avatarPath, API_BASE_URL).toString();
-      } catch (fallbackError) {
-        return `${API_BASE_URL}${participant.avatarPath}`;
-      }
-    }
-  }
-
-  return null;
-};
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Avatar from '../components/ui/Avatar';
 
 const formatRelativeTime = (value) => {
   if (!value) return '';
@@ -69,22 +48,6 @@ const formatRelativeTime = (value) => {
     hour: 'numeric',
     minute: '2-digit'
   });
-};
-
-const buildInitials = (participant) => {
-  if (!participant) return '??';
-  if (participant.name) {
-    return participant.name
-      .split(' ')
-      .map((part) => part[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-  }
-  if (participant.email) {
-    return participant.email.slice(0, 2).toUpperCase();
-  }
-  return '??';
 };
 
 const RecentChats = () => {
@@ -147,7 +110,7 @@ const RecentChats = () => {
   });
 
   const blockMutation = useMutation({
-    mutationFn: blockUser,
+    mutationFn: ({ conversationId, reason, userId }) => blockUser({ userId, reason }),
     onSuccess: (_, variables) => {
       updateConversationInCache(variables.conversationId, {
         isBlockedByCurrentUser: true,
@@ -162,7 +125,7 @@ const RecentChats = () => {
   });
 
   const unblockMutation = useMutation({
-    mutationFn: unblockUser,
+    mutationFn: ({ conversationId, userId }) => unblockUser({ userId }),
     onSuccess: (_, variables) => {
       updateConversationInCache(variables.conversationId, {
         isBlockedByCurrentUser: false,
@@ -219,7 +182,9 @@ const RecentChats = () => {
       return (
         <div className={`recent-chats__feedback recent-chats__feedback--${feedback.type}`} role="status">
           <span>{feedback.message}</span>
-          <button type="button" onClick={() => setFeedback(null)} aria-label="Dismiss message">×</button>
+          <Button variant="ghost" size="sm" onClick={() => setFeedback(null)} aria-label="Dismiss message">
+            Dismiss
+          </Button>
         </div>
       );
     }
@@ -241,181 +206,176 @@ const RecentChats = () => {
         <p>All your direct messages live here. Pick up a conversation, clear out old threads, or block members that you no longer want to hear from.</p>
 
         <div className="recent-chats__stats" role="list">
-          <div className="recent-chats__stat-card" role="listitem">
+          <Card className="recent-chats__stat-card" variant="glass">
             <span>Total chats</span>
             <strong>{stats.total}</strong>
-          </div>
-          <div className="recent-chats__stat-card" role="listitem">
+          </Card>
+          <Card className="recent-chats__stat-card" variant="glass">
             <span>Unread messages</span>
             <strong>{stats.unread}</strong>
-          </div>
-          <div className="recent-chats__stat-card" role="listitem">
+          </Card>
+          <Card className="recent-chats__stat-card" variant="glass">
             <span>Active threads</span>
             <strong>{stats.active}</strong>
-          </div>
-          <div className="recent-chats__stat-card" role="listitem">
+          </Card>
+          <Card className="recent-chats__stat-card" variant="glass">
             <span>Blocked chats</span>
             <strong>{stats.blocked}</strong>
-          </div>
+          </Card>
         </div>
       </header>
 
       {renderStatus()}
 
       {conversationsQuery.isLoading ? (
-        <div className="recent-chats__panel recent-chats__placeholder">
+        <Card className="recent-chats__panel recent-chats__placeholder">
           <h2>Loading your conversations…</h2>
           <p>We’re fetching your latest messages and notifications.</p>
-        </div>
+        </Card>
       ) : conversations.length === 0 ? (
-        <div className="recent-chats__panel recent-chats__empty">
+        <Card className="recent-chats__panel recent-chats__empty">
           <div className="recent-chats__empty-illustration" aria-hidden>
             <span>💬</span>
           </div>
           <h2>No conversations yet</h2>
           <p>Start a chat from the batches or member profile pages and it’ll appear here for quick access.</p>
-          <button
-            type="button"
-            className="recent-chats__cta"
+          <Button
+            variant="primary"
             onClick={() => navigate('/batches')}
           >
             Explore batches
-          </button>
-        </div>
+          </Button>
+        </Card>
       ) : (
-        <div className="recent-chats__panel">
-          <div className="recent-chats__list">
-            {conversations.map((conversation) => {
-              const otherMember = conversation.otherParticipant || null;
-              const avatarUrl = buildAvatarUrl(otherMember);
-              const initials = buildInitials(otherMember);
-              const lastMessagePreview = conversation.lastMessage?.body || 'No messages yet.';
-              const lastMessageTime = conversation.lastMessage?.sentAt || conversation.updatedAt;
-              const isBlockedByCurrentUser = conversation.isBlockedByCurrentUser;
-              const isBlockingCurrentUser = conversation.isBlockingCurrentUser;
-              const unreadCount = conversation.unreadCount || 0;
-              const conversationId = conversation.id;
-              const otherMemberId = otherMember?.id;
-              const isOtherOnline = Boolean(conversation.isOtherParticipantOnline || otherMember?.isOnline);
-              const lastSeenAt = conversation.otherParticipantLastSeenAt || otherMember?.lastSeenAt || null;
+        <div className="recent-chats__list">
+          {conversations.map((conversation) => {
+            const otherMember = conversation.otherParticipant || null;
+            const lastMessagePreview = conversation.lastMessage?.body || 'No messages yet.';
+            const lastMessageTime = conversation.lastMessage?.sentAt || conversation.updatedAt;
+            const isBlockedByCurrentUser = conversation.isBlockedByCurrentUser;
+            const isBlockingCurrentUser = conversation.isBlockingCurrentUser;
+            const unreadCount = conversation.unreadCount || 0;
+            const conversationId = conversation.id;
+            const otherMemberId = otherMember?.id;
+            const isOtherOnline = Boolean(conversation.isOtherParticipantOnline || otherMember?.isOnline);
+            const lastSeenAt = conversation.otherParticipantLastSeenAt || otherMember?.lastSeenAt || null;
 
-              const deletePending = deleteMutation.isPending && deleteMutation.variables?.conversationId === conversationId;
-              const blockPending = blockMutation.isPending && blockMutation.variables?.conversationId === conversationId;
-              const unblockPending = unblockMutation.isPending && unblockMutation.variables?.conversationId === conversationId;
+            const deletePending = deleteMutation.isPending && deleteMutation.variables?.conversationId === conversationId;
+            const blockPending = blockMutation.isPending && blockMutation.variables?.conversationId === conversationId;
+            const unblockPending = unblockMutation.isPending && unblockMutation.variables?.conversationId === conversationId;
 
-              return (
-                <article
-                  key={conversationId}
-                  className="conversation-card"
-                  aria-label={`Conversation with ${otherMember?.name || otherMember?.email || 'member'}`}
+            return (
+              <Card
+                key={conversationId}
+                className="conversation-card"
+                variant="default"
+                noPadding
+              >
+                <div
+                  className="conversation-card__main"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleOpenConversation(otherMemberId)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleOpenConversation(otherMemberId);
+                    }
+                  }}
                 >
-                  <div
-                    className="conversation-card__main"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleOpenConversation(otherMemberId)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        handleOpenConversation(otherMemberId);
-                      }
-                    }}
-                  >
-                    <span className={`conversation-card__avatar${avatarUrl ? ' has-image' : ''}`} aria-hidden>
-                      {avatarUrl ? (
-                        <img src={avatarUrl} alt="" />
-                      ) : (
-                        <span>{initials}</span>
-                      )}
-                    </span>
-                    <div className="conversation-card__text">
-                      <div className="conversation-card__row">
-                        <h2>{otherMember?.name || otherMember?.email || 'Member'}</h2>
-                        <time dateTime={lastMessageTime}>{formatRelativeTime(lastMessageTime)}</time>
-                      </div>
-                      <p className="conversation-card__preview" title={lastMessagePreview}>{lastMessagePreview}</p>
-                      <div className="conversation-card__tags">
-                        {unreadCount > 0 && (
-                          <span className="conversation-card__badge" aria-label={`${unreadCount} unread messages`}>
-                            {unreadCount} unread
-                          </span>
-                        )}
-                        {isOtherOnline ? (
-                          <span className="conversation-card__tag conversation-card__tag--online">Online now</span>
-                        ) : lastSeenAt ? (
-                          <span className="conversation-card__tag conversation-card__tag--muted">Last seen {formatRelativeTime(lastSeenAt)}</span>
-                        ) : (
-                          <span className="conversation-card__tag conversation-card__tag--muted">Last seen NA</span>
-                        )}
-                        {isBlockingCurrentUser && (
-                          <span className="conversation-card__tag conversation-card__tag--warning">They blocked you</span>
-                        )}
-                        {isBlockedByCurrentUser && (
-                          <span className="conversation-card__tag">Blocked</span>
-                        )}
-                      </div>
-                    </div>
+                  <div className="conversation-card__media">
+                    <Avatar
+                      src={otherMember?.image || otherMember?.avatarPath}
+                      name={otherMember?.name || otherMember?.email}
+                      size="lg"
+                      status={isOtherOnline ? 'online' : null}
+                    />
                   </div>
 
-                  {(isBlockedByCurrentUser || isBlockingCurrentUser || conversation.blockReason) && (
-                    <div className="conversation-card__notices">
-                      {conversation.blockReason && (
-                        <p className="conversation-card__note" role="note">
-                          Reason noted: {conversation.blockReason}
-                        </p>
+                  <div className="conversation-card__text">
+                    <div className="conversation-card__row">
+                      <h2>{otherMember?.name || otherMember?.email || 'Member'}</h2>
+                      <time dateTime={lastMessageTime}>{formatRelativeTime(lastMessageTime)}</time>
+                    </div>
+                    <p className="conversation-card__preview" title={lastMessagePreview}>{lastMessagePreview}</p>
+                    <div className="conversation-card__tags">
+                      {unreadCount > 0 && (
+                        <span className="conversation-card__badge" aria-label={`${unreadCount} unread messages`}>
+                          {unreadCount} unread
+                        </span>
                       )}
-                      {isBlockingCurrentUser && !conversation.blockReason && (
-                        <p className="conversation-card__note" role="note">This member has blocked you.</p>
+                      {!isOtherOnline && lastSeenAt && (
+                        <span className="conversation-card__tag conversation-card__tag--muted">Last seen {formatRelativeTime(lastSeenAt)}</span>
                       )}
-                      {isBlockedByCurrentUser && !conversation.blockReason && (
-                        <p className="conversation-card__note" role="note">You’ve blocked this member.</p>
+                      {isBlockingCurrentUser && (
+                        <span className="conversation-card__tag conversation-card__tag--warning">They blocked you</span>
+                      )}
+                      {isBlockedByCurrentUser && (
+                        <span className="conversation-card__tag">Blocked</span>
                       )}
                     </div>
-                  )}
+                  </div>
+                </div>
 
-                  <div className="conversation-card__actions" aria-label="Conversation actions">
-                    {isBlockedByCurrentUser ? (
-                      <button
-                        type="button"
-                        className="conversation-card__action"
-                        onClick={() => {
-                          setFeedback(null);
-                          unblockMutation.mutate({ userId: otherMemberId, conversationId });
-                        }}
-                        disabled={unblockPending}
-                      >
-                        {unblockPending ? 'Unblocking…' : 'Unblock'}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="conversation-card__action"
-                        onClick={() => {
-                          const reason = window.prompt('Add an optional note for why you are blocking this member (optional).');
-                          setFeedback(null);
-                          blockMutation.mutate({ userId: otherMemberId, reason: reason?.trim() || undefined, conversationId });
-                        }}
-                        disabled={blockPending}
-                      >
-                        {blockPending ? 'Blocking…' : 'Block'}
-                      </button>
+                {(isBlockedByCurrentUser || isBlockingCurrentUser || conversation.blockReason) && (
+                  <div className="conversation-card__notices">
+                    {conversation.blockReason && (
+                      <p className="conversation-card__note" role="note">
+                        Reason noted: {conversation.blockReason}
+                      </p>
                     )}
-                    <button
-                      type="button"
-                      className="conversation-card__action conversation-card__action--danger"
+                    {isBlockingCurrentUser && !conversation.blockReason && (
+                      <p className="conversation-card__note" role="note">This member has blocked you.</p>
+                    )}
+                    {isBlockedByCurrentUser && !conversation.blockReason && (
+                      <p className="conversation-card__note" role="note">You’ve blocked this member.</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="conversation-card__actions" aria-label="Conversation actions">
+                  {isBlockedByCurrentUser ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         setFeedback(null);
-                        deleteMutation.mutate({ conversationId, userId: otherMemberId });
+                        unblockMutation.mutate({ userId: otherMemberId, conversationId });
                       }}
-                      disabled={deletePending}
+                      loading={unblockPending}
                     >
-                      {deletePending ? 'Deleting…' : 'Delete chat'}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+                      Unblock
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const reason = window.prompt('Add an optional note forming why you are blocking this member.');
+                        setFeedback(null);
+                        blockMutation.mutate({ userId: otherMemberId, reason: reason?.trim() || undefined, conversationId });
+                      }}
+                      loading={blockPending}
+                    >
+                      Block
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-danger"
+                    onClick={() => {
+                      setFeedback(null);
+                      deleteMutation.mutate({ conversationId, userId: otherMemberId });
+                    }}
+                    loading={deletePending}
+                  >
+                    Delete chat
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </section>
