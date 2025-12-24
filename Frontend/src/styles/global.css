@@ -7,6 +7,7 @@
 
   /* Refined Premium Palette - Light */
   --color-brand-primary: #6366f1;
+  --color-primary: var(--color-brand-primary);
   /* Indigo */
   --color-brand-secondary: #ec4899;
   /* Pink */
@@ -94,6 +95,8 @@
   /* Slate 900 */
   --color-bg-shell: radial-gradient(circle at top center, rgba(99, 102, 241, 0.15), transparent 60%), #0f172a;
 
+  --color-primary: var(--color-brand-primary);
+
   --color-surface-base: #1e293b;
   /* Slate 800 */
   --color-surface: #1e293b;
@@ -103,9 +106,13 @@
   --color-surface-glass: rgba(15, 23, 42, 0.75);
   --color-surface-hover: #334155;
 
-  --color-border-subtle: rgba(255, 255, 255, 0.08);
-  --color-border-strong: rgba(255, 255, 255, 0.15);
+  --color-border-subtle: rgba(255, 255, 255, 0.12);
+  --color-border-strong: rgba(255, 255, 255, 0.2);
   --color-overlay: rgba(0, 0, 0, 0.75);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
 
   --shadow-elevated: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
 

@@ -1,6 +1,9 @@
 .batches-page {
   display: grid;
   gap: clamp(2.5rem, 5vw, 4rem);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 5vw, 2rem);
 }
 
 .batches-header {
@@ -8,6 +11,224 @@
   gap: 1rem;
   max-width: 70ch;
 }
+
+.batches-header h1 {
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  line-height: 1.1;
+}
+
+.batch-controls {
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.batch-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.batch-filter-group {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.batch-filter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.batch-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.35rem;
+  background: var(--tab-bg);
+  border-radius: 99px;
+  border: 1px solid var(--tab-border);
+}
+
+.batch-tabs button {
+  padding: 0.5rem 1.25rem;
+  border-radius: 99px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.batch-tabs button:hover {
+  color: var(--color-text-primary);
+}
+
+.batch-tabs button.active {
+  background: var(--tab-active-bg);
+  color: var(--tab-active-color);
+  box-shadow: var(--tab-active-shadow);
+}
+
+.batch-search {
+  display: flex;
+  justify-content: flex-start;
+  max-width: 400px;
+}
+
+.batch-search input {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  border-radius: 99px;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.batch-search input:focus {
+  outline: none;
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 0 0 3px var(--input-focus-ring);
+}
+
+.batch-section {
+  display: grid;
+  gap: 2rem;
+}
+
+.batch-description {
+  font-size: 1.05rem;
+  color: var(--color-text-secondary);
+  max-width: 65ch;
+  line-height: 1.6;
+}
+
+.profile-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* Batch Profile Card specific overrides */
+.batch-profile-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.batch-profile-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.batch-profile-link {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  height: 100%;
+  align-content: start;
+}
+
+.batch-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.batch-profile-info {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.batch-profile-info h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.batch-profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.meta-chip {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  color: var(--color-brand-primary);
+  font-weight: 600;
+}
+
+.meta-chip--muted {
+  background: var(--color-surface-elevated);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-secondary);
+}
+
+.focus-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.focus-chips span {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 99px;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.batch-pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.load-more {
+  padding: 0.85rem 2rem;
+  border-radius: 99px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.load-more:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  border-color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
+}
+
+.load-more:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+@media (min-width: 900px) {
+  .batch-controls {
+    grid-template-columns: 1fr auto;
+    align-items: end;
+  }
+}
+
 
 .batches-header h1 {
   font-size: clamp(2.4rem, 5vw, 3.4rem);

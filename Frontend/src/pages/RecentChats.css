@@ -72,9 +72,9 @@
   padding: 0.9rem 1.2rem;
   border-radius: 14px;
   font-size: 0.95rem;
-  background: rgba(37, 99, 235, 0.14);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.18);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-brand-primary);
 }
 
 .recent-chats__feedback--error {
@@ -106,7 +106,7 @@
   width: 88px;
   height: 88px;
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.1));
+  background: var(--hero-glow);
   color: var(--color-primary);
   display: grid;
   place-items: center;
@@ -149,7 +149,7 @@
 
 .conversation-card__main:focus-visible {
   border-radius: 0.5rem;
-  box-shadow: 0 0 0 3px var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-brand-primary);
 }
 
 .conversation-card__text {
@@ -205,8 +205,9 @@
   gap: 0.35rem;
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.15);
-  color: #3b82f6;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  color: var(--color-brand-primary);
   font-size: 0.75rem;
   font-weight: 600;
 }

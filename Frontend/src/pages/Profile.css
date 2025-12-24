@@ -82,7 +82,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  background: var(--accent-gradient-primary);
   border-radius: 99px;
 }
 
@@ -106,8 +106,9 @@
 .role-badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  background: rgba(37, 99, 235, 0.1);
-  color: #3b82f6;
+  background: var(--chip-bg);
+  color: var(--color-brand-primary);
+  border: 1px solid var(--chip-border);
   border-radius: 99px;
   font-size: 0.75rem;
   font-weight: 600;

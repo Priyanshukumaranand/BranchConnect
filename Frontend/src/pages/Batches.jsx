@@ -4,25 +4,13 @@ import './Batches.css';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchBatchMembers } from '../api/batches';
 import { API_BASE_URL } from '../api/client';
+import Card from '../components/ui/Card';
+import Avatar from '../components/ui/Avatar';
 
 const DEFAULT_BATCH_YEARS = [];
 const DEFAULT_BRANCH_KEY = 'all';
 const BASE_BRANCH_OPTION = { key: 'all', label: 'All branches', shortLabel: 'All branches', alias: null };
 const PAGE_SIZE = 12;
-
-const LINK_LABELS = {
-  github: 'GitHub',
-  linkedin: 'LinkedIn',
-  twitter: 'X',
-  instagram: 'Instagram',
-  behance: 'Behance',
-  dribbble: 'Dribbble',
-  portfolio: 'Portfolio',
-  website: 'Website',
-  email: 'Email'
-};
-
-const linkIcon = (key) => LINK_LABELS[key] || 'Profile';
 
 const tokenise = (value) => {
   if (!value) return [];
@@ -72,16 +60,6 @@ const normaliseProfile = (user) => {
     ...tokenise(user.secret)
   ].filter(Boolean))).slice(0, 3);
 
-  const socials = user.socials || {};
-  const links = Object.entries({
-    instagram: socials.instagram,
-    github: socials.github,
-    linkedin: socials.linkedin,
-    email: socials.email || email
-  })
-    .filter(([, value]) => Boolean(value))
-    .map(([key, value]) => [key, key === 'email' && !value.startsWith('mailto:') ? `mailto:${value}` : value]);
-
   const avatarCandidate = user.image || user.avatarUrl || user.avatarPath;
   const image = avatarCandidate
     ? avatarCandidate.startsWith('data:')
@@ -103,7 +81,6 @@ const normaliseProfile = (user) => {
     email,
     about: truncate(user.about || 'Details coming soon. Reach out to the IIIT Network organisers to update this profile.'),
     focus: focus.length > 0 ? focus : ['IIIT Network Member'],
-    links,
     image,
     location: user.place || null,
     batchYear,
@@ -135,6 +112,7 @@ const Batches = () => {
   const [availableYears, setAvailableYears] = useState(initialYears);
   const [activeYear, setActiveYear] = useState(() => initialYearFromQuery || 'all');
   const [activeBranch, setActiveBranch] = useState(initialBranchKey);
+
   useEffect(() => {
     setAvailableYears((prev) => (
       initialYearFromQuery && !prev.includes(initialYearFromQuery)
@@ -158,9 +136,6 @@ const Batches = () => {
       setActiveBranch(initialBranchKey);
     }
   }, [initialBranchKey, activeBranch]);
-
-  // Temporarily disable branch filtering
-  const branchAlias = null;
 
   const {
     data,
@@ -238,23 +213,6 @@ const Batches = () => {
     return Array.from(new Set(normalized)).sort((a, b) => Number(b) - Number(a));
   }, [data]);
 
-  const metaBranches = useMemo(() => {
-    const fromMeta = data?.pages?.map((page) => page?.meta?.branches || []).flat() || [];
-    const byKey = new Map();
-    fromMeta.forEach((branch) => {
-      if (!branch?.key) return;
-      const key = branch.key.toString().toLowerCase();
-      if (!byKey.has(key)) {
-        byKey.set(key, {
-          key,
-          shortLabel: branch.short || branch.label || key,
-          label: branch.label || branch.short || key
-        });
-      }
-    });
-    return Array.from(byKey.values()).sort((a, b) => a.label.localeCompare(b.label));
-  }, [data]);
-
   const filteredProfiles = useMemo(() => {
     const value = searchTerm.trim().toLowerCase();
     if (!value) {
@@ -287,27 +245,6 @@ const Batches = () => {
     return unique.sort((a, b) => Number(b) - Number(a));
   }, [currentProfiles]);
 
-  const branchesFromProfiles = useMemo(() => {
-    const entries = currentProfiles
-      .map((profile) => profile.branch)
-      .filter(Boolean)
-      .map((branch) => ({
-        key: (branch.key || branch.short || branch.label || '').toString().toLowerCase(),
-        shortLabel: branch.short || branch.label || 'Branch',
-        label: branch.label || branch.short || 'Branch'
-      }))
-      .filter((branch) => branch.key);
-
-    const byKey = new Map();
-    entries.forEach((branch) => {
-      if (!byKey.has(branch.key)) {
-        byKey.set(branch.key, branch);
-      }
-    });
-
-    return Array.from(byKey.values()).sort((a, b) => a.label.localeCompare(b.label));
-  }, [currentProfiles]);
-
   useEffect(() => {
     setAvailableYears((prev) => {
       const merged = ['all', ...metaYears, ...yearsFromProfiles];
@@ -330,11 +267,6 @@ const Batches = () => {
       setActiveBranch(DEFAULT_BRANCH_KEY);
     }
   }, [branchOptions, activeBranch]);
-
-  const activeBranchOption = useMemo(
-    () => branchOptions.find((option) => option.key === activeBranch) || BASE_BRANCH_OPTION,
-    [branchOptions, activeBranch]
-  );
 
   const years = useMemo(
     () => Array.from(new Set(availableYears.filter(Boolean))),
@@ -381,7 +313,6 @@ const Batches = () => {
   const isRefreshing = isFetching && !isFetchingNextPage;
 
   const branchDescriptor = 'all branches';
-
   const yearDescriptor = activeYear === 'all' ? 'all years' : `Batch ${activeYear}`;
 
   const description = searchActive
@@ -417,7 +348,6 @@ const Batches = () => {
                 </button>
               ))}
             </div>
-            {/* Branch filter hidden intentionally */}
           </div>
 
           <div className="batch-filter-group">
@@ -470,19 +400,18 @@ const Batches = () => {
             {visibleProfiles.length > 0 ? (
               <div className="profile-grid">
                 {visibleProfiles.map((profile) => (
-                  <article className="profile-card" key={profile.id}>
-                    <Link className="profile-card__link" to={`/members/${profile.id}`}>
-                      <div className="profile-card__header">
-                        <div className={`profile-portrait${profile.image ? ' profile-portrait--photo' : ''}`} aria-hidden>
-                          {profile.image ? (
-                            <img src={profile.image} alt={profile.name} loading="lazy" />
-                          ) : (
-                            <span>{profile.initials}</span>
-                          )}
-                        </div>
-                        <div className="profile-heading">
+                  <Card key={profile.id} className="batch-profile-card" variant="glass" noPadding>
+                    <Link className="batch-profile-link" to={`/members/${profile.id}`}>
+                      <div className="batch-profile-header">
+                        <Avatar
+                          src={profile.image}
+                          name={profile.name}
+                          size="lg"
+                          className="batch-profile-avatar"
+                        />
+                        <div className="batch-profile-info">
                           <h3>{profile.name}</h3>
-                          <div className="profile-heading__row">
+                          <div className="batch-profile-meta">
                             <span className="meta-chip">{profile.roll}</span>
                             {profile.location && <span className="meta-chip meta-chip--muted">{profile.location}</span>}
                           </div>
@@ -495,7 +424,7 @@ const Batches = () => {
                         ))}
                       </div>
                     </Link>
-                  </article>
+                  </Card>
                 ))}
               </div>
             ) : (
