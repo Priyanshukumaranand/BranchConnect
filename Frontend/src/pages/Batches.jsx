@@ -398,7 +398,7 @@ const Batches = () => {
           <>
             <p className="batch-description">{description}</p>
             {visibleProfiles.length > 0 ? (
-              <div className="profile-grid">
+              <div className="batches-grid">
                 {visibleProfiles.map((profile) => (
                   <Card key={profile.id} className="batch-profile-card" variant="glass" noPadding>
                     <Link className="batch-profile-link" to={`/members/${profile.id}`}>

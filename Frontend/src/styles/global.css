@@ -39,13 +39,13 @@
   --color-text-contrast: #ffffff;
   --color-text-inverse: #f8fafc;
 
-  --accent-gradient-primary: linear-gradient(135deg, #6366f1, #ec4899);
-  --accent-gradient-text: linear-gradient(135deg, #4f46e5, #ec4899);
-  --accent-gradient-badge: linear-gradient(135deg, #f97316, #fbbf24);
-  --accent-color-strong: #6366f1;
+  --accent-gradient-primary: linear-gradient(135deg, #4f46e5, #6366f1);
+  --accent-gradient-text: linear-gradient(135deg, #4338ca, #6366f1);
+  --accent-gradient-badge: linear-gradient(135deg, #6366f1, #818cf8);
+  --accent-color-strong: #4f46e5;
   --accent-color-soft: #818cf8;
 
-  --hero-glow: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15), transparent 70%);
+  --hero-glow: radial-gradient(circle at 50% 0%, rgba(79, 70, 229, 0.15), transparent 70%);
   --society-glow: radial-gradient(circle at top, rgba(99, 102, 241, 0.15), transparent 70%);
 
   /* Component Specifics - Standardized */
@@ -122,9 +122,9 @@
   --color-text-contrast: #ffffff;
   --color-text-inverse: #0f172a;
 
-  --accent-gradient-primary: linear-gradient(135deg, #6366f1, #ec4899);
-  --accent-gradient-text: linear-gradient(135deg, #818cf8, #f472b6);
-  --accent-gradient-badge: linear-gradient(135deg, #fb923c, #fbbf24);
+  --accent-gradient-primary: linear-gradient(135deg, #6366f1, #818cf8);
+  --accent-gradient-text: linear-gradient(135deg, #818cf8, #a5b4fc);
+  --accent-gradient-badge: linear-gradient(135deg, #6366f1, #818cf8);
   --accent-color-strong: #818cf8;
   --accent-color-soft: #6366f1;
 

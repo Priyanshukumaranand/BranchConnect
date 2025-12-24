@@ -9,44 +9,102 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    background: var(--color-surface-muted, rgba(241, 245, 249, 0.5));
-    /* Neutral/Glassy background */
-    color: var(--color-text-secondary, #64748b);
+    background: var(--color-surface-elevated);
+    color: var(--color-text-primary);
     transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid var(--color-border-subtle, transparent);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.ui-social-link svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
 }
 
 .ui-social-link:hover {
     transform: translateY(-3px) scale(1.05);
-    background: var(--color-surface-elevated, white);
-    box-shadow: var(--shadow-elevated, 0 4px 12px rgba(0, 0, 0, 0.1));
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    border-color: var(--color-brand-primary);
 }
 
-/* Platform Colors */
+/* Platform Colors - Default State */
+.ui-social-link--github {
+    color: #24292f;
+}
+
+.ui-social-link--linkedin {
+    color: #0077b5;
+}
+
+.ui-social-link--instagram {
+    color: #e4405f;
+}
+
+.ui-social-link--mail {
+    color: #ea4335;
+}
+
+.ui-social-link--twitter {
+    color: #1da1f2;
+}
+
+/* Platform Colors - Hover State */
 .ui-social-link--github:hover {
-    color: #333;
-    background: #f0f0f0;
+    background: #24292f;
+    color: white;
 }
 
 .ui-social-link--linkedin:hover {
-    color: #0077b5;
-    background: #e1f0f8;
+    background: #0077b5;
+    color: white;
 }
 
 .ui-social-link--instagram:hover {
-    color: #e4405f;
-    background: #fdf2f5;
+    background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    color: white;
 }
 
 .ui-social-link--mail:hover {
-    color: #ea4335;
-    background: #fce8e6;
+    background: #ea4335;
+    color: white;
 }
 
 .ui-social-link--twitter:hover {
-    color: #1da1f2;
-    background: #e8f5fd;
+    background: #1da1f2;
+    color: white;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .ui-social-link {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .ui-social-link:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .ui-social-link--github {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .ui-social-link--linkedin {
+    color: #3b9ede;
+}
+
+[data-theme="dark"] .ui-social-link--instagram {
+    color: #f56991;
+}
+
+[data-theme="dark"] .ui-social-link--mail {
+    color: #f87171;
+}
+
+[data-theme="dark"] .ui-social-link--twitter {
+    color: #60c5fa;
 }
