@@ -27,7 +27,7 @@ const PROVIDER_PROFILE_ORDER = {
 const LEADERBOARD_PROVIDER_META = {
   codeforces: {
     title: 'Codeforces rating leaders',
-    description: 'Live snapshot of Branch Connect members climbing the Codeforces ladder.'
+    description: 'Live snapshot of IIIT Network members climbing the Codeforces ladder.'
   },
   leetcode: {
     title: 'LeetCode contest rating leaders',
@@ -61,7 +61,7 @@ const highlightStats = [
   {
     value: '8 weeks',
     label: 'structured roadmap',
-    blurb: 'Follow a two-month readiness plan tailored for computer engineering placements.'
+    blurb: 'Follow a two-month readiness plan tailored for university placements.'
   }
 ];
 
@@ -95,127 +95,26 @@ const resourceCollections = [
         tags: ['cover letter', 'communication']
       }
     ]
-  }
-];
-
-const timelineMilestones = [
-  {
-    period: 'Weeks 1-2',
-    focus: 'Baseline & Resume Sprint',
-    actions: [
-      'Audit your resume using the Resume Toolkit and circulate for mentor feedback.',
-      'Pick one flagship project and build the project deep-dive deck outline.',
-      'Book two mock HR conversations to warm up your storytelling game.'
-    ]
   },
   {
-    period: 'Weeks 3-4',
-    focus: 'DSA Rhythm & Mock Interviews',
-    actions: [
-      'Solve at least 20 questions from two different DSA patterns and log reflections in the sheet.',
-      'Run one weekend mock contest and review the editorial solutions the next day.',
-      'Schedule a peer mock using the script; focus on structuring your thought process aloud.'
-    ]
-  },
-  {
-    period: 'Weeks 5-6',
-    focus: 'Projects & System Design',
-    actions: [
-      'Ship a minor feature or fix on an existing project and update the case-study deck.',
-      'Review the system design primer and draft solutions for two prompt scenarios.',
-      'Record a 5-minute project walkthrough to spot clarity gaps in your explanation.'
-    ]
-  },
-  {
-    period: 'Weeks 7-8',
-    focus: 'Company-Specific Prep & Final Polish',
-    actions: [
-      'Shortlist top companies; align your problem bank to their interview style.',
-      'Refresh HR answers and align stories with company values.',
-      'Complete a final resume pass and store PDF versions tailored per company bucket.'
+    id: 'dsa',
+    icon: '⚡',
+    title: 'DSA & Competitive Programming',
+    description: 'Track your progress with live leaderboards and access curated problem sheets.',
+    ctaLabel: 'Browse DSA resources',
+    resources: [
+      {
+        title: 'Standard DSA Checklist',
+        type: 'PDF',
+        summary: 'A comprehensive list of patterns and problems to solve.',
+        link: `${driveFolder}#dsa-checklist`,
+        tags: ['dsa', 'checklist']
+      }
     ]
   }
 ];
 
-const faqItems = [
-  {
-    question: 'How should I prioritize the resources in the Drive folder?',
-    answer:
-      'Start with the Resume Toolkit to establish a strong baseline, then move into the DSA hub for daily problem practice. Once you have a rhythm, rotate through behavioural and system design resources each week so every track progresses together.'
-  },
-  {
-    question: 'Can I contribute additional sheets or notes?',
-    answer:
-      'Absolutely. Create a subfolder with your batch name or tag your document clearly, then share it with the coordinators. We review weekly and merge high-quality additions into the main collections.'
-  },
-  {
-    question: 'How often are the resources refreshed?',
-    answer:
-      'Community volunteers update the drive after every major placement season. You can always check the resource changelog inside the drive for timestamps and editors.'
-  },
-  {
-    question: 'What if I only have four weeks before interviews?',
-    answer:
-      'Compress the roadmap by focusing on resume polish and targeted DSA practice (top patterns + company past questions). Use the mock interview script twice a week and prioritize storytelling prep for fast confidence wins.'
-  }
-];
 
-const supportChannels = [
-  {
-    title: 'Weekly focus sessions',
-    detail: 'Join Friday syncs to share blockers, new resources, and interview learnings with peers.',
-    action: {
-      label: 'Check meeting calendar',
-      link: driveFolder
-    }
-  },
-  {
-    title: 'Mentor office hours',
-    detail: 'Book 1:1 time with alumni mentors for resume critique or mock interview dry runs.',
-    action: {
-      label: 'See mentor roster',
-      link: driveFolder
-    }
-  },
-  {
-    title: 'Resource request form',
-    detail: 'Missing a company sheet or topic summary? Submit a request and we will add it to the pipeline.',
-    action: {
-      label: 'Request a resource',
-      link: driveFolder
-    }
-  }
-];
-
-const practicePlatforms = [
-  {
-    id: 'gfg',
-    name: 'GeeksforGeeks',
-    icon: '🧩',
-    description:
-      'Topic-wise problem sets, company archives, and detailed editorials that mirror common campus interview rounds.',
-    link: 'https://www.geeksforgeeks.org/explore?page=1&category=Placement%20series',
-    highlights: ['Complete SDE sheet', 'Company interview archives', 'Daily revision problems']
-  },
-  {
-    id: 'leetcode',
-    name: 'LeetCode',
-    icon: '🧠',
-    description:
-      'Refine problem-solving patterns with curated playlists and timed contests that strengthen analytical speed.',
-    link: 'https://leetcode.com/explore/interview/card/top-interview-questions-easy/',
-    highlights: ['Top interview question sets', 'Timed weekly contests', 'Company tagged questions']
-  },
-  {
-    id: 'interviewbit',
-    name: 'InterviewBit',
-    icon: '🚀',
-    description:
-      'Structured track that blends bite-sized tutorials with checkpoint problems for quick revision before interviews.',
-    link: 'https://www.interviewbit.com/courses/programming/',
-    highlights: ['Structured learning paths', 'Checkpoint quizzes', 'Behavioral question bank']
-  }
-];
 
 const DEFAULT_RESUME_FORM = {
   email: '',
@@ -554,7 +453,7 @@ const PlacementResources = () => {
           <p className="placement-hero__eyebrow">placements · readiness stack</p>
           <h1 id="placement-hero-title">Everything you need for campus placements, curated in one drive</h1>
           <p>
-            Explore templates, problem sets, mock interview scripts, and roadmaps contributed by Branch Connect mentors and alumni. The resources below mirror the organisation inside the Drive folder so you can jump straight to what you need.
+            Explore templates, problem sets, mock interview scripts, and roadmaps contributed by IIIT Network mentors and alumni. The resources below mirror the organisation inside the Drive folder so you can jump straight to what you need.
           </p>
           <div className="placement-hero__actions">
             <a className="primary" href={driveFolder} target="_blank" rel="noopener noreferrer">
@@ -580,7 +479,7 @@ const PlacementResources = () => {
       <section className="mcp-assistant" aria-labelledby="mcp-assistant-heading">
         <header className="mcp-assistant__header">
           <div>
-            <p className="mcp-assistant__eyebrow">branchbase resume pool</p>
+            <p className="mcp-assistant__eyebrow">IIIT Network resume pool</p>
             <h2 id="mcp-assistant-heading">Share your resume with the community</h2>
             <p>Publish your resume so peers and mentors can discover profiles easily. Upload a PDF or add details, then ask the bot questions grounded in this pool.</p>
           </div>
@@ -789,7 +688,7 @@ const PlacementResources = () => {
             {collection.id === 'dsa' && (
               <div className="dsa-leaderboard" role="region" aria-live="polite">
                 <div className="dsa-leaderboard__header">
-                  <h4>Branch Connect CP leaderboards</h4>
+                  <h4>IIIT Network CP leaderboards</h4>
                   <p>Live ratings pulled directly from Codeforces and LeetCode profiles shared by the community.</p>
                   {leaderboardRefreshLabel && (
                     <span className="dsa-leaderboard__timestamp">Updated {leaderboardRefreshLabel}</span>
@@ -814,8 +713,8 @@ const PlacementResources = () => {
                     {leaderboardSections.map((section) => {
                       const profileOrder = PROVIDER_PROFILE_ORDER[section.provider] || CP_PROFILE_ORDER;
                       const emptyMessage = section.provider === 'codeforces'
-                        ? 'Link your Codeforces handle in your Branch Connect profile to appear on this board.'
-                        : 'Link your LeetCode username in your Branch Connect profile to appear on this board.';
+                        ? 'Link your Codeforces handle in your IIIT Network profile to appear on this board.'
+                        : 'Link your LeetCode username in your IIIT Network profile to appear on this board.';
 
                       return (
                         <section
@@ -841,7 +740,7 @@ const PlacementResources = () => {
                                 const itemKey = entry.userId || `${section.provider}-${entry.rank}-${entry.handle || entry.name}`;
                                 const subtitle = entry.subtitle
                                   || (entry.handle ? `@${entry.handle}` : null)
-                                  || 'Branch Connect member';
+                                  || 'IIIT Network member';
                                 const stats = Array.isArray(entry.stats) ? entry.stats : [];
                                 const solvedStat = stats.find((stat) => stat?.label === 'Solved');
                                 const rankStat = stats.find((stat) => stat?.label === 'Rank');
@@ -940,7 +839,7 @@ const PlacementResources = () => {
                                       })}
                                       {(!entry.profiles || profileOrder.every((key) => !entry.profiles?.[key])) && (
                                         <span className="leaderboard-item__links--placeholder">
-                                          Add your CP profiles from the Branch Connect profile page
+                                          Add your CP profiles from the IIIT Network profile page
                                         </span>
                                       )}
                                     </div>
@@ -990,99 +889,7 @@ const PlacementResources = () => {
         ))}
       </section>
 
-      <section className="practice-platforms" aria-labelledby="practice-platforms-heading">
-        <header>
-          <h2 id="practice-platforms-heading">Pair the drive with daily practice</h2>
-          <p>
-            Mix in these verified online platforms to keep your problem-solving sharp. Each link opens a curated track focused on
-            interview-ready patterns.
-          </p>
-        </header>
-        <div className="practice-platforms__grid">
-          {practicePlatforms.map((platform) => (
-            <article key={platform.id} className="platform-card">
-              <div className="platform-card__header">
-                <span className="platform-card__icon" aria-hidden>{platform.icon}</span>
-                <h3>{platform.name}</h3>
-              </div>
-              <p>{platform.description}</p>
-              <ul>
-                {platform.highlights.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <a href={platform.link} target="_blank" rel="noopener noreferrer" className="platform-card__link">
-                Launch playlist ↗
-              </a>
-            </article>
-          ))}
-        </div>
-      </section>
 
-      <section className="prep-timeline" aria-labelledby="prep-timeline-heading">
-        <header>
-          <h2 id="prep-timeline-heading">8-week placement roadmap</h2>
-          <p>Use this weekly breakdown to balance depth and breadth. Pair it with the checklist inside the Drive for a detailed tracker.</p>
-        </header>
-        <div className="timeline-grid">
-          {timelineMilestones.map((milestone) => (
-            <article key={milestone.period} className="timeline-card">
-              <span className="timeline-card__period">{milestone.period}</span>
-              <h3>{milestone.focus}</h3>
-              <ul>
-                {milestone.actions.map((action) => (
-                  <li key={action}>{action}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="support-section" aria-labelledby="support-section-heading">
-        <header>
-          <h2 id="support-section-heading">Keep up the momentum</h2>
-          <p>Connect with peers and mentors so you never prep alone. These support loops live alongside the Drive resources.</p>
-        </header>
-        <div className="support-grid">
-          {supportChannels.map((channel) => (
-            <article key={channel.title} className="support-card">
-              <h3>{channel.title}</h3>
-              <p>{channel.detail}</p>
-              <a href={channel.action.link} target="_blank" rel="noopener noreferrer">
-                {channel.action.label} ↗
-              </a>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="faq" aria-labelledby="placement-faq-heading">
-        <header>
-          <h2 id="placement-faq-heading">Placement prep FAQs</h2>
-          <p>Quick answers to the most common questions we hear from the community each season.</p>
-        </header>
-        <div className="faq-list">
-          {faqItems.map((faq) => (
-            <article key={faq.question} className="faq-item">
-              <h3>{faq.question}</h3>
-              <p>{faq.answer}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="placement-cta" aria-label="Placement resource footer call to action">
-        <div className="placement-cta__copy">
-          <h2>Ready to share your own resource?</h2>
-          <p>
-            Add your notes, solutions, or interview experiences to the Drive so the next Branch Connect batch can learn faster. Use clear naming, include a short description, and drop a message in the Friday sync.
-          </p>
-        </div>
-        <a className="primary" href={driveFolder} target="_blank" rel="noopener noreferrer">
-          Contribute to the drive
-        </a>
-      </section>
     </div>
   );
 };

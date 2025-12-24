@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './Societies.css';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 import heroOne from '../assets/images/society_pic1.png';
 import heroTwo from '../assets/images/society_pic2.png';
 import heroThree from '../assets/images/society_pic3.png';
@@ -155,18 +157,27 @@ const Societies = () => {
         </header>
         <div className="society-cards">
           {societies.map((society) => (
-            <article className="society-card" key={society.name}>
+            <Card className="society-card" key={society.name} hoverEffect>
               <div className="society-card__image" style={{ backgroundImage: `url(${society.image})` }}>
                 <div className="society-card__overlay">
                   <p>{society.description}</p>
-                  <a href={society.instagram} target="_blank" rel="noreferrer">Follow on Instagram →</a>
+                  <Button
+                    as="a"
+                    href={society.instagram}
+                    target="_blank"
+                    rel="noreferrer"
+                    variant="primary"
+                    size="sm"
+                  >
+                    Follow on Instagram
+                  </Button>
                 </div>
               </div>
               <div className="society-card__body">
                 <h3>{society.name}</h3>
-                <span>{society.focus}</span>
+                <span className="society-card__focus">{society.focus}</span>
               </div>
-            </article>
+            </Card>
           ))}
         </div>
       </section>

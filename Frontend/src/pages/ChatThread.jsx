@@ -115,9 +115,9 @@ const ChatThread = () => {
       signal
     }),
     getNextPageParam: (lastPage) => (lastPage?.pagination?.hasMore ? lastPage.pagination.nextCursor : undefined),
-  refetchInterval: isSocketConnected ? false : 8000,
-  refetchIntervalInBackground: !isSocketConnected,
-  refetchOnWindowFocus: !isSocketConnected,
+    refetchInterval: isSocketConnected ? false : 8000,
+    refetchIntervalInBackground: !isSocketConnected,
+    refetchOnWindowFocus: !isSocketConnected,
     refetchOnReconnect: true
   });
 
@@ -134,9 +134,9 @@ const ChatThread = () => {
           ...page,
           conversation: page.conversation
             ? {
-                ...page.conversation,
-                ...updates
-              }
+              ...page.conversation,
+              ...updates
+            }
             : page.conversation
         }))
       };
@@ -736,7 +736,7 @@ const ChatThread = () => {
   const loadingMember = memberQuery.isLoading;
   const memberError = memberQuery.isError;
   const conversationError = conversationQuery.isError;
-  const conversationTitle = member?.name || member?.email || 'Branch Connect member';
+  const conversationTitle = member?.name || member?.email || 'IIIT Network member';
   const memberEmail = member?.email || null;
   const lastInteraction = conversation?.lastMessage?.sentAt || conversation?.updatedAt || null;
   const lastInteractionIso = lastInteraction ? new Date(lastInteraction).toISOString() : null;
@@ -762,7 +762,7 @@ const ChatThread = () => {
           ← Recent chats
         </button>
         <span className="chat-thread-page__eyebrow">direct chat</span>
-  <h1>{member?.name || member?.email || 'Branch Connect member'}</h1>
+        <h1>{member?.name || member?.email || 'IIIT Network member'}</h1>
       </header>
 
       <div className="chat-thread-shell">

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import './Auth.css';
 import { requestOtp } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 const INSTITUTE_EMAIL_PATTERN = /^b\d{6}@iiit-bh\.ac\.in$/i;
 const COLLEGE_ID_PATTERN = /^b\d{6}$/i;
@@ -27,6 +29,7 @@ const SignUp = () => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
+    // Lowercase rollId and email for standardization
     const nextValue = ['rollId', 'email'].includes(name) ? value.toLowerCase() : value;
     setForm((prev) => ({ ...prev, [name]: nextValue }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
@@ -137,7 +140,7 @@ const SignUp = () => {
     try {
       setSendingOtp(true);
       setOtpStatus({ type: 'pending', message: 'Sending OTP…' });
-  await requestOtp(form.email.trim());
+      await requestOtp(form.email.trim());
       setOtpStatus({ type: 'success', message: 'OTP sent! Check your inbox.' });
     } catch (error) {
       setOtpStatus({
@@ -152,12 +155,12 @@ const SignUp = () => {
   return (
     <section className="auth-page">
       <div className="auth-headline">
-  <h1>Create your Branch Connect account</h1>
-  <p>Unlock mentor feedback, society collaborations, and personalised workshops tailored to your goals.</p>
+        <h1>Create your IIIT Network account</h1>
+        <p>Unlock mentor feedback, society collaborations, and personalised workshops tailored to your goals.</p>
       </div>
 
       <div className="auth-split">
-        <div className="auth-card">
+        <Card className="auth-card" variant="glass">
           <form onSubmit={handleSubmit} noValidate>
             <div className="form-field">
               <label htmlFor="fullName">Full name</label>
@@ -170,7 +173,6 @@ const SignUp = () => {
                 value={form.fullName}
                 onChange={handleChange}
               />
-              <p className="field-hint">Use the name you’d like mentors to recognise.</p>
               {errors.fullName && <p className="field-error">{errors.fullName}</p>}
             </div>
 
@@ -184,7 +186,6 @@ const SignUp = () => {
                 value={form.rollId}
                 onChange={handleChange}
               />
-              <p className="field-hint">Helps us connect you with the right branch community.</p>
               {errors.rollId && <p className="field-error">{errors.rollId}</p>}
             </div>
 
@@ -199,7 +200,6 @@ const SignUp = () => {
                 value={form.email}
                 onChange={handleChange}
               />
-              <p className="field-hint">Institute emails are verified faster.</p>
               {errors.email && <p className="field-error">{errors.email}</p>}
             </div>
 
@@ -214,7 +214,6 @@ const SignUp = () => {
                 value={form.password}
                 onChange={handleChange}
               />
-              <p className="field-hint">Include at least 6 characters, one uppercase letter, and one number.</p>
               {errors.password && <p className="field-error">{errors.password}</p>}
             </div>
 
@@ -245,9 +244,15 @@ const SignUp = () => {
                   value={form.otp}
                   onChange={handleChange}
                 />
-                <button type="button" className="ghost-btn" onClick={handleSendOtp} disabled={sendingOtp}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleSendOtp}
+                  disabled={sendingOtp}
+                  size="sm"
+                >
                   {sendingOtp ? 'Sending…' : 'Send OTP'}
-                </button>
+                </Button>
               </div>
               {errors.otp && <p className="field-error">{errors.otp}</p>}
               {otpStatus && (
@@ -258,32 +263,35 @@ const SignUp = () => {
             </div>
 
             <div className="auth-actions">
-              <button type="submit" disabled={submitting}>{submitting ? 'Creating…' : 'Create account'}</button>
-              <Link className="secondary-link" to="/auth/sign-in">Already have one? Sign in</Link>
+              <Button type="submit" variant="primary" fullWidth loading={submitting}>
+                Create account
+              </Button>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+                Already have an account?{' '}
+                <Link className="secondary-link" to="/auth/sign-in">Sign in</Link>
+              </span>
             </div>
           </form>
 
           {status && (
             <div className={`auth-status ${status.type}`} role="status">
-              <strong>
-                {status.type === 'success'
-                  ? 'Account ready'
-                  : status.type === 'pending'
-                    ? 'Working on it'
-                    : 'Let’s adjust a few things'}
-              </strong>
               <span>{status.message}</span>
             </div>
           )}
-        </div>
+        </Card>
 
         <aside className="auth-benefits">
-          <h2>Membership perks</h2>
-          <ul>
-            <li>Showcase your portfolio to incoming recruiters.</li>
-            <li>Book mentor hours to unblock tricky challenges.</li>
-            <li>Join exclusive society collaborations and campus projects.</li>
-          </ul>
+          <Card variant="elevated">
+            <h2>Membership perks</h2>
+            <ul>
+              <li>Showcase your portfolio to incoming recruiters.</li>
+              <li>Book mentor hours to unblock tricky challenges.</li>
+              <li>Join exclusive society collaborations and campus projects.</li>
+            </ul>
+          </Card>
         </aside>
       </div>
     </section>

@@ -1,0 +1,52 @@
+.ui-social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.ui-social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--color-surface-muted, rgba(241, 245, 249, 0.5));
+    /* Neutral/Glassy background */
+    color: var(--color-text-secondary, #64748b);
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid var(--color-border-subtle, transparent);
+}
+
+.ui-social-link:hover {
+    transform: translateY(-3px) scale(1.05);
+    background: var(--color-surface-elevated, white);
+    box-shadow: var(--shadow-elevated, 0 4px 12px rgba(0, 0, 0, 0.1));
+}
+
+/* Platform Colors */
+.ui-social-link--github:hover {
+    color: #333;
+    background: #f0f0f0;
+}
+
+.ui-social-link--linkedin:hover {
+    color: #0077b5;
+    background: #e1f0f8;
+}
+
+.ui-social-link--instagram:hover {
+    color: #e4405f;
+    background: #fdf2f5;
+}
+
+.ui-social-link--mail:hover {
+    color: #ea4335;
+    background: #fce8e6;
+}
+
+.ui-social-link--twitter:hover {
+    color: #1da1f2;
+    background: #e8f5fd;
+}

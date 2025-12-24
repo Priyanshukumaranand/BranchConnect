@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import './Home.css';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
 import slideOne from '../assets/carousel_1.png';
 import slideTwo from '../assets/carousel_2.png';
 import slideThree from '../assets/carousel_3.png';
@@ -37,16 +39,8 @@ const gallerySlides = [
 ];
 
 const Home = () => {
-  const [headlineIndex, setHeadlineIndex] = useState(0);
   const [slideIndex, setSlideIndex] = useState(0);
   const [pauseCarousel, setPauseCarousel] = useState(false);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setHeadlineIndex((index) => (index + 1) % heroHeadlines.length);
-    }, 3500);
-    return () => clearInterval(id);
-  }, []);
 
   const goToSlide = useCallback((nextIndex) => {
     const total = gallerySlides.length;
@@ -62,39 +56,33 @@ const Home = () => {
     return () => clearInterval(id);
   }, [handleNext, pauseCarousel]);
 
-  const activeHeadline = useMemo(() => heroHeadlines[headlineIndex], [headlineIndex]);
-
   return (
     <div className="home-page">
       <section className="hero">
         <div className="hero__intro">
-          <p className="hero__eyebrow">Branch Connect · College Network</p>
-          <h1>
-            {activeHeadline.split(' ').map((word, index) => (
-              <span key={word + index} className={index === 0 ? 'accent' : ''}>{word} </span>
-            ))}
-          </h1>
+          <p className="hero__eyebrow">IIIT Network · College Network</p>
+          <h1>Discover the future of tech</h1>
           <p className="hero__description">
-            Explore student profiles, passion projects, and community-led initiatives from the heart of IIIT Bhubaneswar. We celebrate collaboration, curiosity, and the courage to build bold ideas across every branch.
+            Discover the future of tech with our students. Explore their profiles, skills, and innovative projects. Meet the next generation of engineers, ready to lead and inspire. Welcome to IIIT Network – where talent meets technology.
           </p>
           <div className="hero__actions">
-            <Link className="primary" to="/enroll">Enroll now</Link>
-            <Link className="ghost" to="/societies">Tour the societies</Link>
+            <Button as={Link} to="/enroll" variant="primary" size="lg">Enroll now</Button>
+            <Button as={Link} to="/societies" variant="secondary" size="lg">Tour the societies</Button>
           </div>
         </div>
         <div className="hero__meta">
-          <div className="hero__stat">
+          <Card className="hero__stat" variant="glass">
             <span className="hero__stat-number">120+</span>
             <span className="hero__stat-label">Active participants</span>
-          </div>
-          <div className="hero__stat">
+          </Card>
+          <Card className="hero__stat" variant="glass">
             <span className="hero__stat-number">35</span>
             <span className="hero__stat-label">Student-led projects</span>
-          </div>
-          <div className="hero__stat">
+          </Card>
+          <Card className="hero__stat" variant="glass">
             <span className="hero__stat-number">15</span>
             <span className="hero__stat-label">Campus societies</span>
-          </div>
+          </Card>
         </div>
       </section>
 
@@ -105,12 +93,18 @@ const Home = () => {
         </header>
         <div className="batch-grid">
           {batchHighlights.map((batch) => (
-            <Link key={batch.title} to={batch.to} className="batch-card">
+            <Card
+              key={batch.title}
+              as={Link}
+              to={batch.to}
+              className="batch-card"
+              hoverEffect
+            >
               <span className="batch-card__tag">Explore</span>
               <h3>{batch.title}</h3>
               <p>{batch.description}</p>
               <span className="batch-card__cta">View profiles →</span>
-            </Link>
+            </Card>
           ))}
         </div>
       </section>
@@ -153,7 +147,7 @@ const Home = () => {
       <section className="moments" aria-labelledby="moments-heading">
         <header className="section-heading">
           <h2 id="moments-heading">Moments</h2>
-          <p>Experience the pulse of Branch Connect through highlights captured by the community.</p>
+          <p>Experience the pulse of IIIT Network through highlights captured by the community.</p>
         </header>
         <div className="moments__media">
           <video controls muted playsInline poster={gallerySlides[2].src}>
@@ -165,7 +159,7 @@ const Home = () => {
             <p>
               From prototyping wearables to building full-stack dashboards, our branches explore diverse domains. Each sprint ends with a showcase where peers, mentors, and alumni exchange feedback and celebrate progress.
             </p>
-            <Link to="/societies" className="ghost">Meet society leads</Link>
+            <Button as={Link} to="/societies" variant="ghost">Meet society leads →</Button>
           </div>
         </div>
       </section>

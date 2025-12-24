@@ -273,7 +273,7 @@ const Profile = () => {
           </p>
         </div>
         <div className="profile-hero__body">
-          <span className="profile-hero__eyebrow">Branch Connect profile</span>
+          <span className="profile-hero__eyebrow">IIIT Network profile</span>
           <h1 id="profile-heading">{heroHeading}</h1>
           <p className="profile-hero__intro">{aboutPreview}</p>
           <dl className="profile-hero__meta">
@@ -381,7 +381,7 @@ const Profile = () => {
                   />
                   <p className="field-hint">
                     {rollLocked
-                      ? 'Roll ID is locked. Contact the Branch Connect team if it needs to be corrected.'
+                      ? 'Roll ID is locked. Contact the IIIT Network team if it needs to be corrected.'
                       : 'Example: b520123. This links you to the right branch directory.'}
                   </p>
                 </div>
@@ -443,7 +443,7 @@ const Profile = () => {
                     onChange={handleChange}
                     placeholder="https://leetcode.com/username"
                   />
-                  <p className="field-hint">Used to feature you on the Branch Connect DSA leaderboard.</p>
+                  <p className="field-hint">Used to feature you on the IIIT Network DSA leaderboard.</p>
                 </div>
 
                 <div className="form-field">

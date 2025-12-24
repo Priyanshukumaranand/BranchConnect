@@ -138,9 +138,9 @@ const MemberProfile = () => {
           ...page,
           conversation: page.conversation
             ? {
-                ...page.conversation,
-                ...updates
-              }
+              ...page.conversation,
+              ...updates
+            }
             : page.conversation
         }))
       };
@@ -393,7 +393,7 @@ const MemberProfile = () => {
         <div className="member-profile__feedback">
           <button type="button" onClick={() => navigate(-1)} className="member-profile__back">← Back</button>
           <h1>Profile unavailable</h1>
-          <p>We couldn’t load this member’s profile right now. Please try again or reach out to the Branch Connect team.</p>
+          <p>We couldn’t load this member’s profile right now. Please try again or reach out to the IIIT Network team.</p>
         </div>
       </section>
     );
@@ -413,7 +413,7 @@ const MemberProfile = () => {
           </div>
           <div className="member-profile__heading">
             <span className="member-profile__eyebrow">Community member</span>
-            <h1>{member?.name || member?.email || 'Branch Connect Member'}</h1>
+            <h1>{member?.name || member?.email || 'IIIT Network Member'}</h1>
             <div className="member-profile__tags">
               {member?.collegeId && (
                 <span className="member-profile__tag">Roll · {member.collegeId.toUpperCase()}</span>

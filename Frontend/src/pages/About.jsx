@@ -1,6 +1,7 @@
 import React from 'react';
 import './About.css';
-import bgTexture from '../assets/Photos/bg.png';
+import Card from '../components/ui/Card';
+import SocialLinks from '../components/ui/SocialLinks';
 import priyaranjan from '../assets/Photos/PRIYARANJAN.png';
 import harapriya from '../assets/Photos/HARAPRIYA.png';
 import subham from '../assets/Photos/SHUBHAM.png';
@@ -104,59 +105,43 @@ const About = () => {
       <section className="about-hero">
         <p className="about-hero__eyebrow">Building community · Celebrating collaboration</p>
         <h1>Dedicated to connecting every branch across campus.</h1>
-        <p>
-          Branch Connect is a student-led initiative from IIIT Bhubaneswar that brings together builders, designers, storytellers, and problem-solvers. We showcase the journeys, skills, and ambitions of every branch community so collaborators and recruiters can connect with rising talent.
+        <p className="about-hero__lead">
+          A platform dedicated to introducing you to the talented students who are shaping the future of technology. Our website is designed to showcase their skills, projects, and the passion they bring to their field.
         </p>
       </section>
 
       <section className="about-values" aria-labelledby="values-heading">
-        <h2 id="values-heading">What drives us</h2>
+        <h2 id="values-heading">Our Mission</h2>
         <div className="values-grid">
-          <article>
-            <h3>Learning in public</h3>
-            <p>We document our progress—from early wireframes to production demos—so everyone can learn, iterate, and celebrate together.</p>
-          </article>
-          <article>
-            <h3>Collaborative energy</h3>
-            <p>Working across disciplines keeps our solutions grounded. Hardware meets software, storytelling meets systems thinking.</p>
-          </article>
-          <article>
-            <h3>Inclusive growth</h3>
-            <p>Every member finds a space to grow—whether through mentorship circles, design critiques, or late-night debugging sessions.</p>
-          </article>
+          <Card className="mission-card" hoverEffect>
+            <p className="mission-text">
+              Our mission is to provide a simple, user-friendly experience that highlights the incredible talents of our students. We believe in the power of community and the importance of recognizing the hard work and love that goes into every project.
+            </p>
+            <div className="mission-card__accent" aria-hidden />
+          </Card>
         </div>
       </section>
 
       <section className="about-team" aria-labelledby="team-heading">
-        <header>
+        <header className="about-team__header">
           <h2 id="team-heading">Meet the crew</h2>
-          <p>Our multidisciplinary team keeps this platform evolving, ensuring Branch Connect voices are heard loud and clear.</p>
+          <p>Our multidisciplinary team keeps this platform evolving, ensuring IIIT Network voices are heard loud and clear.</p>
         </header>
         <div className="team-grid">
           {team.map((member) => (
-            <article className="team-card" key={member.name}>
-              <div className="team-card__media" style={{ backgroundImage: `url(${bgTexture})` }}>
+            <Card className="team-card" key={member.name} hoverEffect>
+              <div className="team-card__glow-bg" />
+              <div className="team-card__image-wrapper">
                 <img src={member.image} alt={member.name} loading="lazy" />
               </div>
-              <div className="team-card__body">
-                <h3>{member.name}</h3>
-                <p>{member.role}</p>
+              <div className="team-card__content">
+                <div className="team-card__info">
+                  <h3>{member.name}</h3>
+                  <span className="team-card__role">{member.role}</span>
+                </div>
+                <SocialLinks links={member.socials} className="team-card__socials" />
               </div>
-              <div className="team-card__socials" aria-label={`${member.name} social links`}>
-                {member.socials.github && (
-                  <a href={member.socials.github} target="_blank" rel="noreferrer">GitHub</a>
-                )}
-                {member.socials.linkedin && (
-                  <a href={member.socials.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
-                )}
-                {member.socials.instagram && (
-                  <a href={member.socials.instagram} target="_blank" rel="noreferrer">Instagram</a>
-                )}
-                {member.socials.mail && (
-                  <a href={member.socials.mail}>Email</a>
-                )}
-              </div>
-            </article>
+            </Card>
           ))}
         </div>
       </section>

@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './Auth.css';
 import { API_BASE_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 const INSTITUTE_EMAIL_PATTERN = /^b\d{6}@iiit-bh\.ac\.in$/i;
 
@@ -36,6 +38,7 @@ const SignIn = () => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
+    // Lowercase email automatically for convenience
     const nextValue = name === 'email' ? value.toLowerCase() : value;
     setForm((prev) => ({ ...prev, [name]: nextValue }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
@@ -108,12 +111,12 @@ const SignIn = () => {
   return (
     <section className="auth-page">
       <div className="auth-headline">
-  <h1>Welcome back!</h1>
-  <p>Sign in to stay connected with every branch, collaborate with societies, and keep tabs on submissions.</p>
+        <h1>Welcome back!</h1>
+        <p>Sign in to stay connected with every branch, collaborate with societies, and keep tabs on submissions.</p>
       </div>
 
       <div className="auth-split">
-        <div className="auth-card">
+        <Card className="auth-card" variant="glass">
           <form onSubmit={handleSubmit} noValidate>
             <div className="form-field">
               <label htmlFor="email">Institute email</label>
@@ -126,7 +129,7 @@ const SignIn = () => {
                 value={form.email}
                 onChange={handleChange}
               />
-              <p className="field-hint">Use your institute-issued email for the smoothest approval.</p>
+              <p className="field-hint">Use your institute-issued email.</p>
               {errors.email && <p className="field-error">{errors.email}</p>}
             </div>
 
@@ -141,48 +144,55 @@ const SignIn = () => {
                 value={form.password}
                 onChange={handleChange}
               />
-              <p className="field-hint">Minimum 6 characters. Use a mix of letters, numbers, and symbols.</p>
               {errors.password && <p className="field-error">{errors.password}</p>}
+              <Link className="secondary-link" to="/auth/forgot-password" style={{ textAlign: 'right', fontSize: '0.8rem' }}>Forgot password?</Link>
             </div>
 
             <div className="auth-actions">
-              <button type="submit" disabled={submitting || initializing}>{submitting ? 'Signing in…' : 'Sign in'}</button>
-              <Link className="secondary-link" to="/auth/forgot-password">Forgot password?</Link>
+              <Button
+                type="submit"
+                variant="primary"
+                fullWidth
+                loading={submitting}
+                disabled={initializing}
+              >
+                Sign In
+              </Button>
             </div>
           </form>
 
+          {status && (
+            <div className={`auth-status ${status.type}`} role="status">
+              <span>{status.message}</span>
+            </div>
+          )}
+
           <div className="alt-signin" aria-live="polite">
-            <button type="button" className="alt-signin__google" onClick={handleGoogleSignIn}>
-              <span aria-hidden className="alt-signin__icon">G</span>
-              <span>Continue with Google</span>
-            </button>
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              onClick={handleGoogleSignIn}
+              icon={<i className="fab fa-google" />}
+            >
+              Continue with Google
+            </Button>
             <span>
               New here?{' '}
               <Link className="secondary-link" to="/auth/sign-up">Create an account</Link>
             </span>
           </div>
-
-          {status && (
-            <div className={`auth-status ${status.type}`} role="status">
-              <strong>
-                {status.type === 'success'
-                  ? 'Success'
-                  : status.type === 'pending'
-                    ? 'Working on it'
-                    : 'Let’s fix this'}
-              </strong>
-              <span>{status.message}</span>
-            </div>
-          )}
-        </div>
+        </Card>
 
         <aside className="auth-benefits">
-          <h2>Why sign in?</h2>
-          <ul>
-            <li>Track your society or project submissions in real time.</li>
-            <li>Collaborate with mentors and peer reviewers seamlessly.</li>
-            <li>Unlock Branch Connect-only resources and campus events.</li>
-          </ul>
+          <Card variant="elevated">
+            <h2>Why sign in?</h2>
+            <ul>
+              <li>Track your society or project submissions in real time.</li>
+              <li>Collaborate with mentors and peer reviewers seamlessly.</li>
+              <li>Unlock IIIT Network-only resources and campus events.</li>
+            </ul>
+          </Card>
         </aside>
       </div>
     </section>

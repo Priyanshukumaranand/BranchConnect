@@ -139,7 +139,7 @@ const RecentChats = () => {
       } else {
         queryClient.removeQueries({ queryKey: ['chat', 'with'], exact: false });
       }
-  setFeedback({ type: 'success', message: 'Conversation deleted.' });
+      setFeedback({ type: 'success', message: 'Conversation deleted.' });
     },
     onError: (error) => {
       setFeedback({ type: 'error', message: error?.message || 'Unable to delete conversation right now.' });
@@ -237,7 +237,7 @@ const RecentChats = () => {
     <section className="recent-chats">
       <header className="recent-chats__header">
         <span className="recent-chats__eyebrow">Inbox</span>
-        <h1>Stay connected with Branch Connect peers</h1>
+        <h1>Stay connected with IIIT Network peers</h1>
         <p>All your direct messages live here. Pick up a conversation, clear out old threads, or block members that you no longer want to hear from.</p>
 
         <div className="recent-chats__stats" role="list">
@@ -286,22 +286,22 @@ const RecentChats = () => {
         <div className="recent-chats__panel">
           <div className="recent-chats__list">
             {conversations.map((conversation) => {
-            const otherMember = conversation.otherParticipant || null;
-            const avatarUrl = buildAvatarUrl(otherMember);
-            const initials = buildInitials(otherMember);
-            const lastMessagePreview = conversation.lastMessage?.body || 'No messages yet.';
-            const lastMessageTime = conversation.lastMessage?.sentAt || conversation.updatedAt;
-            const isBlockedByCurrentUser = conversation.isBlockedByCurrentUser;
-            const isBlockingCurrentUser = conversation.isBlockingCurrentUser;
-            const unreadCount = conversation.unreadCount || 0;
-            const conversationId = conversation.id;
-            const otherMemberId = otherMember?.id;
-            const isOtherOnline = Boolean(conversation.isOtherParticipantOnline || otherMember?.isOnline);
-            const lastSeenAt = conversation.otherParticipantLastSeenAt || otherMember?.lastSeenAt || null;
+              const otherMember = conversation.otherParticipant || null;
+              const avatarUrl = buildAvatarUrl(otherMember);
+              const initials = buildInitials(otherMember);
+              const lastMessagePreview = conversation.lastMessage?.body || 'No messages yet.';
+              const lastMessageTime = conversation.lastMessage?.sentAt || conversation.updatedAt;
+              const isBlockedByCurrentUser = conversation.isBlockedByCurrentUser;
+              const isBlockingCurrentUser = conversation.isBlockingCurrentUser;
+              const unreadCount = conversation.unreadCount || 0;
+              const conversationId = conversation.id;
+              const otherMemberId = otherMember?.id;
+              const isOtherOnline = Boolean(conversation.isOtherParticipantOnline || otherMember?.isOnline);
+              const lastSeenAt = conversation.otherParticipantLastSeenAt || otherMember?.lastSeenAt || null;
 
-            const deletePending = deleteMutation.isPending && deleteMutation.variables?.conversationId === conversationId;
-            const blockPending = blockMutation.isPending && blockMutation.variables?.conversationId === conversationId;
-            const unblockPending = unblockMutation.isPending && unblockMutation.variables?.conversationId === conversationId;
+              const deletePending = deleteMutation.isPending && deleteMutation.variables?.conversationId === conversationId;
+              const blockPending = blockMutation.isPending && blockMutation.variables?.conversationId === conversationId;
+              const unblockPending = unblockMutation.isPending && unblockMutation.variables?.conversationId === conversationId;
 
               return (
                 <article

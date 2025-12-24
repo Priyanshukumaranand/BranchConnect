@@ -54,7 +54,7 @@ const truncate = (value, limit = 180) => {
 };
 
 const normaliseProfile = (user) => {
-  const name = user.name || user.email?.split('@')[0] || 'Branch Connect Member';
+  const name = user.name || user.email?.split('@')[0] || 'IIIT Network Member';
   const roll = user.collegeId ? user.collegeId.toUpperCase() : user.email?.substring(0, 7)?.toUpperCase() || '—';
   const email = user.email || '';
   const batchYear = user.batchYear || deriveBatchYearFromId(user.collegeId || roll) || null;
@@ -101,8 +101,8 @@ const normaliseProfile = (user) => {
     name,
     roll,
     email,
-    about: truncate(user.about || 'Details coming soon. Reach out to the Branch Connect organisers to update this profile.'),
-    focus: focus.length > 0 ? focus : ['Branch Connect Member'],
+    about: truncate(user.about || 'Details coming soon. Reach out to the IIIT Network organisers to update this profile.'),
+    focus: focus.length > 0 ? focus : ['IIIT Network Member'],
     links,
     image,
     location: user.place || null,
@@ -417,7 +417,7 @@ const Batches = () => {
                 </button>
               ))}
             </div>
-                      {/* Branch filter hidden intentionally */}
+            {/* Branch filter hidden intentionally */}
           </div>
 
           <div className="batch-filter-group">
@@ -460,7 +460,7 @@ const Batches = () => {
 
         {!isInitialLoading && !isRefreshing && !isError && currentProfiles.length === 0 && (
           <p className="batch-description">
-            No profiles found for {activeYear} in {branchDescriptor}. If you believe this is an error, please ask the Branch Connect team to update the database.
+            No profiles found for {activeYear} in {branchDescriptor}. If you believe this is an error, please ask the IIIT Network team to update the database.
           </p>
         )}
 

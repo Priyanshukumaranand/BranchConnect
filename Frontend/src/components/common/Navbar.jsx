@@ -107,9 +107,15 @@ const Navbar = () => {
   return (
     <header className="site-header" data-open={isMenuOpen}>
       <div className="site-header__inner">
-        <NavLink to="/" className="brand" aria-label="Branch Connect home" onClick={closeMenu}>
-          <span className="brand__logo" aria-hidden>BC</span>
-          <span className="brand__text">Branch Connect</span>
+        <NavLink to="/" className="brand" aria-label="IIIT Network home" onClick={closeMenu}>
+          <span className="brand__logo" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span className="brand__text">IIIT Network</span>
         </NavLink>
         <button
           className="menu-toggle"
@@ -121,7 +127,7 @@ const Navbar = () => {
           <span />
           <span />
         </button>
-  <nav aria-label="Primary" className="primary-nav" data-open={isMenuOpen}>
+        <nav aria-label="Primary" className="primary-nav" data-open={isMenuOpen}>
           <ul>
             {navLinks.map((link) => (
               <li key={link.to}>
@@ -168,7 +174,7 @@ const Navbar = () => {
           <div className="nav-actions">
             {!user && (
               <NavLink to="/auth/sign-up" className="cta" onClick={closeMenu}>
-                Join Branch Connect
+                Join IIIT Network
               </NavLink>
             )}
             {user && (

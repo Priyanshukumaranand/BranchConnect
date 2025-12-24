@@ -6,9 +6,9 @@ const Footer = () => {
     <footer className="site-footer">
       <div className="site-footer__inner">
         <div className="site-footer__brand">
-          <span className="brand-mark">BC</span>
+          <span className="brand-mark">IIIT</span>
           <div>
-            <h3>Branch Connect</h3>
+            <h3>IIIT Network</h3>
             <p>Discover every branch across campus. Portfolios, passion projects, and college communities in one place.</p>
           </div>
         </div>
@@ -29,7 +29,7 @@ const Footer = () => {
             <ul>
               <li><a href="mailto:hello@branchconnect.dev">Contact</a></li>
               <li><a href="/auth/forgot-password">Forgot password</a></li>
-              <li><a href="/auth/sign-up">Join Branch Connect</a></li>
+              <li><a href="/auth/sign-up">Join IIIT Network</a></li>
               <li><a href="/server-error" onClick={(e) => e.preventDefault()}>Status</a></li>
             </ul>
           </div>
@@ -45,7 +45,7 @@ const Footer = () => {
         </div>
 
         <div className="site-footer__meta">
-          <p>© {new Date().getFullYear()} Branch Connect. Crafted with passion for the next generation of campus innovators.</p>
+          <p>© {new Date().getFullYear()} IIIT Network. Crafted with passion for the next generation of campus innovators.</p>
           <div className="footer-links" aria-label="Footer links">
             <a href="/" onClick={(e) => e.preventDefault()}>Privacy</a>
             <a href="/" onClick={(e) => e.preventDefault()}>Terms</a>
