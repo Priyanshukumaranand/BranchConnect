@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import classNames from 'classnames';
 import './Avatar.css';
 
@@ -11,6 +11,8 @@ const Avatar = ({
     status = null, // 'online', 'busy', etc.
     ...props
 }) => {
+    const [imageError, setImageError] = useState(false);
+
     const initials = useMemo(() => {
         if (!name) return '?';
         return name
@@ -21,10 +23,17 @@ const Avatar = ({
             .toUpperCase();
     }, [name]);
 
+    const showImage = src && !imageError;
+
     return (
         <div className={classNames('ui-avatar', `ui-avatar--${size}`, className)} {...props}>
-            {src ? (
-                <img src={src} alt={alt || name} className="ui-avatar__image" />
+            {showImage ? (
+                <img
+                    src={src}
+                    alt={alt || name}
+                    className="ui-avatar__image"
+                    onError={() => setImageError(true)}
+                />
             ) : (
                 <span className="ui-avatar__initials">{initials}</span>
             )}

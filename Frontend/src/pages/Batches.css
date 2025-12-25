@@ -202,14 +202,14 @@
 
 .batch-profile-avatar {
   flex-shrink: 0;
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
 }
 
 .batch-profile-avatar .avatar {
-  width: 56px !important;
-  height: 56px !important;
-  font-size: 1.25rem !important;
+  width: 72px !important;
+  height: 72px !important;
+  font-size: 1.5rem !important;
 }
 
 .batch-profile-info {

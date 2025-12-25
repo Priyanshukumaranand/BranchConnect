@@ -720,7 +720,6 @@ const ChatThread = () => {
                 <time dateTime={lastInteractionIso || undefined}>{formatRelativeTime(lastInteraction)}</time>
               )}
             </div>
-            {memberEmail && <p>{memberEmail}</p>}
             {presenceLabel && (
               <p
                 className={`chat-thread__presence${presence.isOnline ? ' chat-thread__presence--online' : ''}`}
@@ -739,10 +738,36 @@ const ChatThread = () => {
             </div>
           </div>
 
-          <div className="chat-thread__header-actions">
-            {/* Only show delete option for now in header to keep it clean, maybe kebab menu later? */}
-            {/* For now, actions are better placed maybe in a settings menu or kept simple. 
-                     The design implies specific actions. Let's add basic ones. */}
+          <div className="chat-thread__inline-actions">
+            {isBlockedByCurrentUser ? (
+              <button
+                className="chat-thread__action-btn"
+                onClick={() => unblockConversationMutation.mutate({ conversationId })}
+              >
+                Unblock
+              </button>
+            ) : (
+              <button
+                className="chat-thread__action-btn chat-thread__action-btn--danger"
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to block this user?')) {
+                    blockConversationMutation.mutate({ conversationId });
+                  }
+                }}
+              >
+                Block
+              </button>
+            )}
+            <button
+              className="chat-thread__action-btn chat-thread__action-btn--danger"
+              onClick={() => {
+                if (window.confirm('Delete this conversation? This cannot be undone.')) {
+                  deleteConversationMutation.mutate({ conversationId });
+                }
+              }}
+            >
+              Delete
+            </button>
           </div>
         </header>
 
@@ -844,24 +869,6 @@ const ChatThread = () => {
           )}
         </footer>
       </Card>
-
-      <div className="chat-thread-page__actions">
-        {isBlockedByCurrentUser ? (
-          <Button variant="secondary" onClick={() => unblockConversationMutation.mutate({ conversationId })}>Unblock Member</Button>
-        ) : (
-          <Button variant="ghost" className="text-danger" onClick={() => {
-            if (window.confirm('Are you sure you want to block this user?')) {
-              blockConversationMutation.mutate({ conversationId });
-            }
-          }}>Block Member</Button>
-        )}
-        <Button variant="ghost" className="text-danger" onClick={() => {
-          if (window.confirm('Delete this conversation mostly? This cannot be undone.')) {
-            deleteConversationMutation.mutate({ conversationId });
-          }
-        }}>Delete Conversation</Button>
-      </div>
-
     </section>
   );
 };
