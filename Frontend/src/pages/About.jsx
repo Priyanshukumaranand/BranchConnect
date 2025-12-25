@@ -13,14 +13,13 @@ import priyanshu from '../assets/Photos/PRIYANSHU.png';
 
 const team = [
   {
-    name: 'Priyaranjan Kumar',
-    role: 'Frontend Developer',
-    image: priyaranjan,
+    name: 'Biswajit Bhoi',
+    role: 'UI/UX Designer',
+    image: biswajit,
     socials: {
-      github: 'https://github.com/priyaranjan2902',
-      linkedin: 'https://in.linkedin.com/in/priyaranjan2902',
-      instagram: 'https://www.instagram.com/priyaranjan2902/',
-      mail: 'mailto:rajprience2902@gmail.com'
+      linkedin: 'https://www.linkedin.com/in/biswajit-bhoi-2537b5257/',
+      instagram: 'https://www.instagram.com/biswajit.bhoi.125/',
+      mail: 'mailto:b522016@iiit-bh.ac.in'
     }
   },
   {
@@ -32,49 +31,6 @@ const team = [
       linkedin: 'https://www.linkedin.com/in/harapriya-swain-75632a256/',
       instagram: 'https://www.instagram.com/harapriya_17/',
       mail: 'mailto:harapriyas1704@gmail.com'
-    }
-  },
-  {
-    name: 'Subham Kuanar',
-    role: 'Frontend Developer',
-    image: subham,
-    socials: {
-      github: 'https://github.com/kuanarshubham',
-      linkedin: 'https://www.linkedin.com/in/kuanarshubham/',
-      instagram: 'https://www.instagram.com/shubhamkuanar/',
-      mail: 'mailto:kuanarshubham@gmail.com'
-    }
-  },
-  {
-    name: 'Saumyajeet Varma',
-    role: 'Frontend Developer',
-    image: saumya,
-    socials: {
-      github: 'https://github.com/Saumyajeet-Varma',
-      linkedin: 'https://www.linkedin.com/in/saumyajeet-varma-91bb4025a/',
-      instagram: 'https://www.instagram.com/_saumyajeet_/',
-      mail: 'mailto:saumyajeetv@gmail.com'
-    }
-  },
-  {
-    name: 'Swedeshna Mishra',
-    role: 'Frontend Developer',
-    image: swedeshna,
-    socials: {
-      github: 'https://github.com/SwedeshnaMishra',
-      linkedin: 'https://www.linkedin.com/in/swedeshna-mishra-8a9567251/',
-      instagram: 'https://www.instagram.com/__.swedeshna.__/',
-      mail: 'mailto:swedeshnamishra364@gmail.com'
-    }
-  },
-  {
-    name: 'Biswajit Bhoi',
-    role: 'UI/UX Designer',
-    image: biswajit,
-    socials: {
-      linkedin: 'https://www.linkedin.com/in/biswajit-bhoi-2537b5257/',
-      instagram: 'https://www.instagram.com/biswajit.bhoi.125/',
-      mail: 'mailto:b522016@iiit-bh.ac.in'
     }
   },
   {
@@ -95,6 +51,50 @@ const team = [
       github: 'https://github.com/Priyanshukumaranand',
       linkedin: 'https://www.linkedin.com/in/priyanshu-kumar-anand-52b29825a',
       mail: 'mailto:priyanshukumaranandofficial@gmail.com'
+    }
+  },
+  {
+    name: 'Priyaranjan Kumar',
+    role: 'Frontend Developer',
+    image: priyaranjan,
+    socials: {
+      github: 'https://github.com/priyaranjan2902',
+      linkedin: 'https://in.linkedin.com/in/priyaranjan2902',
+      instagram: 'https://www.instagram.com/priyaranjan2902/',
+      mail: 'mailto:rajprience2902@gmail.com'
+    }
+  },
+  {
+    name: 'Saumyajeet Varma',
+    role: 'Frontend Developer',
+    image: saumya,
+    socials: {
+      github: 'https://github.com/Saumyajeet-Varma',
+      linkedin: 'https://www.linkedin.com/in/saumyajeet-varma-91bb4025a/',
+      instagram: 'https://www.instagram.com/_saumyajeet_/',
+      mail: 'mailto:saumyajeetv@gmail.com'
+    }
+  },
+  {
+    name: 'Subham Kuanar',
+    role: 'Frontend Developer',
+    image: subham,
+    socials: {
+      github: 'https://github.com/kuanarshubham',
+      linkedin: 'https://www.linkedin.com/in/kuanarshubham/',
+      instagram: 'https://www.instagram.com/shubhamkuanar/',
+      mail: 'mailto:kuanarshubham@gmail.com'
+    }
+  },
+  {
+    name: 'Swedeshna Mishra',
+    role: 'Frontend Developer',
+    image: swedeshna,
+    socials: {
+      github: 'https://github.com/SwedeshnaMishra',
+      linkedin: 'https://www.linkedin.com/in/swedeshna-mishra-8a9567251/',
+      instagram: 'https://www.instagram.com/__.swedeshna.__/',
+      mail: 'mailto:swedeshnamishra364@gmail.com'
     }
   }
 ];
@@ -127,22 +127,40 @@ const About = () => {
           <h2 id="team-heading">Meet the crew</h2>
           <p>Our multidisciplinary team keeps this platform evolving, ensuring IIIT Network voices are heard loud and clear.</p>
         </header>
-        <div className="team-grid">
-          {team.map((member) => (
-            <Card className="team-card" key={member.name} hoverEffect>
-              <div className="team-card__glow-bg" />
-              <div className="team-card__image-wrapper">
-                <img src={member.image} alt={member.name} loading="lazy" />
-              </div>
-              <div className="team-card__content">
-                <div className="team-card__info">
-                  <h3>{member.name}</h3>
-                  <span className="team-card__role">{member.role}</span>
+        <div className="team-carousel">
+          <div className="team-carousel__track">
+            {team.map((member) => (
+              <Card className="team-card" key={member.name} hoverEffect>
+                <div className="team-card__glow-bg" />
+                <div className="team-card__image-wrapper">
+                  <img src={member.image} alt={member.name} loading="lazy" />
                 </div>
-                <SocialLinks links={member.socials} className="team-card__socials" />
-              </div>
-            </Card>
-          ))}
+                <div className="team-card__content">
+                  <div className="team-card__info">
+                    <h3>{member.name}</h3>
+                    <span className="team-card__role">{member.role}</span>
+                  </div>
+                  <SocialLinks links={member.socials} className="team-card__socials" />
+                </div>
+              </Card>
+            ))}
+            {/* Duplicate for seamless loop */}
+            {team.map((member) => (
+              <Card className="team-card" key={`${member.name}-dup`} hoverEffect>
+                <div className="team-card__glow-bg" />
+                <div className="team-card__image-wrapper">
+                  <img src={member.image} alt={member.name} loading="lazy" />
+                </div>
+                <div className="team-card__content">
+                  <div className="team-card__info">
+                    <h3>{member.name}</h3>
+                    <span className="team-card__role">{member.role}</span>
+                  </div>
+                  <SocialLinks links={member.socials} className="team-card__socials" />
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
     </div>

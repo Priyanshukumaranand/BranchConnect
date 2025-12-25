@@ -10,7 +10,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import placementHero3d from '../assets/placement-hero-3d.png';
+import placementHero3d from '../assets/placement-career-visual.png';
 
 const driveFolder = 'https://drive.google.com/drive/folders/1UlIxN-hqY6FrOlk_9kOJfj3-TvWJL4ru';
 
@@ -124,6 +124,212 @@ const RESUME_ASSISTANT_PROMPTS = [
   'List candidates with Kubernetes or cloud experience.',
   'Compare the top two resumes for backend roles.'
 ];
+
+// ============== PLACEMENT DASHBOARD DATA (Replace with API calls) ==============
+// These will be populated from your email pipeline API
+
+const MOCK_PLACEMENT_METRICS = {
+  placementRate: 92,
+  placementRateChange: '+5%',
+  avgCtc: '₹12.5 LPA',
+  avgCtcChange: '+18%',
+  highestCtc: '₹45 LPA',
+  highestCtcCompany: 'Microsoft India',
+  companiesVisited: 85,
+  newCompanies: 12,
+  lastUpdated: new Date().toISOString()
+};
+
+const MOCK_COMPANIES = [
+  {
+    id: 1,
+    name: 'Google',
+    logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg',
+    role: 'SDE Intern',
+    ctc: '₹40 LPA',
+    cgpa: '8.0+',
+    branches: 'CSE, IT, ECE',
+    backlogs: '0',
+    visitDate: '2025-01-15',
+    deadline: '2025-01-10',
+    status: 'open',
+    appliedCount: 45,
+    // External API data (Glassdoor/AmbitionBox/LinkedIn)
+    glassdoorRating: 4.4,
+    interviewDifficulty: 'Hard',
+    employeeCount: '150,000+',
+    industry: 'Technology',
+    reviewsCount: 45000,
+    workLifeBalance: 4.2,
+    linkedinUrl: 'https://linkedin.com/company/google'
+  },
+  {
+    id: 2,
+    name: 'Microsoft',
+    logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg',
+    role: 'Software Engineer',
+    ctc: '₹42 LPA',
+    cgpa: '7.5+',
+    branches: 'All Branches',
+    backlogs: '0',
+    visitDate: '2025-01-18',
+    deadline: '2025-01-12',
+    status: 'open',
+    appliedCount: 62,
+    glassdoorRating: 4.3,
+    interviewDifficulty: 'Medium',
+    employeeCount: '180,000+',
+    industry: 'Technology',
+    reviewsCount: 52000,
+    workLifeBalance: 4.0,
+    linkedinUrl: 'https://linkedin.com/company/microsoft'
+  },
+  {
+    id: 3,
+    name: 'Amazon',
+    logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg',
+    role: 'SDE-1',
+    ctc: '₹32 LPA',
+    cgpa: '7.0+',
+    branches: 'CSE, IT, ECE, EE',
+    backlogs: '≤1',
+    visitDate: '2025-01-22',
+    deadline: '2025-01-16',
+    status: 'shortlisting',
+    appliedCount: 78,
+    glassdoorRating: 3.9,
+    interviewDifficulty: 'Hard',
+    employeeCount: '1.5M+',
+    industry: 'E-commerce/Cloud',
+    reviewsCount: 95000,
+    workLifeBalance: 3.4,
+    linkedinUrl: 'https://linkedin.com/company/amazon'
+  },
+  {
+    id: 4,
+    name: 'Flipkart',
+    logo: 'https://logo.clearbit.com/flipkart.com',
+    role: 'Backend Engineer',
+    ctc: '₹28 LPA',
+    cgpa: '7.0+',
+    branches: 'CSE, IT',
+    backlogs: '0',
+    visitDate: '2025-01-25',
+    deadline: '2025-01-18',
+    status: 'shortlisting',
+    appliedCount: 55,
+    glassdoorRating: 4.0,
+    interviewDifficulty: 'Medium',
+    employeeCount: '30,000+',
+    industry: 'E-commerce',
+    reviewsCount: 8500,
+    workLifeBalance: 3.8,
+    linkedinUrl: 'https://linkedin.com/company/flipkart'
+  },
+  {
+    id: 5,
+    name: 'Razorpay',
+    logo: 'https://logo.clearbit.com/razorpay.com',
+    role: 'Full Stack Dev',
+    ctc: '₹24 LPA',
+    cgpa: '6.5+',
+    branches: 'All Branches',
+    backlogs: '≤2',
+    visitDate: '2025-01-28',
+    deadline: '2025-01-22',
+    status: 'open',
+    appliedCount: 42,
+    glassdoorRating: 4.1,
+    interviewDifficulty: 'Medium',
+    employeeCount: '3,000+',
+    industry: 'Fintech',
+    reviewsCount: 1200,
+    workLifeBalance: 4.0,
+    linkedinUrl: 'https://linkedin.com/company/razorpay'
+  },
+  {
+    id: 6,
+    name: 'PhonePe',
+    logo: 'https://logo.clearbit.com/phonepe.com',
+    role: 'Android Dev',
+    ctc: '₹22 LPA',
+    cgpa: '6.5+',
+    branches: 'CSE, IT, ECE',
+    backlogs: '≤1',
+    visitDate: '2025-02-01',
+    deadline: '2025-01-25',
+    status: 'upcoming',
+    appliedCount: 0,
+    glassdoorRating: 4.0,
+    interviewDifficulty: 'Medium',
+    employeeCount: '5,000+',
+    industry: 'Fintech',
+    reviewsCount: 2100,
+    workLifeBalance: 3.7,
+    linkedinUrl: 'https://linkedin.com/company/phonepe'
+  },
+  {
+    id: 7,
+    name: 'Zomato',
+    logo: 'https://logo.clearbit.com/zomato.com',
+    role: 'Backend Engineer',
+    ctc: '₹20 LPA',
+    cgpa: '6.0+',
+    branches: 'All Branches',
+    backlogs: '≤2',
+    visitDate: '2025-02-05',
+    deadline: '2025-01-30',
+    status: 'upcoming',
+    appliedCount: 0,
+    glassdoorRating: 3.8,
+    interviewDifficulty: 'Medium',
+    employeeCount: '8,000+',
+    industry: 'Food Tech',
+    reviewsCount: 3200,
+    workLifeBalance: 3.5,
+    linkedinUrl: 'https://linkedin.com/company/zomato'
+  },
+];
+
+const MOCK_PLACEMENT_TRENDS = [
+  { year: 2021, placementRate: 78, totalOffers: 120 },
+  { year: 2022, placementRate: 85, totalOffers: 145 },
+  { year: 2023, placementRate: 88, totalOffers: 168 },
+  { year: 2024, placementRate: 92, totalOffers: 195 },
+];
+
+const MOCK_SECTOR_DATA = [
+  { id: 'software', name: 'Software & IT', percentage: 45, color: '#6366f1' },
+  { id: 'fintech', name: 'Finance & Fintech', percentage: 22, color: '#ec4899' },
+  { id: 'consulting', name: 'Consulting', percentage: 15, color: '#f59e0b' },
+  { id: 'product', name: 'Product Companies', percentage: 12, color: '#10b981' },
+  { id: 'others', name: 'Others', percentage: 6, color: '#64748b' },
+];
+
+const MOCK_TOP_RECRUITERS = [
+  { id: 1, name: 'Google', hires: 12, logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg' },
+  { id: 2, name: 'Microsoft', hires: 15, logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg' },
+  { id: 3, name: 'Amazon', hires: 18, logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg' },
+  { id: 4, name: 'Goldman Sachs', hires: 8, logo: 'https://logo.clearbit.com/goldmansachs.com' },
+  { id: 5, name: 'Flipkart', hires: 10, logo: 'https://logo.clearbit.com/flipkart.com' },
+  { id: 6, name: 'PhonePe', hires: 7, logo: 'https://logo.clearbit.com/phonepe.com' },
+  { id: 7, name: 'Razorpay', hires: 6, logo: 'https://logo.clearbit.com/razorpay.com' },
+  { id: 8, name: 'Adobe', hires: 5, logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-plain.svg' },
+];
+
+const MOCK_CTC_DISTRIBUTION = [
+  { range: '< ₹8 LPA', count: 25, percentage: 15 },
+  { range: '₹8-15 LPA', count: 68, percentage: 40 },
+  { range: '₹15-25 LPA', count: 52, percentage: 30 },
+  { range: '₹25-40 LPA', count: 18, percentage: 10 },
+  { range: '> ₹40 LPA', count: 8, percentage: 5 },
+];
+
+// Format date for display
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
 
 const PlacementResources = () => {
   const { user } = useAuth();
@@ -472,16 +678,183 @@ const PlacementResources = () => {
         <div className="placement-hero__visual delay-200 animate-slide-up">
           <img src={placementHero3d} alt="Abstract 3D glass shapes representing future pathways" className="hero-3d-asset" />
         </div>
+      </section>
 
-        <div className="placement-hero__stats delay-400 animate-slide-up" role="list">
-          {highlightStats.map((stat) => (
-            <Card key={stat.label} role="listitem" variant="glass" className="stat-card">
-              <span className="placement-hero__value">{stat.value}</span>
-              <span className="placement-hero__label">{stat.label}</span>
-              <p>{stat.blurb}</p>
-            </Card>
-          ))}
+      {/* Placement Dashboard Section */}
+      <section className="placement-dashboard delay-500 animate-slide-up" aria-labelledby="dashboard-heading">
+        <header className="dashboard-header">
+          <div>
+            <p className="dashboard-eyebrow">Placement Insights</p>
+            <h2 id="dashboard-heading">Campus Placement Dashboard</h2>
+            <p>Real-time placement data, company visits, and CTC trends to help you prepare better.</p>
+          </div>
+        </header>
+
+        {/* Key Metrics */}
+        <div className="dashboard-metrics">
+          <Card className="metric-card metric-card--highlight" variant="glass">
+            <span className="metric-icon">📈</span>
+            <div className="metric-content">
+              <span className="metric-value">{MOCK_PLACEMENT_METRICS.placementRate}%</span>
+              <span className="metric-label">Placement Rate</span>
+              <span className="metric-change positive">{MOCK_PLACEMENT_METRICS.placementRateChange} from last year</span>
+            </div>
+          </Card>
+          <Card className="metric-card" variant="glass">
+            <span className="metric-icon">💰</span>
+            <div className="metric-content">
+              <span className="metric-value">{MOCK_PLACEMENT_METRICS.avgCtc}</span>
+              <span className="metric-label">Average CTC</span>
+              <span className="metric-change positive">{MOCK_PLACEMENT_METRICS.avgCtcChange} YoY</span>
+            </div>
+          </Card>
+          <Card className="metric-card" variant="glass">
+            <span className="metric-icon">🏆</span>
+            <div className="metric-content">
+              <span className="metric-value">{MOCK_PLACEMENT_METRICS.highestCtc}</span>
+              <span className="metric-label">Highest CTC</span>
+              <span className="metric-trend">{MOCK_PLACEMENT_METRICS.highestCtcCompany}</span>
+            </div>
+          </Card>
+          <Card className="metric-card" variant="glass">
+            <span className="metric-icon">🏢</span>
+            <div className="metric-content">
+              <span className="metric-value">{MOCK_PLACEMENT_METRICS.companiesVisited}+</span>
+              <span className="metric-label">Companies Visited</span>
+              <span className="metric-change positive">+{MOCK_PLACEMENT_METRICS.newCompanies} new</span>
+            </div>
+          </Card>
         </div>
+
+        {/* Companies Visiting */}
+        <div className="dashboard-section">
+          <div className="section-header">
+            <h3>🗓️ Upcoming Company Visits</h3>
+            <span className="badge badge--info">Live Schedule</span>
+          </div>
+          <div className="company-table-container">
+            <table className="company-table">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Role</th>
+                  <th>CTC</th>
+                  <th>CGPA</th>
+                  <th>Branches</th>
+                  <th>Backlogs</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MOCK_COMPANIES.map((company) => (
+                  <tr key={company.id} className={`company-row company-row--${company.status}`}>
+                    <td className="company-name-cell">
+                      <img src={company.logo} alt={company.name} className="company-logo-img" />
+                      <span className="company-name">{company.name}</span>
+                    </td>
+                    <td>{company.role}</td>
+                    <td className="ctc-cell">{company.ctc}</td>
+                    <td className="cgpa-cell">
+                      <span className="cgpa-badge">{company.cgpa}</span>
+                    </td>
+                    <td className="branches-cell">{company.branches}</td>
+                    <td className="backlogs-cell">{company.backlogs}</td>
+                    <td className="date-cell">
+                      <span className="visit-date">{formatDate(company.visitDate)}</span>
+                      {company.status !== 'upcoming' && (
+                        <span className="deadline">Apply by {formatDate(company.deadline)}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="eligibility-note">
+            <span className="note-icon">💡</span>
+            <p><strong>Tip:</strong> Check your eligibility criteria carefully. CGPA requirements are minimum cutoffs. Some companies may have additional coding rounds before shortlisting.</p>
+          </div>
+        </div>
+
+        {/* Placement Trends */}
+        <div className="dashboard-grid">
+          <Card className="trend-card" variant="default">
+            <div className="trend-header">
+              <h3>📊 Year-wise Placement Trends</h3>
+            </div>
+            <div className="trend-bars">
+              {MOCK_PLACEMENT_TRENDS.map((item) => (
+                <div key={item.year} className="trend-bar-item">
+                  <div className="trend-bar-label">
+                    <span className="trend-year">{item.year}</span>
+                    <span className="trend-rate">{item.placementRate}%</span>
+                  </div>
+                  <div className="trend-bar-track">
+                    <div
+                      className="trend-bar-fill"
+                      style={{ width: `${item.placementRate}%`, background: `hsl(${240 + item.year - 2021 * 15}, 70%, 60%)` }}
+                    />
+                  </div>
+                  <span className="trend-offers">{item.totalOffers} offers</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="sector-card" variant="default">
+            <div className="sector-header">
+              <h3>🎯 Top Recruiting Sectors</h3>
+            </div>
+            <div className="sector-list">
+              {MOCK_SECTOR_DATA.map((sector) => (
+                <div key={sector.id} className="sector-item">
+                  <div className="sector-info">
+                    <span className="sector-dot" style={{ background: sector.color }} />
+                    <span className="sector-name">{sector.name}</span>
+                  </div>
+                  <span className="sector-percentage">{sector.percentage}%</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        {/* Top Recruiters */}
+        <div className="dashboard-section">
+          <div className="section-header">
+            <h3>⭐ Top Recruiters (2024)</h3>
+          </div>
+          <div className="recruiters-carousel">
+            {MOCK_TOP_RECRUITERS.map((recruiter) => (
+              <Card key={recruiter.id} className="recruiter-chip" hoverEffect>
+                <img src={recruiter.logo} alt={recruiter.name} className="recruiter-logo-img" />
+                <span className="recruiter-name">{recruiter.name}</span>
+                <span className="recruiter-hires">{recruiter.hires} hires</span>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* CTC Breakdown */}
+        <Card className="ctc-card" variant="glass">
+          <div className="ctc-header">
+            <h3>💵 CTC Distribution (2024 Batch)</h3>
+          </div>
+          <div className="ctc-grid">
+            {MOCK_CTC_DISTRIBUTION.map((bracket) => (
+              <div key={bracket.range} className="ctc-bracket">
+                <div className="ctc-bar-container">
+                  <div
+                    className="ctc-bar"
+                    style={{ height: `${bracket.percentage * 2}px` }}
+                  />
+                </div>
+                <span className="ctc-range">{bracket.range}</span>
+                <span className="ctc-count">{bracket.count} students</span>
+              </div>
+            ))}
+          </div>
+        </Card>
       </section>
 
       <section className="mcp-assistant delay-500 animate-slide-up" aria-labelledby="mcp-assistant-heading">
@@ -837,7 +1210,7 @@ const PlacementResources = () => {
           </Card>
         ))}
       </section>
-    </div>
+    </div >
   );
 };
 

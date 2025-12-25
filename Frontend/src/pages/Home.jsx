@@ -41,6 +41,7 @@ const gallerySlides = [
 const Home = () => {
   const [slideIndex, setSlideIndex] = useState(0);
   const [pauseCarousel, setPauseCarousel] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
 
   const goToSlide = useCallback((nextIndex) => {
     const total = gallerySlides.length;
@@ -114,31 +115,21 @@ const Home = () => {
           <h2 id="gallery-heading">Gallery</h2>
           <p>Snapshots from showcase nights, robotics pits, design sprints, and campus celebrations.</p>
         </header>
-        <div
-          className="carousel"
-          onMouseEnter={() => setPauseCarousel(true)}
-          onMouseLeave={() => setPauseCarousel(false)}
-        >
-          <button className="carousel__control prev" onClick={handlePrev} aria-label="Previous slide">‹</button>
-          <div className="carousel__track" style={{ transform: `translateX(-${slideIndex * 100}%)` }}>
-            {gallerySlides.map((slide, index) => (
-              <figure className="carousel__slide" key={slide.alt} aria-hidden={index !== slideIndex}>
+        <div className="carousel">
+          <div className="carousel__track">
+            {/* Original slides */}
+            {gallerySlides.map((slide) => (
+              <figure className="carousel__slide" key={slide.alt}>
                 <img src={slide.src} alt={slide.alt} />
                 <figcaption>{slide.alt}</figcaption>
               </figure>
             ))}
-          </div>
-          <button className="carousel__control next" onClick={handleNext} aria-label="Next slide">›</button>
-          <div className="carousel__dots" role="tablist" aria-label="Gallery slides">
-            {gallerySlides.map((_, index) => (
-              <button
-                key={index}
-                role="tab"
-                aria-selected={slideIndex === index}
-                aria-label={`Go to slide ${index + 1}`}
-                className={slideIndex === index ? 'active' : ''}
-                onClick={() => goToSlide(index)}
-              />
+            {/* Duplicate slides for seamless loop */}
+            {gallerySlides.map((slide) => (
+              <figure className="carousel__slide" key={`${slide.alt}-dup`}>
+                <img src={slide.src} alt={slide.alt} />
+                <figcaption>{slide.alt}</figcaption>
+              </figure>
             ))}
           </div>
         </div>
@@ -150,10 +141,36 @@ const Home = () => {
           <p>Experience the pulse of IIIT Network through highlights captured by the community.</p>
         </header>
         <div className="moments__media">
-          <video controls muted playsInline poster={gallerySlides[2].src}>
-            <source src={highlightVideo} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
+          <div className="video-container">
+            <video
+              autoPlay
+              loop
+              muted={isMuted}
+              playsInline
+              poster={gallerySlides[2].src}
+            >
+              <source src={highlightVideo} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <button
+              className="mute-toggle"
+              onClick={() => setIsMuted(!isMuted)}
+              aria-label={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <line x1="23" y1="9" x2="17" y2="15"></line>
+                  <line x1="17" y1="9" x2="23" y2="15"></line>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+              )}
+            </button>
+          </div>
           <div className="moments__copy">
             <h3>Inside the lab</h3>
             <p>
