@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './PlacementResources.css';
 import { fetchDsaLeaderboard } from '../api/resources';
+import { fetchDbStats } from '../api/placement';
 import {
   addResumeFromPdf,
   askPlacementQuestion,
@@ -125,211 +126,9 @@ const RESUME_ASSISTANT_PROMPTS = [
   'Compare the top two resumes for backend roles.'
 ];
 
-// ============== PLACEMENT DASHBOARD DATA (Replace with API calls) ==============
-// These will be populated from your email pipeline API
+// ============== PLACEMENT DASHBOARD DATA ==============
+// Now fetched from FastAPI pipeline
 
-const MOCK_PLACEMENT_METRICS = {
-  placementRate: 92,
-  placementRateChange: '+5%',
-  avgCtc: '₹12.5 LPA',
-  avgCtcChange: '+18%',
-  highestCtc: '₹45 LPA',
-  highestCtcCompany: 'Microsoft India',
-  companiesVisited: 85,
-  newCompanies: 12,
-  lastUpdated: new Date().toISOString()
-};
-
-const MOCK_COMPANIES = [
-  {
-    id: 1,
-    name: 'Google',
-    logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg',
-    role: 'SDE Intern',
-    ctc: '₹40 LPA',
-    cgpa: '8.0+',
-    branches: 'CSE, IT, ECE',
-    backlogs: '0',
-    visitDate: '2025-01-15',
-    deadline: '2025-01-10',
-    status: 'open',
-    appliedCount: 45,
-    // External API data (Glassdoor/AmbitionBox/LinkedIn)
-    glassdoorRating: 4.4,
-    interviewDifficulty: 'Hard',
-    employeeCount: '150,000+',
-    industry: 'Technology',
-    reviewsCount: 45000,
-    workLifeBalance: 4.2,
-    linkedinUrl: 'https://linkedin.com/company/google'
-  },
-  {
-    id: 2,
-    name: 'Microsoft',
-    logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg',
-    role: 'Software Engineer',
-    ctc: '₹42 LPA',
-    cgpa: '7.5+',
-    branches: 'All Branches',
-    backlogs: '0',
-    visitDate: '2025-01-18',
-    deadline: '2025-01-12',
-    status: 'open',
-    appliedCount: 62,
-    glassdoorRating: 4.3,
-    interviewDifficulty: 'Medium',
-    employeeCount: '180,000+',
-    industry: 'Technology',
-    reviewsCount: 52000,
-    workLifeBalance: 4.0,
-    linkedinUrl: 'https://linkedin.com/company/microsoft'
-  },
-  {
-    id: 3,
-    name: 'Amazon',
-    logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg',
-    role: 'SDE-1',
-    ctc: '₹32 LPA',
-    cgpa: '7.0+',
-    branches: 'CSE, IT, ECE, EE',
-    backlogs: '≤1',
-    visitDate: '2025-01-22',
-    deadline: '2025-01-16',
-    status: 'shortlisting',
-    appliedCount: 78,
-    glassdoorRating: 3.9,
-    interviewDifficulty: 'Hard',
-    employeeCount: '1.5M+',
-    industry: 'E-commerce/Cloud',
-    reviewsCount: 95000,
-    workLifeBalance: 3.4,
-    linkedinUrl: 'https://linkedin.com/company/amazon'
-  },
-  {
-    id: 4,
-    name: 'Flipkart',
-    logo: 'https://logo.clearbit.com/flipkart.com',
-    role: 'Backend Engineer',
-    ctc: '₹28 LPA',
-    cgpa: '7.0+',
-    branches: 'CSE, IT',
-    backlogs: '0',
-    visitDate: '2025-01-25',
-    deadline: '2025-01-18',
-    status: 'shortlisting',
-    appliedCount: 55,
-    glassdoorRating: 4.0,
-    interviewDifficulty: 'Medium',
-    employeeCount: '30,000+',
-    industry: 'E-commerce',
-    reviewsCount: 8500,
-    workLifeBalance: 3.8,
-    linkedinUrl: 'https://linkedin.com/company/flipkart'
-  },
-  {
-    id: 5,
-    name: 'Razorpay',
-    logo: 'https://logo.clearbit.com/razorpay.com',
-    role: 'Full Stack Dev',
-    ctc: '₹24 LPA',
-    cgpa: '6.5+',
-    branches: 'All Branches',
-    backlogs: '≤2',
-    visitDate: '2025-01-28',
-    deadline: '2025-01-22',
-    status: 'open',
-    appliedCount: 42,
-    glassdoorRating: 4.1,
-    interviewDifficulty: 'Medium',
-    employeeCount: '3,000+',
-    industry: 'Fintech',
-    reviewsCount: 1200,
-    workLifeBalance: 4.0,
-    linkedinUrl: 'https://linkedin.com/company/razorpay'
-  },
-  {
-    id: 6,
-    name: 'PhonePe',
-    logo: 'https://logo.clearbit.com/phonepe.com',
-    role: 'Android Dev',
-    ctc: '₹22 LPA',
-    cgpa: '6.5+',
-    branches: 'CSE, IT, ECE',
-    backlogs: '≤1',
-    visitDate: '2025-02-01',
-    deadline: '2025-01-25',
-    status: 'upcoming',
-    appliedCount: 0,
-    glassdoorRating: 4.0,
-    interviewDifficulty: 'Medium',
-    employeeCount: '5,000+',
-    industry: 'Fintech',
-    reviewsCount: 2100,
-    workLifeBalance: 3.7,
-    linkedinUrl: 'https://linkedin.com/company/phonepe'
-  },
-  {
-    id: 7,
-    name: 'Zomato',
-    logo: 'https://logo.clearbit.com/zomato.com',
-    role: 'Backend Engineer',
-    ctc: '₹20 LPA',
-    cgpa: '6.0+',
-    branches: 'All Branches',
-    backlogs: '≤2',
-    visitDate: '2025-02-05',
-    deadline: '2025-01-30',
-    status: 'upcoming',
-    appliedCount: 0,
-    glassdoorRating: 3.8,
-    interviewDifficulty: 'Medium',
-    employeeCount: '8,000+',
-    industry: 'Food Tech',
-    reviewsCount: 3200,
-    workLifeBalance: 3.5,
-    linkedinUrl: 'https://linkedin.com/company/zomato'
-  },
-];
-
-const MOCK_PLACEMENT_TRENDS = [
-  { year: 2021, placementRate: 78, totalOffers: 120 },
-  { year: 2022, placementRate: 85, totalOffers: 145 },
-  { year: 2023, placementRate: 88, totalOffers: 168 },
-  { year: 2024, placementRate: 92, totalOffers: 195 },
-];
-
-const MOCK_SECTOR_DATA = [
-  { id: 'software', name: 'Software & IT', percentage: 45, color: '#6366f1' },
-  { id: 'fintech', name: 'Finance & Fintech', percentage: 22, color: '#ec4899' },
-  { id: 'consulting', name: 'Consulting', percentage: 15, color: '#f59e0b' },
-  { id: 'product', name: 'Product Companies', percentage: 12, color: '#10b981' },
-  { id: 'others', name: 'Others', percentage: 6, color: '#64748b' },
-];
-
-const MOCK_TOP_RECRUITERS = [
-  { id: 1, name: 'Google', hires: 12, logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg' },
-  { id: 2, name: 'Microsoft', hires: 15, logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg' },
-  { id: 3, name: 'Amazon', hires: 18, logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg' },
-  { id: 4, name: 'Goldman Sachs', hires: 8, logo: 'https://logo.clearbit.com/goldmansachs.com' },
-  { id: 5, name: 'Flipkart', hires: 10, logo: 'https://logo.clearbit.com/flipkart.com' },
-  { id: 6, name: 'PhonePe', hires: 7, logo: 'https://logo.clearbit.com/phonepe.com' },
-  { id: 7, name: 'Razorpay', hires: 6, logo: 'https://logo.clearbit.com/razorpay.com' },
-  { id: 8, name: 'Adobe', hires: 5, logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-plain.svg' },
-];
-
-const MOCK_CTC_DISTRIBUTION = [
-  { range: '< ₹8 LPA', count: 25, percentage: 15 },
-  { range: '₹8-15 LPA', count: 68, percentage: 40 },
-  { range: '₹15-25 LPA', count: 52, percentage: 30 },
-  { range: '₹25-40 LPA', count: 18, percentage: 10 },
-  { range: '> ₹40 LPA', count: 8, percentage: 5 },
-];
-
-// Format date for display
-const formatDate = (dateStr) => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-};
 
 const PlacementResources = () => {
   const { user } = useAuth();
@@ -356,6 +155,40 @@ const PlacementResources = () => {
   const [assistantError, setAssistantError] = useState(null);
   const assistantMessagesRef = useRef(null);
   const resolvedEmail = user?.email || resumeForm.email;
+
+  // FastAPI Database Stats
+  const [dbStats, setDbStats] = useState(null);
+  const [dbStatsStatus, setDbStatsStatus] = useState('idle');
+  const [dbStatsError, setDbStatsError] = useState(null);
+
+  // Fetch FastAPI database stats on mount
+  useEffect(() => {
+    const controller = new AbortController();
+    let isActive = true;
+
+    const loadDbStats = async () => {
+      setDbStatsStatus('loading');
+      setDbStatsError(null);
+      try {
+        const payload = await fetchDbStats({ signal: controller.signal });
+        if (!isActive) return;
+        setDbStats(payload);
+        setDbStatsStatus('success');
+      } catch (error) {
+        if (!isActive || error.name === 'AbortError') return;
+        console.warn('Failed to fetch FastAPI stats:', error);
+        setDbStatsError(error.message || 'Unable to load placement stats from pipeline.');
+        setDbStatsStatus('error');
+      }
+    };
+
+    loadDbStats();
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     if (assistantMessagesRef.current) {
@@ -688,173 +521,181 @@ const PlacementResources = () => {
             <h2 id="dashboard-heading">Campus Placement Dashboard</h2>
             <p>Real-time placement data, company visits, and CTC trends to help you prepare better.</p>
           </div>
+          {dbStatsStatus === 'success' && (
+            <span className="live-badge">🟢 Live Data</span>
+          )}
         </header>
 
-        {/* Key Metrics */}
-        <div className="dashboard-metrics">
-          <Card className="metric-card metric-card--highlight" variant="glass">
-            <span className="metric-icon">📈</span>
-            <div className="metric-content">
-              <span className="metric-value">{MOCK_PLACEMENT_METRICS.placementRate}%</span>
-              <span className="metric-label">Placement Rate</span>
-              <span className="metric-change positive">{MOCK_PLACEMENT_METRICS.placementRateChange} from last year</span>
-            </div>
-          </Card>
-          <Card className="metric-card" variant="glass">
-            <span className="metric-icon">💰</span>
-            <div className="metric-content">
-              <span className="metric-value">{MOCK_PLACEMENT_METRICS.avgCtc}</span>
-              <span className="metric-label">Average CTC</span>
-              <span className="metric-change positive">{MOCK_PLACEMENT_METRICS.avgCtcChange} YoY</span>
-            </div>
-          </Card>
-          <Card className="metric-card" variant="glass">
-            <span className="metric-icon">🏆</span>
-            <div className="metric-content">
-              <span className="metric-value">{MOCK_PLACEMENT_METRICS.highestCtc}</span>
-              <span className="metric-label">Highest CTC</span>
-              <span className="metric-trend">{MOCK_PLACEMENT_METRICS.highestCtcCompany}</span>
-            </div>
-          </Card>
-          <Card className="metric-card" variant="glass">
-            <span className="metric-icon">🏢</span>
-            <div className="metric-content">
-              <span className="metric-value">{MOCK_PLACEMENT_METRICS.companiesVisited}+</span>
-              <span className="metric-label">Companies Visited</span>
-              <span className="metric-change positive">+{MOCK_PLACEMENT_METRICS.newCompanies} new</span>
-            </div>
-          </Card>
-        </div>
+        {/* FastAPI Pipeline Stats - Loading State */}
+        {dbStatsStatus === 'loading' && (
+          <div className="pipeline-stats-loading">
+            <span className="loading-spinner"></span>
+            <span>Loading pipeline data...</span>
+          </div>
+        )}
 
-        {/* Companies Visiting */}
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h3>🗓️ Upcoming Company Visits</h3>
-            <span className="badge badge--info">Live Schedule</span>
+        {/* FastAPI Pipeline Stats - Error State */}
+        {dbStatsError && (
+          <div className="pipeline-stats-error">
+            <span className="error-icon">⚠️</span>
+            <span>{dbStatsError}</span>
           </div>
-          <div className="company-table-container">
-            <table className="company-table">
-              <thead>
-                <tr>
-                  <th>Company</th>
-                  <th>Role</th>
-                  <th>CTC</th>
-                  <th>CGPA</th>
-                  <th>Branches</th>
-                  <th>Backlogs</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {MOCK_COMPANIES.map((company) => (
-                  <tr key={company.id} className={`company-row company-row--${company.status}`}>
-                    <td className="company-name-cell">
-                      <img src={company.logo} alt={company.name} className="company-logo-img" />
-                      <span className="company-name">{company.name}</span>
-                    </td>
-                    <td>{company.role}</td>
-                    <td className="ctc-cell">{company.ctc}</td>
-                    <td className="cgpa-cell">
-                      <span className="cgpa-badge">{company.cgpa}</span>
-                    </td>
-                    <td className="branches-cell">{company.branches}</td>
-                    <td className="backlogs-cell">{company.backlogs}</td>
-                    <td className="date-cell">
-                      <span className="visit-date">{formatDate(company.visitDate)}</span>
-                      {company.status !== 'upcoming' && (
-                        <span className="deadline">Apply by {formatDate(company.deadline)}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="eligibility-note">
-            <span className="note-icon">💡</span>
-            <p><strong>Tip:</strong> Check your eligibility criteria carefully. CGPA requirements are minimum cutoffs. Some companies may have additional coding rounds before shortlisting.</p>
-          </div>
-        </div>
+        )}
 
-        {/* Placement Trends */}
-        <div className="dashboard-grid">
-          <Card className="trend-card" variant="default">
-            <div className="trend-header">
-              <h3>📊 Year-wise Placement Trends</h3>
-            </div>
-            <div className="trend-bars">
-              {MOCK_PLACEMENT_TRENDS.map((item) => (
-                <div key={item.year} className="trend-bar-item">
-                  <div className="trend-bar-label">
-                    <span className="trend-year">{item.year}</span>
-                    <span className="trend-rate">{item.placementRate}%</span>
-                  </div>
-                  <div className="trend-bar-track">
-                    <div
-                      className="trend-bar-fill"
-                      style={{ width: `${item.placementRate}%`, background: `hsl(${240 + item.year - 2021 * 15}, 70%, 60%)` }}
-                    />
-                  </div>
-                  <span className="trend-offers">{item.totalOffers} offers</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="sector-card" variant="default">
-            <div className="sector-header">
-              <h3>🎯 Top Recruiting Sectors</h3>
-            </div>
-            <div className="sector-list">
-              {MOCK_SECTOR_DATA.map((sector) => (
-                <div key={sector.id} className="sector-item">
-                  <div className="sector-info">
-                    <span className="sector-dot" style={{ background: sector.color }} />
-                    <span className="sector-name">{sector.name}</span>
-                  </div>
-                  <span className="sector-percentage">{sector.percentage}%</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        {/* Top Recruiters */}
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h3>⭐ Top Recruiters (2024)</h3>
-          </div>
-          <div className="recruiters-carousel">
-            {MOCK_TOP_RECRUITERS.map((recruiter) => (
-              <Card key={recruiter.id} className="recruiter-chip" hoverEffect>
-                <img src={recruiter.logo} alt={recruiter.name} className="recruiter-logo-img" />
-                <span className="recruiter-name">{recruiter.name}</span>
-                <span className="recruiter-hires">{recruiter.hires} hires</span>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* CTC Breakdown */}
-        <Card className="ctc-card" variant="glass">
-          <div className="ctc-header">
-            <h3>💵 CTC Distribution (2024 Batch)</h3>
-          </div>
-          <div className="ctc-grid">
-            {MOCK_CTC_DISTRIBUTION.map((bracket) => (
-              <div key={bracket.range} className="ctc-bracket">
-                <div className="ctc-bar-container">
-                  <div
-                    className="ctc-bar"
-                    style={{ height: `${bracket.percentage * 2}px` }}
-                  />
-                </div>
-                <span className="ctc-range">{bracket.range}</span>
-                <span className="ctc-count">{bracket.count} students</span>
+        {/* Live Pipeline Metrics from FastAPI */}
+        {dbStats && (
+          <div className="dashboard-metrics pipeline-metrics">
+            <Card className="metric-card metric-card--pipeline" variant="glass">
+              <span className="metric-icon">📧</span>
+              <div className="metric-content">
+                <span className="metric-value">{dbStats.emails_stored}</span>
+                <span className="metric-label">Emails Analyzed</span>
+                <span className="metric-source">From TPO Pipeline</span>
               </div>
-            ))}
+            </Card>
+            <Card className="metric-card metric-card--pipeline" variant="glass">
+              <span className="metric-icon">📋</span>
+              <div className="metric-content">
+                <span className="metric-value">{dbStats.placement_drives}</span>
+                <span className="metric-label">Placement Drives</span>
+                <span className="metric-source">Active Drives Tracked</span>
+              </div>
+            </Card>
+            <Card className="metric-card metric-card--pipeline" variant="glass">
+              <span className="metric-icon">🏢</span>
+              <div className="metric-content">
+                <span className="metric-value">{dbStats.unique_companies?.length || 0}</span>
+                <span className="metric-label">Unique Companies</span>
+                <span className="metric-source">Extracted from Emails</span>
+              </div>
+            </Card>
           </div>
-        </Card>
+        )}
+
+        {/* Company Tags from FastAPI */}
+        {dbStats?.unique_companies && dbStats.unique_companies.length > 0 && (
+          <div className="dashboard-section companies-from-pipeline">
+            <div className="section-header">
+              <h3>🏷️ Companies from Email Pipeline</h3>
+              <span className="badge badge--success">Live from FastAPI</span>
+            </div>
+            <div className="company-tags">
+              {dbStats.unique_companies.map((company, index) => (
+                <span key={index} className="company-tag">{company}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* CTC vs Date Scatter Plot */}
+        {dbStats?.drives && dbStats.drives.length > 0 && (() => {
+          // Parse CTC from string like "₹12 LPA" or "₹40K/month" to number (LPA)
+          const parseCTC = (ctcStr) => {
+            if (!ctcStr) return 10; // Default 10 LPA
+            const match = ctcStr.match(/(\d+(?:\.\d+)?)/);
+            if (!match) return 10;
+            const num = parseFloat(match[1]);
+            if (ctcStr.toLowerCase().includes('k/month') || ctcStr.toLowerCase().includes('k per month')) {
+              return (num * 12) / 100000; // Convert monthly stipend to LPA
+            }
+            return num || 10;
+          };
+
+          // Get date from drive (prefer drive_date, fallback to created_at)
+          const getDate = (drive) => {
+            if (drive.drive_date) return new Date(drive.drive_date);
+            if (drive.created_at) return new Date(drive.created_at);
+            return new Date();
+          };
+
+          // Sort drives by date
+          const sortedDrives = [...dbStats.drives].sort((a, b) => getDate(a) - getDate(b));
+
+          // Calculate date range for x-axis
+          const dates = sortedDrives.map(d => getDate(d));
+          const minDate = new Date(Math.min(...dates));
+          const maxDate = new Date(Math.max(...dates));
+          const dateRange = maxDate - minDate || 1;
+
+          // Calculate CTC range for y-axis
+          const ctcs = sortedDrives.map(d => parseCTC(d.ctc_or_stipend));
+          const maxCTC = Math.max(...ctcs, 20);
+
+          // Format date for display
+          const formatDate = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+          return (
+            <div className="dashboard-section scatter-plot-section">
+              <div className="section-header">
+                <h3>📊 Placement Timeline</h3>
+                <span className="badge badge--success">{sortedDrives.length} Drives</span>
+              </div>
+              <Card className="scatter-chart-container" variant="default">
+                <div className="scatter-chart">
+                  {/* Y-axis labels */}
+                  <div className="scatter-y-axis">
+                    <span>₹{Math.ceil(maxCTC)} LPA</span>
+                    <span>₹{Math.ceil(maxCTC * 0.75)} LPA</span>
+                    <span>₹{Math.ceil(maxCTC * 0.5)} LPA</span>
+                    <span>₹{Math.ceil(maxCTC * 0.25)} LPA</span>
+                    <span>₹0</span>
+                  </div>
+                  {/* Chart area */}
+                  <div className="scatter-plot-area">
+                    {/* Grid lines */}
+                    <div className="scatter-grid">
+                      <div className="grid-line" style={{ bottom: '100%' }}></div>
+                      <div className="grid-line" style={{ bottom: '75%' }}></div>
+                      <div className="grid-line" style={{ bottom: '50%' }}></div>
+                      <div className="grid-line" style={{ bottom: '25%' }}></div>
+                      <div className="grid-line" style={{ bottom: '0%' }}></div>
+                    </div>
+                    {/* Scatter points */}
+                    <div className="scatter-points">
+                      {sortedDrives.map((drive, index) => {
+                        const date = getDate(drive);
+                        const xPos = ((date - minDate) / dateRange) * 100;
+                        const ctc = parseCTC(drive.ctc_or_stipend);
+                        const yPos = (ctc / maxCTC) * 100;
+                        const dateStr = formatDate(date);
+
+                        return (
+                          <div
+                            key={drive.id || index}
+                            className="scatter-point"
+                            style={{
+                              left: `${Math.max(2, Math.min(98, xPos))}%`,
+                              bottom: `${Math.max(5, Math.min(95, yPos))}%`,
+                            }}
+                          >
+                            <div className="scatter-tooltip">
+                              <strong>{drive.company_name}</strong>
+                              {drive.role && <span className="scatter-role">{drive.role}</span>}
+                              <span>₹{ctc.toFixed(1)} LPA</span>
+                              <span className="scatter-date">{dateStr}</span>
+                              {drive.status && <span className="scatter-status">{drive.status}</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                {/* X-axis labels */}
+                <div className="scatter-x-axis">
+                  <span>{formatDate(minDate)}</span>
+                  <span>{formatDate(new Date(minDate.getTime() + dateRange * 0.25))}</span>
+                  <span>{formatDate(new Date(minDate.getTime() + dateRange * 0.5))}</span>
+                  <span>{formatDate(new Date(minDate.getTime() + dateRange * 0.75))}</span>
+                  <span>{formatDate(maxDate)}</span>
+                </div>
+                <p className="scatter-note">
+                  <em>💡 Hover over points to see company details. Timeline based on actual email dates.</em>
+                </p>
+              </Card>
+            </div>
+          );
+        })()}
       </section>
 
       <section className="mcp-assistant delay-500 animate-slide-up" aria-labelledby="mcp-assistant-heading">
