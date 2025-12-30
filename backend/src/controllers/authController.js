@@ -238,7 +238,16 @@ exports.googleAuthCallback = (req, res, next) => {
       }
 
       const token = generateToken({ id: user.id, email: user.email });
-      res.cookie('jwt', token, buildCookieOptions({ maxAge: 24 * 60 * 60 * 1000 }));
+      res.cookie(
+        'jwt',
+        token,
+        {
+          ...buildCookieOptions({ maxAge: 24 * 60 * 60 * 1000 }),
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'Strict'
+        }
+      );
 
       return res.redirect(frontendBaseUrl);
     });
