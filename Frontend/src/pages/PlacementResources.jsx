@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './PlacementResources.css';
 import { fetchDsaLeaderboard } from '../api/resources';
-import { fetchDbStats } from '../api/placement';
+import { fetchAllDrivesDetailed, fetchPlacementStats, fetchFilterOptions } from '../api/placement';
 import {
   addResumeFromPdf,
   askPlacementQuestion,
@@ -130,12 +130,49 @@ const RESUME_ASSISTANT_PROMPTS = [
 // Now fetched from FastAPI pipeline
 
 
+// Parse CTC from string like "₹12 LPA" or "₹40K/month" to number (LPA)
+const parseCTC = (ctcStr) => {
+  if (!ctcStr) return 0;
+  // Normalize: remove commas, lowercase
+  const normalized = ctcStr.toString().toLowerCase().replace(/,/g, '');
+  // Extract numeric value
+  const match = normalized.match(/(\d+(?:\.\d+)?)/);
+  if (!match) return 0;
+  let num = parseFloat(match[1]);
+  // Handle Units
+  if (normalized.includes('month') || normalized.includes('pm')) {
+    if (num < 100 && normalized.includes('k')) {
+      num *= 1000;
+    }
+    return (num * 12) / 100000;
+  }
+  // Handle LPA / Lakhs explicitly
+  if (normalized.includes('lpa') || normalized.includes('lakh')) {
+    return num;
+  }
+  // Handle Raw Numbers
+  if (num >= 200000) return num / 100000;
+  if (num > 1000) return (num * 12) / 100000;
+  if (num > 100) return num / 100;
+  return num;
+};
+
+// Get date from drive
+const getDate = (drive) => {
+  if (drive.drive_date) return new Date(drive.drive_date);
+  if (drive.posted_at) return new Date(drive.posted_at);
+  if (drive.registration_deadline) return new Date(drive.registration_deadline);
+  if (drive.created_at) return new Date(drive.created_at);
+  return new Date();
+};
+
 const PlacementResources = () => {
   const { user } = useAuth();
   const [leaderboardData, setLeaderboardData] = useState(() => createEmptyLeaderboardState());
   const [leaderboardSummary, setLeaderboardSummary] = useState(null);
   const [leaderboardStatus, setLeaderboardStatus] = useState('idle');
   const [leaderboardError, setLeaderboardError] = useState(null);
+  const [showLabels, setShowLabels] = useState(false);
   const [resumeForm, setResumeForm] = useState(DEFAULT_RESUME_FORM);
   const [resumes, setResumes] = useState([]);
   const [resumeStatus, setResumeStatus] = useState('idle');
@@ -156,39 +193,109 @@ const PlacementResources = () => {
   const assistantMessagesRef = useRef(null);
   const resolvedEmail = user?.email || resumeForm.email;
 
-  // FastAPI Database Stats
-  const [dbStats, setDbStats] = useState(null);
-  const [dbStatsStatus, setDbStatsStatus] = useState('idle');
-  const [dbStatsError, setDbStatsError] = useState(null);
+  // Placement Dashboard State
+  const [drives, setDrives] = useState([]);
+  const [drivesStatus, setDrivesStatus] = useState('idle');
+  const [drivesError, setDrivesError] = useState(null);
+  const [placementStats, setPlacementStats] = useState(null);
+  const [filterOptions, setFilterOptions] = useState({ companies: [], batches: [], statuses: [], drive_types: [] });
 
-  // Fetch FastAPI database stats on mount
+  // Filter state
+  const [selectedBatch, setSelectedBatch] = useState('all');
+  const [selectedDriveType, setSelectedDriveType] = useState('all');
+  const [selectedLocation, setSelectedLocation] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch placement drives and stats on mount
   useEffect(() => {
     const controller = new AbortController();
     let isActive = true;
 
-    const loadDbStats = async () => {
-      setDbStatsStatus('loading');
-      setDbStatsError(null);
+    const loadPlacementData = async () => {
+      setDrivesStatus('loading');
+      setDrivesError(null);
       try {
-        const payload = await fetchDbStats({ signal: controller.signal });
+        const [drivesData, statsData, filtersData] = await Promise.all([
+          fetchAllDrivesDetailed({ signal: controller.signal }),
+          fetchPlacementStats({ signal: controller.signal }),
+          fetchFilterOptions({ signal: controller.signal })
+        ]);
         if (!isActive) return;
-        setDbStats(payload);
-        setDbStatsStatus('success');
+        setDrives(drivesData?.drives || []);
+        setPlacementStats(statsData);
+        setFilterOptions(filtersData || { companies: [], batches: [], statuses: [], drive_types: [] });
+        setDrivesStatus('success');
       } catch (error) {
         if (!isActive || error.name === 'AbortError') return;
-        console.warn('Failed to fetch FastAPI stats:', error);
-        setDbStatsError(error.message || 'Unable to load placement stats from pipeline.');
-        setDbStatsStatus('error');
+        console.warn('Failed to fetch placement data:', error);
+        setDrivesError(error.message || 'Unable to load placement drives.');
+        setDrivesStatus('error');
       }
     };
 
-    loadDbStats();
+    loadPlacementData();
 
     return () => {
       isActive = false;
       controller.abort();
     };
   }, []);
+
+  // Filter and search drives
+  const filteredDrives = useMemo(() => {
+    return drives.filter(drive => {
+      // Batch filter
+      if (selectedBatch !== 'all' && drive.batch !== selectedBatch) return false;
+      // Drive type filter
+      if (selectedDriveType !== 'all' && drive.drive_type !== selectedDriveType) return false;
+      // Location filter
+      if (selectedLocation !== 'all' && drive.job_location !== selectedLocation) return false;
+      // Search query
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesCompany = drive.company_name?.toLowerCase().includes(query);
+        const matchesRole = drive.role?.toLowerCase().includes(query);
+        const matchesBranches = drive.eligible_branches?.toLowerCase().includes(query);
+        if (!matchesCompany && !matchesRole && !matchesBranches) return false;
+      }
+      return true;
+    }).sort((a, b) => getDate(b) - getDate(a));
+  }, [drives, selectedBatch, selectedDriveType, selectedLocation, searchQuery]);
+
+  // Compute unique locations from drives
+  const uniqueLocations = useMemo(() => {
+    const locations = new Set(drives.map(d => d.job_location).filter(Boolean));
+    return Array.from(locations).sort();
+  }, [drives]);
+
+  // Parse CTC helper
+  const formatCTC = (ctcStr) => {
+    if (!ctcStr) return null;
+    // Already formatted nicely
+    if (ctcStr.includes('LPA') || ctcStr.includes('lpa') || ctcStr.includes('Lakhs')) return ctcStr;
+    if (ctcStr.includes('month') || ctcStr.includes('Month')) return ctcStr;
+    // Try to parse number and format
+    const match = ctcStr.match(/(\d+(?:\.\d+)?)/);
+    if (match) {
+      const num = parseFloat(match[1]);
+      if (num > 1000) return `₹${(num / 100000).toFixed(1)} LPA`; // Large numbers might be annual
+      return `₹${num} LPA`;
+    }
+    return ctcStr;
+  };
+
+  // Format deadline helper
+  const formatDeadline = (dateStr) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.ceil((date - now) / (1000 * 60 * 60 * 24));
+    const formatted = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    if (diffDays < 0) return { text: formatted, urgent: false, passed: true };
+    if (diffDays <= 3) return { text: `${formatted} (${diffDays}d left)`, urgent: true, passed: false };
+    if (diffDays <= 7) return { text: `${formatted} (${diffDays}d left)`, urgent: false, passed: false };
+    return { text: formatted, urgent: false, passed: false };
+  };
 
   useEffect(() => {
     if (assistantMessagesRef.current) {
@@ -485,7 +592,7 @@ const PlacementResources = () => {
             Explore templates, problem sets, mock interview scripts, and roadmaps contributed by IIIT Network mentors and alumni.
           </p>
           <div className="placement-hero__actions">
-            <Button
+            {/* <Button
               as="a"
               href={driveFolder}
               target="_blank"
@@ -495,7 +602,7 @@ const PlacementResources = () => {
               icon="external-link"
             >
               Open resource drive
-            </Button>
+            </Button> */}
             <Button
               as="a"
               href={`${driveFolder}#placement-checklist`}
@@ -519,183 +626,294 @@ const PlacementResources = () => {
           <div>
             <p className="dashboard-eyebrow">Placement Insights</p>
             <h2 id="dashboard-heading">Campus Placement Dashboard</h2>
-            <p>Real-time placement data, company visits, and CTC trends to help you prepare better.</p>
+            <p>Real-time placement data, company visits, and simplified tracking.</p>
           </div>
-          {dbStatsStatus === 'success' && (
-            <span className="live-badge">🟢 Live Data</span>
+          {drivesStatus === 'success' && (
+            <span className="live-badge">🟢 Live Pipeline</span>
           )}
         </header>
 
-        {/* FastAPI Pipeline Stats - Loading State */}
-        {dbStatsStatus === 'loading' && (
+        {/* Dashboard Content */}
+        {drivesStatus === 'loading' && (
           <div className="pipeline-stats-loading">
             <span className="loading-spinner"></span>
-            <span>Loading pipeline data...</span>
+            <span>Loading placement drives...</span>
           </div>
         )}
 
-        {/* FastAPI Pipeline Stats - Error State */}
-        {dbStatsError && (
+        {drivesError && (
           <div className="pipeline-stats-error">
             <span className="error-icon">⚠️</span>
-            <span>{dbStatsError}</span>
+            <span>{drivesError}</span>
           </div>
         )}
 
-        {/* Live Pipeline Metrics from FastAPI */}
-        {dbStats && (
-          <div className="dashboard-metrics pipeline-metrics">
-            <Card className="metric-card metric-card--pipeline" variant="glass">
-              <span className="metric-icon">📧</span>
-              <div className="metric-content">
-                <span className="metric-value">{dbStats.emails_stored}</span>
-                <span className="metric-label">Emails Analyzed</span>
-                <span className="metric-source">From TPO Pipeline</span>
-              </div>
-            </Card>
-            <Card className="metric-card metric-card--pipeline" variant="glass">
-              <span className="metric-icon">📋</span>
-              <div className="metric-content">
-                <span className="metric-value">{dbStats.placement_drives}</span>
-                <span className="metric-label">Placement Drives</span>
-                <span className="metric-source">Active Drives Tracked</span>
-              </div>
-            </Card>
-            <Card className="metric-card metric-card--pipeline" variant="glass">
-              <span className="metric-icon">🏢</span>
-              <div className="metric-content">
-                <span className="metric-value">{dbStats.unique_companies?.length || 0}</span>
-                <span className="metric-label">Unique Companies</span>
-                <span className="metric-source">Extracted from Emails</span>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* Company Tags from FastAPI */}
-        {dbStats?.unique_companies && dbStats.unique_companies.length > 0 && (
-          <div className="dashboard-section companies-from-pipeline">
-            <div className="section-header">
-              <h3>🏷️ Companies from Email Pipeline</h3>
-              <span className="badge badge--success">Live from FastAPI</span>
-            </div>
-            <div className="company-tags">
-              {dbStats.unique_companies.map((company, index) => (
-                <span key={index} className="company-tag">{company}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* CTC vs Date Scatter Plot */}
-        {dbStats?.drives && dbStats.drives.length > 0 && (() => {
-          // Parse CTC from string like "₹12 LPA" or "₹40K/month" to number (LPA)
-          const parseCTC = (ctcStr) => {
-            if (!ctcStr) return 10; // Default 10 LPA
-            const match = ctcStr.match(/(\d+(?:\.\d+)?)/);
-            if (!match) return 10;
-            const num = parseFloat(match[1]);
-            if (ctcStr.toLowerCase().includes('k/month') || ctcStr.toLowerCase().includes('k per month')) {
-              return (num * 12) / 100000; // Convert monthly stipend to LPA
-            }
-            return num || 10;
-          };
-
-          // Get date from drive (prefer drive_date, fallback to created_at)
-          const getDate = (drive) => {
-            if (drive.drive_date) return new Date(drive.drive_date);
-            if (drive.created_at) return new Date(drive.created_at);
-            return new Date();
-          };
-
-          // Sort drives by date
-          const sortedDrives = [...dbStats.drives].sort((a, b) => getDate(a) - getDate(b));
-
-          // Calculate date range for x-axis
-          const dates = sortedDrives.map(d => getDate(d));
-          const minDate = new Date(Math.min(...dates));
-          const maxDate = new Date(Math.max(...dates));
-          const dateRange = maxDate - minDate || 1;
-
-          // Calculate CTC range for y-axis
-          const ctcs = sortedDrives.map(d => parseCTC(d.ctc_or_stipend));
-          const maxCTC = Math.max(...ctcs, 20);
-
-          // Format date for display
-          const formatDate = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-          return (
-            <div className="dashboard-section scatter-plot-section">
-              <div className="section-header">
-                <h3>📊 Placement Timeline</h3>
-                <span className="badge badge--success">{sortedDrives.length} Drives</span>
-              </div>
-              <Card className="scatter-chart-container" variant="default">
-                <div className="scatter-chart">
-                  {/* Y-axis labels */}
-                  <div className="scatter-y-axis">
-                    <span>₹{Math.ceil(maxCTC)} LPA</span>
-                    <span>₹{Math.ceil(maxCTC * 0.75)} LPA</span>
-                    <span>₹{Math.ceil(maxCTC * 0.5)} LPA</span>
-                    <span>₹{Math.ceil(maxCTC * 0.25)} LPA</span>
-                    <span>₹0</span>
-                  </div>
-                  {/* Chart area */}
-                  <div className="scatter-plot-area">
-                    {/* Grid lines */}
-                    <div className="scatter-grid">
-                      <div className="grid-line" style={{ bottom: '100%' }}></div>
-                      <div className="grid-line" style={{ bottom: '75%' }}></div>
-                      <div className="grid-line" style={{ bottom: '50%' }}></div>
-                      <div className="grid-line" style={{ bottom: '25%' }}></div>
-                      <div className="grid-line" style={{ bottom: '0%' }}></div>
-                    </div>
-                    {/* Scatter points */}
-                    <div className="scatter-points">
-                      {sortedDrives.map((drive, index) => {
-                        const date = getDate(drive);
-                        const xPos = ((date - minDate) / dateRange) * 100;
-                        const ctc = parseCTC(drive.ctc_or_stipend);
-                        const yPos = (ctc / maxCTC) * 100;
-                        const dateStr = formatDate(date);
-
-                        return (
-                          <div
-                            key={drive.id || index}
-                            className="scatter-point"
-                            style={{
-                              left: `${Math.max(2, Math.min(98, xPos))}%`,
-                              bottom: `${Math.max(5, Math.min(95, yPos))}%`,
-                            }}
-                          >
-                            <div className="scatter-tooltip">
-                              <strong>{drive.company_name}</strong>
-                              {drive.role && <span className="scatter-role">{drive.role}</span>}
-                              <span>₹{ctc.toFixed(1)} LPA</span>
-                              <span className="scatter-date">{dateStr}</span>
-                              {drive.status && <span className="scatter-status">{drive.status}</span>}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+        {drivesStatus === 'success' && (
+          <>
+            {/* Stats Overview */}
+            <div className="dashboard-metrics pipeline-metrics">
+              <Card className="metric-card metric-card--pipeline" variant="glass">
+                <span className="metric-icon">🚀</span>
+                <div className="metric-content">
+                  <span className="metric-value">{drives.length}</span>
+                  <span className="metric-label">Total Drives</span>
+                  <span className="metric-source">Batch 2026</span>
                 </div>
-                {/* X-axis labels */}
-                <div className="scatter-x-axis">
-                  <span>{formatDate(minDate)}</span>
-                  <span>{formatDate(new Date(minDate.getTime() + dateRange * 0.25))}</span>
-                  <span>{formatDate(new Date(minDate.getTime() + dateRange * 0.5))}</span>
-                  <span>{formatDate(new Date(minDate.getTime() + dateRange * 0.75))}</span>
-                  <span>{formatDate(maxDate)}</span>
+              </Card>
+              {/* <Card className="metric-card metric-card--pipeline" variant="glass">
+                <span className="metric-icon">📅</span>
+                <div className="metric-content">
+                  <span className="metric-value">
+                    {drives.filter(d => d.status === 'upcoming' || d.status === 'open').length}
+                  </span>
+                  <span className="metric-label">Active & Upcoming</span>
+                  <span className="metric-source">Apply Now</span>
                 </div>
-                <p className="scatter-note">
-                  <em>💡 Hover over points to see company details. Timeline based on actual email dates.</em>
-                </p>
+              </Card> */}
+              <Card className="metric-card metric-card--pipeline" variant="glass">
+                <span className="metric-icon">🏢</span>
+                <div className="metric-content">
+                  <span className="metric-value">{placementStats?.total_companies || 0}</span>
+                  <span className="metric-label">Unique Companies</span>
+                  <span className="metric-source">Visiting Campus</span>
+                </div>
               </Card>
             </div>
-          );
-        })()}
+
+            {/* Placement Timeline (Scatter Plot) */}
+            {drives.length > 0 && (() => {
+
+
+              const sortedDrives = [...drives].sort((a, b) => getDate(a) - getDate(b));
+
+              const drivesWithCtc = sortedDrives.map(d => ({ ...d, ctc: parseCTC(d.ctc_or_stipend) }));
+              // Filter: Show only under 50 LPA AND after May 2024 as requested
+              const filteredGraphDrives = drivesWithCtc.filter(d => {
+                const date = getDate(d);
+                // Assume 'after May' refers to May 2024 or just general cutoff.
+                // Given "Batch 2025 & 2026", May 2024 is the start of placement season for 2025.
+                const mayFirst = new Date('2024-05-01');
+                return d.ctc <= 50 && date >= mayFirst;
+              });
+
+              const dates = filteredGraphDrives.map(d => getDate(d));
+              const minDate = new Date(Math.min(...dates));
+              const maxDate = new Date(Math.max(...dates));
+              const dateRange = maxDate - minDate || 1;
+
+              const ctcs = filteredGraphDrives.map(d => d.ctc);
+              const maxCTC = Math.max(...ctcs, 20);
+              const formatDate = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+              return (
+                <div className="dashboard-section scatter-plot-section">
+                  <div className="section-header">
+                    <h3>📊 Placement Timeline</h3>
+                    <div className="section-header-actions">
+                      <span className="badge badge--success">Under 50 LPA</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowLabels(!showLabels)}
+                        className="chart-toggle-btn"
+                      >
+                        {showLabels ? 'Hide Labels' : 'Show Labels'}
+                      </Button>
+                    </div>
+                  </div>
+                  <Card className="scatter-chart-container" variant="default">
+                    <div className="scatter-chart">
+                      {/* Y-axis */}
+                      <div className="scatter-y-axis">
+                        <span>₹{Math.ceil(maxCTC)} LPA</span>
+                        <span>₹{Math.ceil(maxCTC / 2)} LPA</span>
+                        <span>₹0</span>
+                      </div>
+                      {/* Plot Area */}
+                      <div className="scatter-plot-area">
+                        <div className="scatter-grid">
+                          <div className="grid-line" style={{ bottom: '0%' }}></div>
+                          <div className="grid-line" style={{ bottom: '50%' }}></div>
+                          <div className="grid-line" style={{ bottom: '100%' }}></div>
+                        </div>
+                        <div className="scatter-points">
+                          {filteredGraphDrives.map((drive, index) => {
+                            const date = getDate(drive);
+                            const xPos = ((date - minDate) / dateRange) * 100;
+                            const yPos = (drive.ctc / maxCTC) * 100;
+
+                            return (
+                              <div
+                                key={drive.id || index}
+                                className="scatter-point"
+                                style={{
+                                  left: `${Math.max(2, Math.min(98, xPos))}%`,
+                                  bottom: `${Math.max(5, Math.min(95, yPos))}%`,
+                                }}
+                                title={`${drive.company_name} - ₹${drive.ctc.toFixed(1)} LPA`}
+                              >
+                                <div className={`scatter-tooltip ${showLabels ? 'visible' : ''}`}>
+                                  <strong>{drive.company_name}</strong>
+                                  <span className="scatter-date">{formatDate(date)}</span>
+                                  <span className="scatter-role">₹{drive.ctc.toFixed(1)} LPA</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              );
+            })()}
+
+            {/* Filters & Search */}
+            <div className="dashboard-controls">
+              <div className="search-bar-container">
+                <span className="search-icon">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search companies, roles..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="dashboard-search-input"
+                />
+              </div>
+
+              <div className="dashboard-filters">
+                <select
+                  value={selectedBatch}
+                  onChange={(e) => setSelectedBatch(e.target.value)}
+                  className="dashboard-select"
+                >
+                  <option value="all">All Batches</option>
+                  {filterOptions.batches.map(b => (
+                    <option key={b} value={b}>Batch {b}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={selectedDriveType}
+                  onChange={(e) => setSelectedDriveType(e.target.value)}
+                  className="dashboard-select"
+                >
+                  <option value="all">All Types</option>
+                  <option value="internship">Internships</option>
+                  <option value="fte">Full Time</option>
+                  <option value="both">Both</option>
+                </select>
+
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="dashboard-select"
+                >
+                  <option value="all">All Locations</option>
+                  {uniqueLocations.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Drives Grid */}
+            <div className="drive-cards-grid">
+              {filteredDrives.length === 0 ? (
+                <div className="no-drives-found">
+                  <span className="no-drives-icon">🔭</span>
+                  <p>No drives match your filters.</p>
+                  <Button variant="ghost" onClick={() => {
+                    setSelectedBatch('all');
+                    setSelectedDriveType('all');
+                    setSelectedLocation('all');
+                    setSearchQuery('');
+                  }}>Clear Filters</Button>
+                </div>
+              ) : (
+                filteredDrives.map((drive) => {
+                  const deadline = formatDeadline(drive.registration_deadline);
+                  const isClosed = drive.status === 'closed' || (drive.registration_deadline && new Date(drive.registration_deadline) < new Date());
+                  const ctcDisplay = formatCTC(drive.ctc_or_stipend);
+
+                  return (
+                    <Card key={drive.id} className={`drive-card ${isClosed ? 'drive-card--closed' : ''}`} variant="default">
+                      <div className="drive-card__header">
+                        <div className="drive-company-info">
+                          <div className="drive-company-logo-placeholder">
+                            {drive.company_name.charAt(0)}
+                          </div>
+                          <div>
+                            <h3 className="drive-company-name">{drive.company_name}</h3>
+                            <div className="drive-badges">
+                              {drive.drive_type && (
+                                <span className={`drive-badge drive-badge--type`}>
+                                  {drive.drive_type === 'both' ? 'FTE + Intern' : drive.drive_type}
+                                </span>
+                              )}
+                              {drive.batch && <span className="drive-badge drive-badge--batch">{drive.batch}</span>}
+                            </div>
+                          </div>
+                        </div>
+                        {drive.confidence_score < 0.8 && (
+                          <span className="confidence-warning" title="AI Verification Low">⚠️ Verify</span>
+                        )}
+                      </div>
+
+                      <div className="drive-card__body">
+                        {drive.role && (
+                          <div className="drive-info-row">
+                            <span className="drive-info-icon">💼</span>
+                            <span className="drive-role">{drive.role}</span>
+                          </div>
+                        )}
+
+                        {(ctcDisplay || drive.job_location) && (
+                          <div className="drive-secondary-info">
+                            {ctcDisplay && (
+                              <span className="drive-ctc">
+                                💰 {ctcDisplay}
+                              </span>
+                            )}
+                            {drive.job_location && (
+                              <span className="drive-location">
+                                📍 {drive.job_location}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {drive.eligible_branches && (
+                          <div className="drive-eligibility">
+                            <span className="eligibility-label">Eligibility:</span>
+                            <span className="eligibility-value">{drive.eligible_branches}</span>
+                          </div>
+                        )}
+
+                        <div className="drive-deadline-section">
+                          {deadline ? (
+                            <p className={`drive-deadline ${deadline.urgent ? 'deadline-urgent' : ''} ${deadline.passed ? 'deadline-passed' : ''}`}>
+                              {deadline.passed ? 'Closed on ' : 'Deadline: '}
+                              <strong>{deadline.text}</strong>
+                            </p>
+                          ) : (
+                            <p className="drive-deadline">No deadline specified</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="drive-card__footer">
+                        <span className="drive-email-date">
+                          Last Email Received: {getDate(drive).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          </>
+        )}
       </section>
 
       <section className="mcp-assistant delay-500 animate-slide-up" aria-labelledby="mcp-assistant-heading">

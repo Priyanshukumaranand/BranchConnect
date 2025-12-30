@@ -2,6 +2,7 @@
   "name": "ce-bootcamp",
   "version": "0.1.0",
   "private": true,
+  "proxy": "https://placement-pipeline.lemonglacier-3904d7f4.southeastasia.azurecontainerapps.io",
   "dependencies": {
     "@tanstack/react-query": "^5.51.21",
     "@testing-library/jest-dom": "^5.17.0",

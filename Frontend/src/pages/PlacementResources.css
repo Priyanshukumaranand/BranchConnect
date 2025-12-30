@@ -715,6 +715,7 @@
   flex: 1;
 }
 
+
 /* ========== PLACEMENT DASHBOARD ========== */
 .placement-dashboard {
   display: grid;
@@ -731,7 +732,7 @@
   text-transform: uppercase;
   letter-spacing: 0.25em;
   font-size: 0.75rem;
-  color: var(--color-primary, #6366f1);
+  color: var(--color-brand-primary);
   font-weight: 700;
 }
 
@@ -746,6 +747,18 @@
   font-size: 1rem;
 }
 
+.live-badge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  width: fit-content;
+}
+
 /* Dashboard Metrics */
 .dashboard-metrics {
   display: grid;
@@ -754,7 +767,7 @@
 }
 
 .metric-card {
-  display: flex;
+  display: flex !important;
   align-items: center;
   gap: 1rem;
   padding: 1.25rem !important;
@@ -767,13 +780,16 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
 }
 
-.metric-card--highlight {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)) !important;
-  border: 1px solid rgba(99, 102, 241, 0.2) !important;
-}
-
 .metric-icon {
   font-size: 2rem;
+  background: var(--color-surface-elevated);
+  width: 3.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  border: 1px solid var(--color-border-subtle);
 }
 
 .metric-content {
@@ -789,15 +805,373 @@
 }
 
 .metric-label {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.metric-source {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Dashboard Controls */
+.dashboard-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-surface-base);
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.search-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-surface-elevated);
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border-subtle);
+  flex: 1;
+  min-width: 250px;
+}
+
+.search-icon {
+  color: var(--color-text-muted);
+}
+
+.dashboard-search-input {
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+.dashboard-search-input:focus {
+  outline: none;
+}
+
+.dashboard-filters {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-select {
+  padding: 0.5rem 2rem 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem top 50%;
+  background-size: 0.65em auto;
+}
+
+[data-theme="dark"] .dashboard-select {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+}
+
+/* Drive Cards Grid */
+.drive-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.no-drives-found {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--color-surface-base);
+  border-radius: 1rem;
+  border: 1px dashed var(--color-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.no-drives-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.drive-card {
+  display: flex !important;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem !important;
+  height: 100%;
+  border-radius: 1rem !important;
+  transition: all 0.2s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.drive-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-brand-primary) !important;
+}
+
+.drive-card--closed {
+  opacity: 0.8;
+  background: var(--color-surface-base) !important;
+}
+
+.drive-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.drive-company-info {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.drive-company-logo-placeholder {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-secondary));
+  color: white;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.drive-company-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.drive-badges {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+  flex-wrap: wrap;
+}
+
+.drive-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.4rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.drive-badge--type {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+}
+
+.drive-badge--batch {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--color-brand-primary);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.confidence-warning {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+  background: rgba(234, 179, 8, 0.1);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  border-radius: 0.3rem;
+  font-weight: 600;
+  cursor: help;
+}
+
+.drive-card__body {
+  display: grid;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.drive-info-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.drive-info-icon {
+  font-size: 1rem;
+  margin-top: 0.1rem;
+}
+
+.drive-role {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.drive-secondary-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed var(--color-border-subtle);
+}
+
+.drive-ctc,
+.drive-location {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.drive-eligibility {
+  font-size: 0.8rem;
+  background: var(--color-surface-hover);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  color: var(--color-text-secondary);
+}
+
+.eligibility-label {
+  font-weight: 600;
+  margin-right: 0.3rem;
+  color: var(--color-text-muted);
+}
+
+.drive-deadline-section {
+  margin-top: auto;
+}
+
+.drive-deadline {
   font-size: 0.8rem;
   color: var(--color-text-secondary);
   font-weight: 500;
 }
 
-.metric-change {
-  font-size: 0.75rem;
-  font-weight: 600;
+.deadline-urgent {
+  color: #ef4444;
+  font-weight: 700;
 }
+
+.deadline-passed {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.drive-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.drive-status-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-upcoming {
+  background: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+}
+
+.status-open {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.status-closed {
+  background: #ef4444;
+}
+
+.status-text {
+  color: var(--color-text-primary);
+}
+
+.drive-apply-btn {
+  font-weight: 600;
+  padding: 0.4rem 1rem !important;
+}
+
+/* Loading & Error States */
+.pipeline-stats-loading,
+.pipeline-stats-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem;
+  background: var(--color-surface-base);
+  border-radius: 1rem;
+  color: var(--color-text-secondary);
+  border: 1px dashed var(--color-border-subtle);
+}
+
+.loading-spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--color-text-muted);
+  border-top-color: var(--color-brand-primary);
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-bar-container {
+    width: 100%;
+  }
+
+  .dashboard-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+
+  .dashboard-select {
+    min-width: 120px;
+  }
+}
+
 
 .metric-change.positive {
   color: #10b981;
@@ -1121,7 +1495,14 @@
 
 .scatter-point:hover .scatter-tooltip {
   opacity: 1;
+  opacity: 1;
   visibility: visible;
+}
+
+.scatter-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  z-index: 20;
 }
 
 .scatter-tooltip strong {
@@ -1741,4 +2122,25 @@
     flex-wrap: wrap;
     justify-content: center;
   }
+}
+
+/* Header Actions */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.chart-toggle-btn {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  height: auto;
+  border-radius: 6px;
 }
