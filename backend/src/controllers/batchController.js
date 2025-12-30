@@ -536,14 +536,14 @@ exports.listBatches = async (req, res, next) => {
     const cacheEligible = !includeImageData && BATCH_LIST_CACHE_TTL_SECONDS > 0;
     const cacheKey = cacheEligible
       ? buildBatchListCacheKey({
-          year,
-          branch: null,
-          page,
-          pageSize,
-          includeImageData,
-          host,
-          metaUpdatedAt: batchIndex?.updatedAt
-        })
+        year,
+        branch: null,
+        page,
+        pageSize,
+        includeImageData,
+        host,
+        metaUpdatedAt: batchIndex?.updatedAt
+      })
       : null;
 
     if (cacheKey) {
