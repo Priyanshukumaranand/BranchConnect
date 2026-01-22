@@ -111,14 +111,19 @@ const deriveYearSuffix = (value) => {
   }
 
   if (trimmed.length === 2) {
-    return trimmed.padStart(2, '0');
+    // Normalize to a 2-digit numeric string derived from the parsed year.
+    // This ensures only digits are returned, preventing regex injection.
+    const normalizedTwoDigitYear = (numericYear % 100).toString().padStart(2, '0');
+    return normalizedTwoDigitYear;
   }
 
   if (trimmed.length === 4) {
     if (numericYear < 1900 || numericYear > 2100) {
       return null;
     }
-    return trimmed.slice(2);
+    // Use the last two digits of the numeric year, ensuring only digits.
+    const normalizedTwoDigitYear = (numericYear % 100).toString().padStart(2, '0');
+    return normalizedTwoDigitYear;
   }
 
   return null;
